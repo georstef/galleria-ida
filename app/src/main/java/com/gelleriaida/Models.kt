@@ -6,11 +6,13 @@ import kotlinx.serialization.Serializable
 data class Player(
     val id: String,
     val name: String,
-    val schoolClass: String,
+    val schoolClass: String = "",
     val language: String,
     val stars: Int = 0,
+    val schoolYearPosition: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
+
 
 @Serializable
 data class GalleryItem(

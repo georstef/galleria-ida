@@ -33,13 +33,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val gemini = GeminiService()
 
     val players: StateFlow<List<Player>> = prefs.playersFlow.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+        viewModelScope, SharingStarted.Eagerly, emptyList()
     )
     val gallery: StateFlow<List<GalleryItem>> = prefs.galleryFlow.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+        viewModelScope, SharingStarted.Eagerly, emptyList()
     )
     val settings: StateFlow<AppSettings> = prefs.settingsFlow.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5000), AppSettings()
+        viewModelScope, SharingStarted.Eagerly, AppSettings()
     )
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
@@ -69,6 +69,56 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val updated = players.value + newPlayer
             prefs.savePlayers(updated)
             _currentPlayer.value = newPlayer
+        }
+    }
+
+    fun updatePlayer(player: Player) {
+        viewModelScope.launch {
+            _currentPlayer.value = player
+            val list = players.value.map { if (it.id == player.id) player else it }
+            prefs.savePlayers(list)
+        }
+    }
+
+    private val _playersLoaded = MutableStateFlow(false)
+    val playersLoaded: StateFlow<Boolean> = _playersLoaded.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            prefs.playersFlow.collect {
+                _playersLoaded.value = true
+            }
+        }
+    }
+
+    fun createPlayerBasic(name: String, language: String) {
+        viewModelScope.launch {
+            val newPlayer = Player(
+                id = UUID.randomUUID().toString(),
+                name = name.trim(),
+                language = language
+            )
+            val updated = players.value + newPlayer
+            prefs.savePlayers(updated)
+            _currentPlayer.value = newPlayer
+        }
+    }
+
+    fun isNameTaken(name: String, excludeId: String? = null): Boolean {
+        return players.value.any {
+            it.name.trim().lowercase() == name.trim().lowercase() && it.id != excludeId
+        }
+    }
+
+    fun deletePlayers(ids: List<String>) {
+        viewModelScope.launch {
+            val updatedPlayers = players.value.filter { it.id !in ids }
+            prefs.savePlayers(updatedPlayers)
+            val updatedGallery = gallery.value.filter { it.playerId !in ids }
+            prefs.saveGallery(updatedGallery)
+            if (_currentPlayer.value?.id in ids) {
+                _currentPlayer.value = null
+            }
         }
     }
 

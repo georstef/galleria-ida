@@ -7,10 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,10 +25,12 @@ fun PlayerSelectionScreen(
 ) {
     val players by viewModel.players.collectAsState()
 
-    LaunchedEffect(players) {
-        if (players.isEmpty()) onNewPlayer()
-    }
+    // First launch — no players yet, go straight to setup
+    val playersLoaded by viewModel.playersLoaded.collectAsState()
 
+    LaunchedEffect(playersLoaded) {
+        if (playersLoaded && players.isEmpty()) onNewPlayer()
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -39,11 +38,20 @@ fun PlayerSelectionScreen(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(48.dp))
 
         Text(
-            text = "⭐ Who is playing?",
+            text = "Who is playing? 👋",
             style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = "Tap your name to start",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MedText,
             textAlign = TextAlign.Center
         )
 
@@ -51,7 +59,7 @@ fun PlayerSelectionScreen(
 
         LazyColumn(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             items(players) { player ->
                 PlayerCard(player = player, onClick = {
@@ -71,7 +79,7 @@ fun PlayerSelectionScreen(
             shape = RoundedCornerShape(20.dp),
             colors = ButtonDefaults.buttonColors(containerColor = ButtonSecondary)
         ) {
-            Text("+ New Player", style = MaterialTheme.typography.labelLarge)
+            Text("+ Add New Player", style = MaterialTheme.typography.labelLarge)
         }
 
         Spacer(Modifier.height(16.dp))
@@ -95,10 +103,13 @@ fun PlayerCard(player: Player, onClick: () -> Unit) {
                 text = player.name,
                 style = MaterialTheme.typography.titleMedium
             )
-            Text(
-                text = "Class ${player.schoolClass}",
-                style = MaterialTheme.typography.bodyMedium
-            )
+            if (player.schoolClass.isNotBlank()) {
+                Text(
+                    text = "Class ${player.schoolClass}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MedText
+                )
+            }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
