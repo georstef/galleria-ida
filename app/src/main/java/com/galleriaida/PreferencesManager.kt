@@ -1,4 +1,4 @@
-package com.gelleriaida.storage
+package com.galleriaida.storage
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -6,9 +6,9 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.gelleriaida.data.AppSettings
-import com.gelleriaida.data.GalleryItem
-import com.gelleriaida.data.Player
+import com.galleriaida.data.AppSettings
+import com.galleriaida.data.GalleryItem
+import com.galleriaida.data.Player
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString

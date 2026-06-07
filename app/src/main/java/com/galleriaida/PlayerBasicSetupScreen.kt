@@ -1,4 +1,4 @@
-package com.gelleriaida.ui.screens
+package com.galleriaida.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,11 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.gelleriaida.ui.theme.*
-import com.gelleriaida.viewmodel.AppViewModel
+import com.galleriaida.ui.theme.*
+import com.galleriaida.viewmodel.AppViewModel
 import java.util.Locale
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.focus.FocusState
 
 data class LanguageOption(
     val displayName: String,

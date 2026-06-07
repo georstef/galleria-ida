@@ -1,4 +1,4 @@
-package com.gelleriaida.ui.screens
+package com.galleriaida.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,10 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.gelleriaida.network.MathQuestion
-import com.gelleriaida.ui.theme.*
-import com.gelleriaida.viewmodel.AppViewModel
-import com.gelleriaida.viewmodel.UiState
+import com.galleriaida.network.MathQuestion
+import com.galleriaida.ui.theme.*
+import com.galleriaida.viewmodel.AppViewModel
+import com.galleriaida.viewmodel.UiState
 
 @Composable
 fun GameScreen(

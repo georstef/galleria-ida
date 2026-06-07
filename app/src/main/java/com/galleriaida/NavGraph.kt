@@ -1,17 +1,18 @@
-package com.gelleriaida.navigation
+package com.galleriaida.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.gelleriaida.ui.screens.GameScreen
-import com.gelleriaida.ui.screens.GalleryScreen
-import com.gelleriaida.ui.screens.PlayerSelectionScreen
-import com.gelleriaida.ui.screens.PlayerBasicSetupScreen
-import com.gelleriaida.ui.screens.PlayerProfileScreen
-import com.gelleriaida.ui.screens.PlayerHomeScreen
-import com.gelleriaida.ui.screens.SettingsScreen
-import com.gelleriaida.viewmodel.AppViewModel
+import com.galleriaida.ui.screens.GameScreen
+import com.galleriaida.ui.screens.GalleryScreen
+import com.galleriaida.ui.screens.ImageCreationScreen
+import com.galleriaida.ui.screens.PlayerSelectionScreen
+import com.galleriaida.ui.screens.PlayerBasicSetupScreen
+import com.galleriaida.ui.screens.PlayerProfileScreen
+import com.galleriaida.ui.screens.PlayerHomeScreen
+import com.galleriaida.ui.screens.SettingsScreen
+import com.galleriaida.viewmodel.AppViewModel
 
 object Routes {
     const val PLAYER_SELECTION = "player_selection"
@@ -20,6 +21,7 @@ object Routes {
     const val PLAYER_HOME = "player_home"
     const val GAME = "game"
     const val GALLERY = "gallery"
+    const val IMAGE_CREATION = "image_creation"
     const val SETTINGS = "settings"
 }
 
@@ -46,7 +48,11 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
         composable(Routes.PLAYER_PROFILE) {
             PlayerProfileScreen(
                 viewModel = viewModel,
-                onDone = { navController.navigate(Routes.PLAYER_HOME) { popUpTo(Routes.PLAYER_SELECTION) } },
+                onDone = {
+                    navController.navigate(Routes.PLAYER_HOME) {
+                        popUpTo(Routes.PLAYER_SELECTION)
+                    }
+                },
                 onBack = { navController.popBackStack() },
                 onSettings = { navController.navigate(Routes.SETTINGS) }
             )
@@ -72,7 +78,19 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
             GalleryScreen(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() },
-                onSettings = { navController.navigate(Routes.SETTINGS) }
+                onSettings = { navController.navigate(Routes.SETTINGS) },
+                onCreateImage = { navController.navigate(Routes.IMAGE_CREATION) }
+            )
+        }
+        composable(Routes.IMAGE_CREATION) {
+            ImageCreationScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onImageCreated = {
+                    navController.navigate(Routes.GALLERY) {
+                        popUpTo(Routes.GALLERY) { inclusive = true }
+                    }
+                }
             )
         }
         composable(Routes.SETTINGS) {

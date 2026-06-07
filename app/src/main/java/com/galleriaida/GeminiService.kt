@@ -1,13 +1,14 @@
-package com.gelleriaida.network
+package com.galleriaida.network
 
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
+import java.io.File
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.Request
+import okhttp3.RequestBody
 
 class GeminiService {
 
@@ -34,7 +35,7 @@ class GeminiService {
     // ── Validation + model list ──────────────────────────────────────────────
 
     suspend fun validateAndFetchModels(apiKey: String): Pair<Boolean, String> = withContext(Dispatchers.IO) {
-        val request = okhttp3.Request.Builder()
+        val request = Request.Builder()
             .url(modelsUrl(apiKey))
             .get()
             .addHeader("Accept", "application/json")
@@ -55,7 +56,6 @@ class GeminiService {
         }
     }
 
-    // Keep old validateKey for compatibility
     suspend fun validateKey(apiKey: String): Boolean {
         return validateAndFetchModels(apiKey).first
     }
@@ -74,7 +74,6 @@ class GeminiService {
                 val name = obj.getString("name")
                 val methods = obj.getJSONArray("supportedGenerationMethods")
                     .let { m -> (0 until m.length()).map { m.getString(it) } }
-
                 if ("generateContent" in methods) textModels.add(name)
                 if ("predict" in methods) imageModels.add(name)
             }
@@ -93,13 +92,11 @@ class GeminiService {
 
             val bestText = textPriority.firstOrNull { it in textModels }
                 ?: textModels.filterNot { "preview" in it.lowercase() }.firstOrNull()
-                ?: textModels.firstOrNull()
-                ?: ""
+                ?: textModels.firstOrNull() ?: ""
 
             val bestImage = imagePriority.firstOrNull { it in imageModels }
                 ?: imageModels.filterNot { "preview" in it.lowercase() }.firstOrNull()
-                ?: imageModels.firstOrNull()
-                ?: ""
+                ?: imageModels.firstOrNull() ?: ""
 
             result["questions"] = bestText
             result["translation"] = bestText
@@ -113,38 +110,47 @@ class GeminiService {
         return result
     }
 
-    // ── Text generation (generateContent) ───────────────────────────────────
+    // ── Text generation using OkHttp with strict JSON output ─────────────────
 
     private fun postGenerateContent(apiKey: String, model: String, prompt: String): String {
-        val url = URL(generateContentUrl(apiKey, model))
-        val connection = url.openConnection() as HttpURLConnection
-        try {
-            connection.requestMethod = "POST"
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.connectTimeout = 30000
-            connection.readTimeout = 30000
-            connection.doOutput = true
+        val url = generateContentUrl(apiKey, model)
 
-            val payload = JSONObject().put(
-                "contents", JSONArray().put(
-                    JSONObject().put(
-                        "parts", JSONArray().put(
-                            JSONObject().put("text", prompt)
-                        )
+        // 1. Force response structure to application/json
+        val generationConfig = JSONObject().apply {
+            put("responseMimeType", "application/json")
+        }
+
+        val payload = JSONObject().apply {
+            put("contents", JSONArray().put(
+                JSONObject().put(
+                    "parts", JSONArray().put(
+                        JSONObject().put("text", prompt)
                     )
                 )
-            )
-            OutputStreamWriter(connection.outputStream).use { it.write(payload.toString()) }
+            ))
+            put("generationConfig", generationConfig)
+        }
 
-            return if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                connection.inputStream.bufferedReader().use { it.readText() }
+        val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+        val body = RequestBody.create(mediaType, payload.toString())
+
+        val request = Request.Builder()
+            .url(url)
+            .post(body)
+            .addHeader("Content-Type", "application/json")
+            .build()
+
+        okHttpClient.newCall(request).execute().use { response ->
+            val responseBody = response.body?.string() ?: ""
+            if (response.isSuccessful) {
+                return responseBody
             } else {
-                val error = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-                Log.e("GeminiService", "HTTP ${connection.responseCode}: $error")
-                throw Exception("Server returned ${connection.responseCode}")
+                Log.e("GeminiService", "HTTP ${response.code}: $responseBody")
+                if (response.code == 429) {
+                    throw Exception("API quota exceeded. Please wait a few seconds or choose another text model in settings.")
+                }
+                throw Exception("Server returned ${response.code}: $responseBody")
             }
-        } finally {
-            connection.disconnect()
         }
     }
 
@@ -157,6 +163,8 @@ class GeminiService {
             .getJSONObject(0)
             .getString("text")
     }
+
+    // ── Math questions ───────────────────────────────────────────────────────
 
     suspend fun generateMathQuestions(
         apiKey: String,
@@ -193,36 +201,37 @@ class GeminiService {
         }
     }
 
-    suspend fun generateImagePromptAndMeta(
+    // ── Phrase generation ────────────────────────────────────────────────────
+
+    suspend fun generatePhrase(
         apiKey: String,
         model: String,
-        words: List<String>,
+        character: String,
+        action: String,
+        place: String,
         language: String
-    ): Result<ImageMeta> = withContext(Dispatchers.IO) {
+    ): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val prompt = """
-                You are helping create a reward image for a child.
-                Use these words: ${words.joinToString(", ")}.
-                Respond ONLY with a JSON object, no markdown, in this exact format:
-                {"title":"Short fun title in $language","sentence":"One cheerful sentence in $language describing the scene","imagePrompt":"A colorful friendly cartoon illustration of [scene], suitable for children, bright vivid colors, no text in image"}
-            """.trimIndent()
+            val prompt = "I want you to creatively combine the words $character, $action, and $place into a simple, child-friendly phrase in $language. This phrase will then be used as the prompt to generate an image suitable for a kid. Return only one phrase and return it in a json formatted like this { \"phrase\": \"\" }"
+            Log.d("GALLERIA_AI", "=== PHRASE REQUEST ===")
+            Log.d("GALLERIA_AI", "Model: $model")
+            Log.d("GALLERIA_AI", "Prompt: $prompt")
 
             val response = postGenerateContent(apiKey, model, prompt)
             val text = extractText(response)
             val cleaned = text.trim().removePrefix("```json").removeSuffix("```").trim()
-            val obj = JSONObject(cleaned)
-            Result.success(ImageMeta(
-                title = obj.getString("title"),
-                sentence = obj.getString("sentence"),
-                imagePrompt = obj.getString("imagePrompt")
-            ))
+            val phrase = JSONObject(cleaned).getString("phrase")
+
+            Log.d("GALLERIA_AI", "=== PHRASE RESPONSE ===")
+            Log.d("GALLERIA_AI", "Phrase: $phrase")
+            Result.success(phrase)
         } catch (e: Exception) {
-            Log.e("GeminiService", "generateImagePromptAndMeta error: ${e.message}")
+            Log.e("GeminiService", "generatePhrase error: ${e.message}", e)
             Result.failure(e)
         }
     }
 
-    // ── Image generation (predict / Imagen) ──────────────────────────────────
+    // ── Image generation using OkHttp (Adaptive format) ──────────────────────
 
     suspend fun generateImage(
         apiKey: String,
@@ -230,17 +239,24 @@ class GeminiService {
         imagePrompt: String
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val url = URL(predictUrl(apiKey, model))
-            val connection = url.openConnection() as HttpURLConnection
-            try {
-                connection.requestMethod = "POST"
-                connection.setRequestProperty("Content-Type", "application/json")
-                connection.setRequestProperty("x-goog-api-key", apiKey)
-                connection.connectTimeout = 60000
-                connection.readTimeout = 60000
-                connection.doOutput = true
+            val isGeminiImageModel = model.contains("gemini")
+            val targetUrl = if (isGeminiImageModel) generateContentUrl(apiKey, model) else predictUrl(apiKey, model)
 
-                val payload = JSONObject()
+            val payload = if (isGeminiImageModel) {
+                // Modern Gemini Image format payload
+                JSONObject().apply {
+                    put("contents", JSONArray().put(
+                        JSONObject().put("parts", JSONArray().put(
+                            JSONObject().put("text", imagePrompt)
+                        ))
+                    ))
+                    put("generationConfig", JSONObject().apply {
+                        put("responseModalities", JSONArray().put("IMAGE"))
+                    })
+                }
+            } else {
+                // Legacy Vertex Imagen payload
+                JSONObject()
                     .put("instances", JSONArray().put(
                         JSONObject().put("prompt", imagePrompt)
                     ))
@@ -249,24 +265,54 @@ class GeminiService {
                         .put("aspectRatio", "1:1")
                         .put("outputMimeType", "image/jpeg")
                     )
+            }
 
-                OutputStreamWriter(connection.outputStream).use { it.write(payload.toString()) }
+            Log.d("GALLERIA_AI", "=== IMAGE REQUEST ===")
+            Log.d("GALLERIA_AI", "Model: $model")
+            Log.d("GALLERIA_AI", "Image prompt: $imagePrompt")
 
-                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                    val responseText = connection.inputStream.bufferedReader().use { it.readText() }
-                    val predictions = JSONObject(responseText).getJSONArray("predictions")
-                    val base64 = predictions.getJSONObject(0).getString("bytesBase64Encoded")
+            val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+            val body = RequestBody.create(mediaType, payload.toString())
+
+            val requestBuilder = Request.Builder()
+                .url(targetUrl)
+                .post(body)
+                .addHeader("Content-Type", "application/json")
+
+            if (!isGeminiImageModel) {
+                requestBuilder.addHeader("x-goog-api-key", apiKey)
+            }
+
+            okHttpClient.newCall(requestBuilder.build()).execute().use { response ->
+                val responseBody = response.body?.string() ?: ""
+                if (response.isSuccessful) {
+                    val base64 = if (isGeminiImageModel) {
+                        JSONObject(responseBody)
+                            .getJSONArray("candidates")
+                            .getJSONObject(0)
+                            .getJSONObject("content")
+                            .getJSONArray("parts")
+                            .getJSONObject(0)
+                            .getJSONObject("inlineData")
+                            .getString("data")
+                    } else {
+                        val predictions = JSONObject(responseBody).getJSONArray("predictions")
+                        predictions.getJSONObject(0).getString("bytesBase64Encoded")
+                    }
+                    Log.d("GELLERIA_AI", "=== IMAGE RESPONSE ===")
+                    Log.d("GELLERIA_AI", "Base64 length: ${base64.length} chars")
                     Result.success(base64)
                 } else {
-                    val error = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-                    Log.e("GeminiService", "Imagen HTTP ${connection.responseCode}: $error")
-                    Result.failure(Exception("Image generation failed: ${connection.responseCode}"))
+                    Log.e("GeminiService", "Image HTTP ${response.code}: $responseBody")
+                    if (response.code == 429) {
+                        Result.failure(Exception("Image API quota exceeded. Please wait a few seconds before trying again."))
+                    } else {
+                        Result.failure(Exception("Image generation failed: ${response.code}"))
+                    }
                 }
-            } finally {
-                connection.disconnect()
             }
         } catch (e: Exception) {
-            Log.e("GeminiService", "generateImage error: ${e.message}")
+            Log.e("GeminiService", "generateImage error: ${e.message}", e)
             Result.failure(e)
         }
     }

@@ -1,4 +1,4 @@
-package com.gelleriaida.ui.screens
+package com.galleriaida.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,8 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gelleriaida.ui.theme.*
-import com.gelleriaida.viewmodel.AppViewModel
+import com.galleriaida.ui.theme.*
+import com.galleriaida.viewmodel.AppViewModel
 
 @Composable
 fun PlayerHomeScreen(

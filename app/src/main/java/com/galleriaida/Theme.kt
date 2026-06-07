@@ -1,4 +1,4 @@
-package com.gelleriaida.ui.theme
+package com.galleriaida.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme

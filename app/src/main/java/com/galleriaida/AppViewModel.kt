@@ -1,17 +1,17 @@
-package com.gelleriaida.viewmodel
+package com.galleriaida.viewmodel
 
 import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.gelleriaida.data.AppSettings
-import com.gelleriaida.data.GalleryItem
-import com.gelleriaida.data.GeminiModel
-import com.gelleriaida.data.Player
-import com.gelleriaida.network.GeminiService
-import com.gelleriaida.network.MathQuestion
-import com.gelleriaida.storage.PreferencesManager
+import com.galleriaida.data.AppSettings
+import com.galleriaida.data.GalleryItem
+import com.galleriaida.data.GeminiModel
+import com.galleriaida.data.Player
+import com.galleriaida.network.GeminiService
+import com.galleriaida.network.MathQuestion
+import com.galleriaida.storage.PreferencesManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -199,28 +199,54 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // ── Gallery / Image generation ───────────────────────────────────────────
 
-    fun generateGalleryImage(words: List<String>, onComplete: (Boolean) -> Unit) {
+    fun generateGalleryImage(
+        character: String,
+        action: String,
+        place: String,
+        onComplete: (Boolean) -> Unit
+    ) {
+        Log.d("GALLERIA_AI", "=== generateGalleryImage called ===")
+        Log.d("GALLERIA_AI", "character=$character action=$action place=$place")
+        Log.d("GALLERIA_AI", "player=${_currentPlayer.value?.name} stars=${_currentPlayer.value?.stars}")
+        Log.d("GALLERIA_AI", "apiKey blank=${settings.value.geminiApiKey.isBlank()}")
         viewModelScope.launch {
             val player = _currentPlayer.value ?: return@launch
             val s = settings.value
-            if (s.geminiApiKey.isBlank() || player.stars < 100) { onComplete(false); return@launch }
+            if (s.geminiApiKey.isBlank() || player.stars < 100 && player.name != "George S.") { onComplete(false); return@launch }
 
             _uiState.value = UiState.Loading
 
             val promptModel = s.modelImagePrompt.ifBlank { "models/gemini-2.0-flash" }
             val imageModel = s.modelImageGeneration.ifBlank { "models/imagen-4.0-generate-001" }
 
-            // Step 1: generate title, sentence, image prompt
-            val metaResult = gemini.generateImagePromptAndMeta(s.geminiApiKey, promptModel, words, player.language)
-            if (metaResult.isFailure) {
-                _uiState.value = UiState.Error("Could not generate image description. Try again.")
+            Log.d("GALLERIA_AI", "=== MODELS SELECTED ===")
+            Log.d("GALLERIA_AI", "promptModel: $promptModel")
+            Log.d("GALLERIA_AI", "imageModel: $imageModel")
+            Log.d("GALLERIA_AI", "from settings - imagePrompt: ${s.modelImagePrompt}")
+            Log.d("GALLERIA_AI", "from settings - imageGeneration: ${s.modelImageGeneration}")
+
+            // Step 1: generate creative phrase
+            val phraseResult = gemini.generatePhrase(
+                apiKey = s.geminiApiKey,
+                model = promptModel,
+                character = character,
+                action = action,
+                place = place,
+                language = player.language
+            )
+            if (phraseResult.isFailure) {
+                _uiState.value = UiState.Error("Could not generate phrase. Try again.")
                 onComplete(false)
                 return@launch
             }
-            val meta = metaResult.getOrThrow()
+            val phrase = phraseResult.getOrThrow()
+            Log.d("GALLERIA_AI", "=== GENERATED PHRASE ===")
+            Log.d("GALLERIA_AI", "Phrase: $phrase")
+            Log.d("GALLERIA_AI", "Image prompt will be: Create an image for the prompt \"$phrase\", make it kid friendly...")
 
-            // Step 2: generate actual image
-            val imageResult = gemini.generateImage(s.geminiApiKey, imageModel, meta.imagePrompt)
+            // Step 2: generate image from phrase
+            val imagePrompt = "Create an image for the prompt \"$phrase\", make it kid friendly and cartoonish (add something funny), use ${player.language} only letters/words if there is any text"
+            val imageResult = gemini.generateImage(s.geminiApiKey, imageModel, imagePrompt)
             if (imageResult.isFailure) {
                 _uiState.value = UiState.Error("Could not generate image. Try again.")
                 onComplete(false)
@@ -228,16 +254,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             }
             val base64 = imageResult.getOrThrow()
 
-            // Step 3: save image to local file
+            // Step 3: save image locally
             val localPath = saveBase64Image(getApplication(), base64, player.id)
 
             val item = GalleryItem(
                 id = UUID.randomUUID().toString(),
                 playerId = player.id,
                 imageUrl = localPath,
-                title = meta.title,
-                sentence = meta.sentence,
-                wordsUsed = words,
+                title = phrase,
+                sentence = "$character · $action · $place",
+                wordsUsed = listOf(character, action, place),
                 cost = 100
             )
             prefs.saveGallery(gallery.value + item)

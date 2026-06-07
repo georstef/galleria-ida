@@ -1,4 +1,4 @@
-package com.gelleriaida.ui.screens
+package com.galleriaida.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,9 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.gelleriaida.data.Player
-import com.gelleriaida.ui.theme.*
-import com.gelleriaida.viewmodel.AppViewModel
+import com.galleriaida.data.Player
+import com.galleriaida.ui.theme.*
+import com.galleriaida.viewmodel.AppViewModel
 
 @Composable
 fun PlayerSelectionScreen(

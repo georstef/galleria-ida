@@ -1,4 +1,4 @@
-package com.gelleriaida.ui.screens
+package com.galleriaida.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,9 +23,26 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gelleriaida.ui.theme.*
-import com.gelleriaida.viewmodel.AppViewModel
+import com.galleriaida.ui.theme.*
+import com.galleriaida.viewmodel.AppViewModel
 import org.json.JSONObject
+
+// Helper function to extract a model's description dynamically from the raw json
+fun getModelDescription(name: String, availableModelsJson: String): String {
+    if (availableModelsJson.isBlank()) return ""
+    return try {
+        val arr = JSONObject(availableModelsJson).getJSONArray("models")
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            if (obj.getString("name") == name) {
+                return obj.optString("description", "")
+            }
+        }
+        ""
+    } catch (e: Exception) {
+        ""
+    }
+}
 
 @Composable
 fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
@@ -169,15 +186,13 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
 fun ModelSelectionScreen(viewModel: AppViewModel, onBack: () -> Unit) {
     val settings by viewModel.settings.collectAsState()
     val allModels = remember(settings.availableModelsJson) { viewModel.parseAvailableModels() }
-    val textModels = allModels.filter { it.isTextModel }
-    val imageModels = allModels.filter { it.isImageModel }
     var showJsonDialog by remember { mutableStateOf(false) }
 
     val categories = listOf(
-        Triple("questions", "📐 Math Questions", textModels),
-        Triple("translation", "🌍 Translation", textModels),
-        Triple("imagePrompt", "✏️ Image Description", textModels),
-        Triple("imageGeneration", "🎨 Image Generation", imageModels)
+        Triple("questions", "📐 Math Questions", allModels),
+        Triple("translation", "🌍 Translation", allModels),
+        Triple("imagePrompt", "✏️ Image Description", allModels),
+        Triple("imageGeneration", "🎨 Image Generation", allModels)
     )
 
     val currentModels = mapOf(
@@ -264,6 +279,11 @@ fun ModelSelectionScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                 val currentDisplay = allModels.firstOrNull { it.name == current }?.displayName
                     ?: current.removePrefix("models/").ifBlank { "Not set" }
 
+                // Retrieve the description of the currently active model
+                val currentDescription = remember(current, settings.availableModelsJson) {
+                    getModelDescription(current, settings.availableModelsJson)
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -289,15 +309,30 @@ fun ModelSelectionScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                         )
                         ExposedDropdownMenu(
                             expanded = expanded,
-                            onDismissRequest = { expanded = false }
+                            onDismissRequest = { expanded = false },
+                            modifier = Modifier.heightIn(max = 280.dp) // Limits the dropdown height for better scrolling
                         ) {
                             models.forEach { model ->
+                                val desc = remember(model.name, settings.availableModelsJson) {
+                                    getModelDescription(model.name, settings.availableModelsJson)
+                                }
                                 DropdownMenuItem(
                                     text = {
-                                        Text(
-                                            model.displayName,
-                                            style = MaterialTheme.typography.bodyLarge
-                                        )
+                                        Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                            Text(
+                                                model.displayName,
+                                                style = MaterialTheme.typography.bodyLarge
+                                            )
+                                            if (desc.isNotBlank()) {
+                                                Spacer(Modifier.height(2.dp))
+                                                Text(
+                                                    text = desc,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MedText,
+                                                    lineHeight = 14.sp
+                                                )
+                                            }
+                                        }
                                     },
                                     onClick = {
                                         viewModel.updateModelSelection(key, model.name)
@@ -306,6 +341,17 @@ fun ModelSelectionScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                                 )
                             }
                         }
+                    }
+
+                    // Display the description below the text field when selected
+                    if (currentDescription.isNotBlank()) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = currentDescription,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MedText,
+                            lineHeight = 16.sp
+                        )
                     }
                 }
             }

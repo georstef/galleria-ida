@@ -1,11 +1,11 @@
-package com.gelleriaida.data
+package com.galleriaida.data
 
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Player(
     val id: String,
-    val name: String,
+    val name : String,
     val schoolClass: String = "",
     val language: String,
     val stars: Int = 0,

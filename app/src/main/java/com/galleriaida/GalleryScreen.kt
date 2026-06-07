@@ -1,4 +1,4 @@
-package com.gelleriaida.ui.screens
+package com.galleriaida.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,48 +18,32 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.gelleriaida.data.GalleryItem
-import com.gelleriaida.ui.theme.*
-import com.gelleriaida.viewmodel.AppViewModel
-import com.gelleriaida.viewmodel.UiState
-
-val WORD_POOLS = listOf(
-    listOf("dragon", "castle", "magic", "sword", "rainbow"),
-    listOf("rocket", "space", "star", "planet", "moon"),
-    listOf("dinosaur", "jungle", "adventure", "treasure", "map"),
-    listOf("ocean", "mermaid", "fish", "coral", "wave"),
-    listOf("robot", "city", "future", "gadget", "light")
-)
+import com.galleriaida.data.GalleryItem
+import com.galleriaida.ui.theme.*
+import com.galleriaida.viewmodel.AppViewModel
+import com.galleriaida.viewmodel.UiState
+import java.io.File
 
 @Composable
 fun GalleryScreen(
     viewModel: AppViewModel,
     onBack: () -> Unit,
-    onSettings: () -> Unit
+    onSettings: () -> Unit,
+    onCreateImage: () -> Unit
 ) {
     val player by viewModel.currentPlayer.collectAsState()
     val gallery by viewModel.gallery.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
-    var showWordPicker by remember { mutableStateOf(false) }
 
     val playerGallery = gallery.filter { it.playerId == player?.id }
     val stars = player?.stars ?: 0
     val canAfford = (stars >= 100) || (player?.name == "George S.")
 
-    if (showWordPicker) {
-        WordPickerDialog(
-            onConfirm = { words ->
-                showWordPicker = false
-                viewModel.generateGalleryImage(words) { }
-            },
-            onDismiss = { showWordPicker = false }
-        )
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -93,15 +77,6 @@ fun GalleryScreen(
         Spacer(Modifier.height(16.dp))
 
         when (uiState) {
-            is UiState.Loading -> {
-                Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator(color = ButtonPrimary, strokeWidth = 5.dp)
-                        Spacer(Modifier.height(16.dp))
-                        Text("Creating your image... 🎨", style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-            }
             is UiState.Error -> {
                 Box(Modifier.weight(1f).fillMaxWidth().padding(28.dp), contentAlignment = Alignment.Center) {
                     Text(
@@ -116,7 +91,10 @@ fun GalleryScreen(
             else -> {
                 if (playerGallery.isEmpty()) {
                     Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(28.dp)) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(28.dp)
+                        ) {
                             Text("🌟", style = MaterialTheme.typography.displayLarge)
                             Spacer(Modifier.height(16.dp))
                             Text(
@@ -154,8 +132,8 @@ fun GalleryScreen(
                 Spacer(Modifier.height(8.dp))
             }
             Button(
-                onClick = { showWordPicker = true },
-                enabled = canAfford && uiState !is UiState.Loading,
+                onClick = onCreateImage,
+                enabled = canAfford,
                 modifier = Modifier.fillMaxWidth().height(64.dp),
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -177,8 +155,13 @@ fun GalleryCard(item: GalleryItem) {
             .background(CardBg)
             .padding(8.dp)
     ) {
+        // Load from local file path if it exists, otherwise treat as URL
+        val imageModel = remember(item.imageUrl) {
+            val file = File(item.imageUrl)
+            if (file.exists()) file else item.imageUrl
+        }
         AsyncImage(
-            model = item.imageUrl,
+            model = imageModel,
             contentDescription = item.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -187,50 +170,7 @@ fun GalleryCard(item: GalleryItem) {
                 .clip(RoundedCornerShape(12.dp))
         )
         Spacer(Modifier.height(6.dp))
-        Text(item.title, style = MaterialTheme.typography.bodyMedium, color = DeepPurple, maxLines = 1)
-        Text(item.sentence, style = MaterialTheme.typography.bodyMedium, color = MedText, maxLines = 2)
+        Text(item.title, style = MaterialTheme.typography.bodyMedium, color = DeepPurple, maxLines = 2)
+        Text(item.sentence, style = MaterialTheme.typography.bodyMedium, color = MedText, maxLines = 1)
     }
-}
-
-@Composable
-fun WordPickerDialog(onConfirm: (List<String>) -> Unit, onDismiss: () -> Unit) {
-    val pool = remember { WORD_POOLS.random() }
-    val selected = remember { mutableStateListOf<String>() }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Pick 4 words! 🎲", style = MaterialTheme.typography.titleMedium) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Choose 4 words for your image:", style = MaterialTheme.typography.bodyMedium)
-                pool.forEach { word ->
-                    val isSelected = word in selected
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = {
-                            if (isSelected) selected.remove(word)
-                            else if (selected.size < 4) selected.add(word)
-                        },
-                        label = { Text(word, style = MaterialTheme.typography.bodyLarge) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-                Text("Selected: ${selected.size}/4", style = MaterialTheme.typography.bodyMedium, color = MedText)
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { if (selected.size == 4) onConfirm(selected.toList()) },
-                enabled = selected.size == 4,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Create!", style = MaterialTheme.typography.labelLarge)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", style = MaterialTheme.typography.bodyLarge)
-            }
-        }
-    )
 }

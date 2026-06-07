@@ -14,11 +14,11 @@ configurations.all {
 }
 
 android {
-    namespace = "com.gelleriaida"
+    namespace = "com.galleriaida"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.gelleriaida"
+        applicationId = "com.galleriaida"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

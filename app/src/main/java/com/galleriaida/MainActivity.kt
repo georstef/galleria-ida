@@ -1,4 +1,4 @@
-package com.gelleriaida
+package com.galleriaida
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -8,9 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-import com.gelleriaida.navigation.AppNavGraph
-import com.gelleriaida.ui.theme.KidsAppTheme
-import com.gelleriaida.viewmodel.AppViewModel
+import com.galleriaida.navigation.AppNavGraph
+import com.galleriaida.ui.theme.KidsAppTheme
+import com.galleriaida.viewmodel.AppViewModel
 
 class MainActivity : ComponentActivity() {
     private val viewModel: AppViewModel by viewModels()
