@@ -18,7 +18,8 @@ data class GalleryItem(
     val id: String,
     val playerId: String,
     val imageUrl: String,
-    val title: String,
+    val phraseEn: String,      // FIX: Keeps track of the English prompt used for AI generation
+    val phraseLocal: String,   // FIX: Keeps track of the local phrase displayed to the player
     val sentence: String,
     val wordsUsed: List<String>,
     val cost: Int = 100

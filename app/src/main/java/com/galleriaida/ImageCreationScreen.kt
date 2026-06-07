@@ -22,7 +22,13 @@ import androidx.compose.ui.unit.dp
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
 import com.galleriaida.viewmodel.UiState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.File
+import java.net.URL
+import java.net.URLEncoder
 
 data class WordPool(
     val characters: List<String>,
@@ -52,6 +58,84 @@ fun loadWordPool(context: Context): WordPool {
     }
 }
 
+fun loadPollinationsKey(context: Context): String? {
+    return try {
+        Log.d("GALLERIA_AI_BACKUP", "Attempting to open assets/pollinations.ai.keystore...")
+        val key = context.assets.open("pollinations.ai.keystore").bufferedReader().use { it.readLine()?.trim() }
+        if (key.isNullOrEmpty()) {
+            Log.e("GALLERIA_AI_BACKUP", "Keystore file exists but returned an empty string!")
+        } else {
+            Log.d("GALLERIA_AI_BACKUP", "Successfully loaded key prefix: ${key.take(6)}...")
+        }
+        key
+    } catch (e: Exception) {
+        Log.e("GALLERIA_AI_BACKUP", "Failed critical read on pollinations.ai.keystore", e)
+        null
+    }
+}
+
+suspend fun downloadPollinationsImage(
+    context: Context,
+    englishPrompt: String,     // CRITICAL: Always pass the phrase_en here
+    playerPrompt: String,      // Pass the player's language phrase for history logging
+    apiKey: String
+): File? = withContext(Dispatchers.IO) {
+    Log.d("GALLERIA_AI_BACKUP", "==================================================")
+    Log.d("GALLERIA_AI_BACKUP", ">>> STARTING DUAL-LANGUAGE PIPELINE")
+    Log.d("GALLERIA_AI_BACKUP", "Local Display Phrase: $playerPrompt")
+
+    try {
+        // Sanitize the English prompt for the URL query network layer
+        val sanitizedPrompt = englishPrompt.replace("\"", " ").replace("'", " ").trim()
+        val encodedPrompt = URLEncoder.encode(sanitizedPrompt, "UTF-8").replace("+", "%20")
+
+        val uniqueSeed = (1..999999).random()
+
+        // This targets the exact working API route with the English version
+        val urlString = "https://gen.pollinations.ai/image/$encodedPrompt?width=512&height=896&seed=$uniqueSeed&nologo=true&model=flux"
+        Log.d("GALLERIA_AI_BACKUP", "TARGET ENGLISH GENERATION URL: $urlString")
+
+        val url = URL(urlString)
+        val targetFile = File(context.cacheDir, "generated_image_${System.currentTimeMillis()}.jpg")
+
+        val connection = url.openConnection() as java.net.HttpURLConnection
+        connection.connectTimeout = 30000
+        connection.readTimeout = 30000
+        connection.requestMethod = "GET"
+
+        if (apiKey.isNotEmpty()) {
+            connection.setRequestProperty("Authorization", "Bearer $apiKey")
+        }
+
+        connection.connect()
+        val responseCode = connection.responseCode
+        Log.d("GALLERIA_AI_BACKUP", "HTTP RESPONSE: $responseCode")
+
+        if (responseCode == 200) {
+            connection.inputStream.use { input ->
+                targetFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            connection.disconnect()
+            if (targetFile.exists() && targetFile.length() > 0) {
+                Log.d("GALLERIA_AI_BACKUP", "SUCCESS: Image generated successfully using English prompt.")
+                return@withContext targetFile
+            }
+        } else {
+            val errorResponse = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "No error body text"
+            Log.e("GALLERIA_AI_BACKUP", "FAIL: Code $responseCode. Details:\n$errorResponse")
+            connection.disconnect()
+        }
+        return@withContext null
+    } catch (e: Exception) {
+        Log.e("GALLERIA_AI_BACKUP", "FAIL: Pipeline execution error", e)
+        null
+    } finally {
+        Log.d("GALLERIA_AI_BACKUP", "==================================================")
+    }
+}
+
 @Composable
 fun ImageCreationScreen(
     viewModel: AppViewModel,
@@ -59,11 +143,11 @@ fun ImageCreationScreen(
     onImageCreated: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
     val player by viewModel.currentPlayer.collectAsState()
     val uiStrings by viewModel.uiStrings.collectAsState()
 
-    // Load word pool and pick 4 random from each category once
     val wordPool = remember { loadWordPool(context) }
     val shownCharacters = remember { wordPool.characters.shuffled().take(4) }
     val shownActions = remember { wordPool.actions.shuffled().take(4) }
@@ -77,10 +161,10 @@ fun ImageCreationScreen(
     val stars = player?.stars ?: 0
     val canAfford = (stars >= 100) || (player?.name == "George S.")
 
-    val isLoading = uiState is UiState.Loading
+    var isFallbackLoading by remember { mutableStateOf(false) }
+    val isLoading = uiState is UiState.Loading || isFallbackLoading
     val errorMessage = (uiState as? UiState.Error)?.message
 
-    // Clear error on enter
     LaunchedEffect(Unit) { viewModel.clearUiState() }
 
     Box(
@@ -121,7 +205,6 @@ fun ImageCreationScreen(
             }
 
             if (isLoading) {
-                // Loading state
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -130,7 +213,7 @@ fun ImageCreationScreen(
                         CircularProgressIndicator(color = ButtonPrimary, strokeWidth = 5.dp)
                         Spacer(Modifier.height(20.dp))
                         Text(
-                            uiStrings.imageCreatingMsg,
+                            if (isFallbackLoading) "Gemini busy... Processing exact prompt through backup creative engine ✨" else uiStrings.imageCreatingMsg,
                             style = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center,
                             color = MedText
@@ -182,7 +265,6 @@ fun ImageCreationScreen(
 
                     Spacer(Modifier.height(24.dp))
 
-                    // Characters
                     WordCategory(
                         title = uiStrings.imageCategoryCharacter,
                         words = shownCharacters,
@@ -193,7 +275,6 @@ fun ImageCreationScreen(
 
                     Spacer(Modifier.height(20.dp))
 
-                    // Actions
                     WordCategory(
                         title = uiStrings.imageCategoryAction,
                         words = shownActions,
@@ -204,7 +285,6 @@ fun ImageCreationScreen(
 
                     Spacer(Modifier.height(20.dp))
 
-                    // Places
                     WordCategory(
                         title = uiStrings.imageCategoryPlace,
                         words = shownPlaces,
@@ -215,7 +295,6 @@ fun ImageCreationScreen(
 
                     Spacer(Modifier.height(32.dp))
 
-                    // Summary of selection
                     if (allSelected) {
                         Box(
                             modifier = Modifier
@@ -249,15 +328,57 @@ fun ImageCreationScreen(
                     Button(
                         onClick = {
                             Log.d("GALLERIA_AI", "=== CREATE BUTTON TAPPED ===")
-                            Log.d("GALLERIA_AI", "allSelected=$allSelected canAfford=$canAfford")
-                            Log.d("GALLERIA_AI", "character=$selectedCharacter action=$selectedAction place=$selectedPlace")
                             if (allSelected && canAfford) {
                                 viewModel.generateGalleryImage(
                                     character = selectedCharacter!!,
                                     action = selectedAction!!,
                                     place = selectedPlace!!,
-                                    onComplete = { success ->
-                                        if (success) onImageCreated()
+                                    onComplete = { success, exactGeminiPrompt ->
+                                        if (success) {
+                                            Log.d("GALLERIA_AI", "Gemini Image Model handled request directly.")
+                                            onImageCreated()
+                                        } else {
+                                            Log.d("GALLERIA_AI", "Gemini Image Model failed/quota exceeded. Mirroring exact prompt over to Pollinations fallback engine...")
+
+                                            val apiKey = loadPollinationsKey(context)
+                                            if (apiKey.isNullOrEmpty()) {
+                                                Log.e("GALLERIA_AI_BACKUP", "Execution aborted. Valid key was not found in keystore file.")
+                                                return@generateGalleryImage
+                                            }
+
+                                            scope.launch {
+                                                isFallbackLoading = true
+
+                                                // CHANGED: We now pass four parameters to match the dual-language downloader layout.
+                                                // exactGeminiPrompt holds the sanitized english text forwarded from our ViewModel.
+                                                val localBackupLabel = "$selectedCharacter $selectedAction $selectedPlace"
+                                                val downloadedFile = downloadPollinationsImage(
+                                                    context = context,
+                                                    englishPrompt = exactGeminiPrompt,
+                                                    playerPrompt = localBackupLabel,
+                                                    apiKey = apiKey
+                                                )
+                                                isFallbackLoading = false
+
+                                                if (downloadedFile != null && downloadedFile.exists()) {
+                                                    Log.d("GALLERIA_AI_BACKUP", "Success! Same prompt processed successfully via Pollinations. Saved at: ${downloadedFile.absolutePath}")
+
+                                                    // CHANGED: Match the updated dual phrase parameters required by our repository layer
+                                                    viewModel.registerFallbackImage(
+                                                        downloadedFile = downloadedFile,
+                                                        englishPhrase = exactGeminiPrompt,
+                                                        playerPhrase = localBackupLabel,
+                                                        character = selectedCharacter!!,
+                                                        action = selectedAction!!,
+                                                        place = selectedPlace!!
+                                                    )
+
+                                                    onImageCreated()
+                                                } else {
+                                                    Log.e("GALLERIA_AI_BACKUP", "Backup engine failed completely. Image could not be captured.")
+                                                }
+                                            }
+                                        }
                                     }
                                 )
                             }

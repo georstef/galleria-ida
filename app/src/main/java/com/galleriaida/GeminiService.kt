@@ -203,6 +203,14 @@ class GeminiService {
 
     // ── Phrase generation ────────────────────────────────────────────────────
 
+    // Helper data class to hold both extracted variations safely
+    data class GeminiPhrases(
+        val phraseEn: String,
+        val phrasePlayer: String
+    )
+
+    // ── Phrase generation ────────────────────────────────────────────────────
+
     suspend fun generatePhrase(
         apiKey: String,
         model: String,
@@ -210,9 +218,17 @@ class GeminiService {
         action: String,
         place: String,
         language: String
-    ): Result<String> = withContext(Dispatchers.IO) {
+    ): Result<GeminiPhrases> = withContext(Dispatchers.IO) { // Changed return type to hold both strings
         try {
-            val prompt = "I want you to creatively combine the words $character, $action, and $place into a simple, child-friendly phrase in $language. This phrase will then be used as the prompt to generate an image suitable for a kid. Return only one phrase and return it in a json formatted like this { \"phrase\": \"\" }"
+            val prompt = """
+    I want you to creatively combine the words $character, $action, and $place into a simple, child-friendly, and cartoonish scenario. 
+    You must provide two versions of this scenario: one in English (optimized for an image generation AI) and one in $language (for the child to read). 
+    Return your response strictly as a raw JSON object formatted exactly like this:
+    {
+      "phrase_en": "The scenario written in English here",
+      "phrase_player": "The exact same scenario translated into $language here"
+    }
+""".trimIndent()
             Log.d("GALLERIA_AI", "=== PHRASE REQUEST ===")
             Log.d("GALLERIA_AI", "Model: $model")
             Log.d("GALLERIA_AI", "Prompt: $prompt")
@@ -220,11 +236,18 @@ class GeminiService {
             val response = postGenerateContent(apiKey, model, prompt)
             val text = extractText(response)
             val cleaned = text.trim().removePrefix("```json").removeSuffix("```").trim()
-            val phrase = JSONObject(cleaned).getString("phrase")
+
+            // FIXED PARSING: Grabbing both explicit keys matching our template
+            val jsonObject = JSONObject(cleaned)
+            val phraseEn = jsonObject.getString("phrase_en")
+            val phrasePlayer = jsonObject.getString("phrase_player")
 
             Log.d("GALLERIA_AI", "=== PHRASE RESPONSE ===")
-            Log.d("GALLERIA_AI", "Phrase: $phrase")
-            Result.success(phrase)
+            Log.d("GALLERIA_AI", "English Phrase: $phraseEn")
+            Log.d("GALLERIA_AI", "Player Phrase: $phrasePlayer")
+
+            // Return both successfully extracted strings wrapped in our data class
+            Result.success(GeminiPhrases(phraseEn, phrasePlayer))
         } catch (e: Exception) {
             Log.e("GeminiService", "generatePhrase error: ${e.message}", e)
             Result.failure(e)
@@ -299,8 +322,8 @@ class GeminiService {
                         val predictions = JSONObject(responseBody).getJSONArray("predictions")
                         predictions.getJSONObject(0).getString("bytesBase64Encoded")
                     }
-                    Log.d("GELLERIA_AI", "=== IMAGE RESPONSE ===")
-                    Log.d("GELLERIA_AI", "Base64 length: ${base64.length} chars")
+                    Log.d("GALLERIA_AI", "=== IMAGE RESPONSE ===")
+                    Log.d("GALLERIA_AI", "Base64 length: ${base64.length} chars")
                     Result.success(base64)
                 } else {
                     Log.e("GeminiService", "Image HTTP ${response.code}: $responseBody")

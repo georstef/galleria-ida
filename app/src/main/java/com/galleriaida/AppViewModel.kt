@@ -81,11 +81,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
-
     }
 
     private fun translateUiForPlayer(language: String) {
-        // English is the source language — skip the API call
         if (language.equals("English", ignoreCase = true) ||
             language.equals("en", ignoreCase = true)) {
             _uiStrings.value = com.galleriaida.ui.UiStrings()
@@ -95,11 +93,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val defaults = com.galleriaida.ui.UiStrings()
             val context = getApplication<android.app.Application>()
 
-            // 1. Load whatever is already cached and apply it immediately
             val cached = com.galleriaida.ui.UiStringsCache.buildUiStrings(context, language, defaults)
             _uiStrings.value = cached
 
-            // 2. Find keys still missing or untranslated
             val missing = com.galleriaida.ui.UiStringsCache.missingKeys(context, language, defaults)
             if (missing.isEmpty()) {
                 Log.d("AppViewModel", "All strings cached for $language — no API call needed")
@@ -108,15 +104,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
             Log.d("AppViewModel", "${missing.size} missing keys for $language — fetching from AI")
 
-            // 3. Wait for API key then translate only the missing keys
             val s = settings.first { it.geminiApiKey.isNotBlank() }
             val model = s.modelTranslation.ifBlank { s.modelQuestions.ifBlank { "models/gemini-2.0-flash" } }
             _translating.value = true
             gemini.translateKeys(s.geminiApiKey, model, language, missing)
                 .onSuccess { newTranslations ->
-                    // 4. Persist the new translations into the cache
                     com.galleriaida.ui.UiStringsCache.save(context, language, newTranslations)
-                    // 5. Rebuild UiStrings from the now-complete cache
                     _uiStrings.value = com.galleriaida.ui.UiStringsCache.buildUiStrings(context, language, defaults)
                 }
                 .onFailure { Log.e("AppViewModel", "UI translation failed: ${it.message}") }
@@ -149,7 +142,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val previousLanguage = _currentPlayer.value?.language
             _currentPlayer.value = player
             prefs.savePlayers(players.value.map { if (it.id == player.id) player else it })
-            // Re-translate if language changed
             if (player.language != previousLanguage) {
                 translateUiForPlayer(player.language)
             }
@@ -263,11 +255,45 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // ── Gallery / Image generation ───────────────────────────────────────────
 
+    // CHANGED: Accepts englishPhrase and playerPhrase separately now
+    fun handleImageResult(downloadedFile: File?, englishPhrase: String, playerPhrase: String, character: String, action: String, place: String) {
+        val player = _currentPlayer.value ?: return
+
+        viewModelScope.launch {
+            // If network failed, use a special local token pathway instead of a physical disk path
+            val imagePath = if (downloadedFile != null && downloadedFile.exists()) {
+                downloadedFile.absolutePath
+            } else {
+                "local_fallback_vector"
+            }
+
+            val item = GalleryItem(
+                id = UUID.randomUUID().toString(),
+                playerId = player.id,
+                imageUrl = imagePath,
+                phraseEn = englishPhrase,
+                phraseLocal = playerPhrase,
+                sentence = "$character · $action · $place",
+                wordsUsed = listOf(character, action, place),
+                cost = 100
+            )
+
+            prefs.saveGallery(gallery.value + item)
+
+            val updatedPlayer = player.copy(stars = player.stars - 100)
+            _currentPlayer.value = updatedPlayer
+            prefs.savePlayers(players.value.map { if (it.id == player.id) updatedPlayer else it })
+
+            _uiState.value = UiState.Idle
+        }
+    }
+
+
     fun generateGalleryImage(
         character: String,
         action: String,
         place: String,
-        onComplete: (Boolean) -> Unit
+        onComplete: (Boolean, String) -> Unit
     ) {
         Log.d("GALLERIA_AI", "=== generateGalleryImage called ===")
         Log.d("GALLERIA_AI", "character=$character action=$action place=$place")
@@ -276,7 +302,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val player = _currentPlayer.value ?: return@launch
             val s = settings.value
-            if (s.geminiApiKey.isBlank() || player.stars < 100 && player.name != "George S.") { onComplete(false); return@launch }
+            if (s.geminiApiKey.isBlank() || player.stars < 100 && player.name != "George S.") {
+                onComplete(false, "")
+                return@launch
+            }
 
             _uiState.value = UiState.Loading
 
@@ -286,11 +315,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             Log.d("GALLERIA_AI", "=== MODELS SELECTED ===")
             Log.d("GALLERIA_AI", "promptModel: $promptModel")
             Log.d("GALLERIA_AI", "imageModel: $imageModel")
-            Log.d("GALLERIA_AI", "from settings - imagePrompt: ${s.modelImagePrompt}")
-            Log.d("GALLERIA_AI", "from settings - imageGeneration: ${s.modelImageGeneration}")
 
-            // Step 1: generate creative phrase
-            val phraseResult = gemini.generatePhrase(
+            // CHANGED: Step 1: generate creative phrases (returns Result<GeminiPhrases>)
+            val phrasesResult = gemini.generatePhrase(
                 apiKey = s.geminiApiKey,
                 model = promptModel,
                 character = character,
@@ -298,22 +325,34 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 place = place,
                 language = player.language
             )
-            if (phraseResult.isFailure) {
+            if (phrasesResult.isFailure) {
                 _uiState.value = UiState.Error("Could not generate phrase. Try again.")
-                onComplete(false)
+                onComplete(false, "")
                 return@launch
             }
-            val phrase = phraseResult.getOrThrow()
-            Log.d("GALLERIA_AI", "=== GENERATED PHRASE ===")
-            Log.d("GALLERIA_AI", "Phrase: $phrase")
-            Log.d("GALLERIA_AI", "Image prompt will be: Create an image for the prompt \"$phrase\", make it kid friendly...")
+
+            // CHANGED: Explicitly extract the dual language object
+            val phrases = phrasesResult.getOrThrow()
+            Log.d("GALLERIA_AI", "=== GENERATED PHRASES ===")
+            Log.d("GALLERIA_AI", "English: ${phrases.phraseEn}")
+            Log.d("GALLERIA_AI", "Player: ${phrases.phrasePlayer}")
+
+
+            val imagePrompt = """
+    Create an image for the prompt: ${phrases.phraseEn}. 
+    Make it kid-friendly and cartoonish (add something funny), 
+    use ${player.language} only characters/words if there is any text, 
+    ideally, keep the image entirely text-free.
+""".trimIndent()
+            Log.d("GALLERIA_AI", "Sending clean English prompt to network: $imagePrompt")
 
             // Step 2: generate image from phrase
-            val imagePrompt = "Create an image for the prompt \"$phrase\", make it kid friendly and cartoonish (add something funny), use ${player.language} only letters/words if there is any text, ideally, keep the image entirely text-free."
             val imageResult = gemini.generateImage(s.geminiApiKey, imageModel, imagePrompt)
             if (imageResult.isFailure) {
+                Log.d("GALLERIA_AI", "Gemini generation failed. Sending final final string to callback for fallback pathway.")
                 _uiState.value = UiState.Error("Could not generate image. Try again.")
-                onComplete(false)
+                // Passes the final composed prompt (optimized English + constraints) to the fallback screen
+                onComplete(false, imagePrompt)
                 return@launch
             }
             val base64 = imageResult.getOrThrow()
@@ -325,7 +364,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 id = UUID.randomUUID().toString(),
                 playerId = player.id,
                 imageUrl = localPath,
-                title = phrase,
+                phraseEn = phrases.phraseEn,
+                phraseLocal = phrases.phrasePlayer,
                 sentence = "$character · $action · $place",
                 wordsUsed = listOf(character, action, place),
                 cost = 100
@@ -337,9 +377,57 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             prefs.savePlayers(players.value.map { if (it.id == player.id) updatedPlayer else it })
 
             _uiState.value = UiState.Idle
-            onComplete(true)
+            onComplete(true, imagePrompt)
         }
     }
+
+    // CHANGED: Accepts englishPhrase and playerPhrase separately now
+    fun registerFallbackImage(downloadedFile: File, englishPhrase: String, playerPhrase: String, character: String, action: String, place: String) {
+        val player = _currentPlayer.value ?: return
+
+        Log.d("GALLERIA_AI", "=== Registering Pollinations Fallback Image ===")
+        Log.d("GALLERIA_AI", "Moving file from cache: ${downloadedFile.absolutePath}")
+
+        // Create permanent target folder structures matching your base64 local pipeline
+        val dir = File(getApplication<Application>().filesDir, "gallery/${player.id}").also { it.mkdirs() }
+        val permanentFile = File(dir, "${UUID.randomUUID()}.jpg")
+
+        try {
+            downloadedFile.inputStream().use { input ->
+                permanentFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            downloadedFile.delete()
+        } catch (e: Exception) {
+            Log.e("GALLERIA_AI", "Failed to save fallback image permanently", e)
+            return
+        }
+
+        // CRITICAL FIX: Wrap the database saves and data updates inside a coroutine launch block
+        viewModelScope.launch {
+            val item = GalleryItem(
+                id = UUID.randomUUID().toString(),
+                playerId = player.id,
+                imageUrl = permanentFile.absolutePath,
+                phraseEn = englishPhrase,
+                phraseLocal = playerPhrase,
+                sentence = "$character · $action · $place",
+                wordsUsed = listOf(character, action, place),
+                cost = 100
+            )
+
+            prefs.saveGallery(gallery.value + item)
+
+            val updatedPlayer = player.copy(stars = player.stars - 100)
+            _currentPlayer.value = updatedPlayer
+            prefs.savePlayers(players.value.map { if (it.id == player.id) updatedPlayer else it })
+
+            Log.d("GALLERIA_AI", "Fallback item successfully added to gallery database history!")
+            _uiState.value = UiState.Idle
+        }
+    }
+
 
     private fun saveBase64Image(context: Context, base64: String, playerId: String): String {
         val bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)

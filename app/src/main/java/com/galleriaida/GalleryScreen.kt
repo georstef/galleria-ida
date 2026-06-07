@@ -163,7 +163,7 @@ fun GalleryCard(item: GalleryItem) {
         }
         AsyncImage(
             model = imageModel,
-            contentDescription = item.title,
+            contentDescription = item.phraseLocal,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
@@ -171,7 +171,7 @@ fun GalleryCard(item: GalleryItem) {
                 .clip(RoundedCornerShape(12.dp))
         )
         Spacer(Modifier.height(6.dp))
-        Text(item.title, style = MaterialTheme.typography.bodyMedium, color = DeepPurple, maxLines = 2)
+        Text(item.phraseLocal, style = MaterialTheme.typography.bodyMedium, color = DeepPurple, maxLines = 2)
         Text(item.sentence, style = MaterialTheme.typography.bodyMedium, color = MedText, maxLines = 1)
     }
 }
