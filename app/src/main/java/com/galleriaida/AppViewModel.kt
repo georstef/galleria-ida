@@ -245,7 +245,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             Log.d("GALLERIA_AI", "Image prompt will be: Create an image for the prompt \"$phrase\", make it kid friendly...")
 
             // Step 2: generate image from phrase
-            val imagePrompt = "Create an image for the prompt \"$phrase\", make it kid friendly and cartoonish (add something funny), use ${player.language} only letters/words if there is any text"
+            val imagePrompt = "Create an image for the prompt \"$phrase\", make it kid friendly and cartoonish (add something funny), use ${player.language} only letters/words if there is any text, ideally, keep the image entirely text-free."
             val imageResult = gemini.generateImage(s.geminiApiKey, imageModel, imagePrompt)
             if (imageResult.isFailure) {
                 _uiState.value = UiState.Error("Could not generate image. Try again.")
