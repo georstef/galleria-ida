@@ -3,21 +3,25 @@ package com.gelleriaida.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.gelleriaida.ui.theme.*
 import com.gelleriaida.viewmodel.AppViewModel
-import androidx.compose.ui.focus.onFocusChanged
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,10 +37,10 @@ fun PlayerProfileScreen(
     val languageOptions = remember { getLanguageOptions(context) }
     val selectableOptions = languageOptions.filterNotNull()
 
-    // Use key(player?.id) so that when player loads, all state resets with actual data
     key(player?.id) {
         var name by remember { mutableStateOf(player?.name ?: "") }
         var nameError by remember { mutableStateOf("") }
+        var nameTouched by remember { mutableStateOf(false) }
         var schoolClass by remember {
             mutableStateOf(player?.schoolClass?.takeIf { it != "—" } ?: "")
         }
@@ -62,11 +66,13 @@ fun PlayerProfileScreen(
         )
         val selectedYearLabel = yearOptions.firstOrNull { it.second == schoolYearPosition }?.first ?: ""
         val classOptions = (1..12).map { "Class $it" }
+        val initial = player?.name?.firstOrNull()?.uppercase() ?: "?"
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
+                .statusBarsPadding()
                 .imePadding()
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -83,9 +89,7 @@ fun PlayerProfileScreen(
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = DeepPurple)
                     }
                     Text("My Profile", style = MaterialTheme.typography.titleMedium)
-                    IconButton(onClick = onSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = DeepPurple)
-                    }
+                    Spacer(Modifier.width(48.dp))
                 }
 
                 Column(
@@ -93,10 +97,28 @@ fun PlayerProfileScreen(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 28.dp)
-                        .padding(top = 16.dp, bottom = 40.dp),
+                        .padding(top = 8.dp, bottom = 40.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Top
                 ) {
+                    // Avatar circle
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(SoftPurple),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = initial,
+                            fontSize = 36.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = DeepPurple
+                        )
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+
                     // Stars badge
                     Row(
                         modifier = Modifier
@@ -113,8 +135,9 @@ fun PlayerProfileScreen(
                         )
                     }
 
-                    var nameTouched by remember { mutableStateOf(false) }
+                    Spacer(Modifier.height(28.dp))
 
+                    // Name
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it; nameError = "" },
@@ -273,6 +296,25 @@ fun PlayerProfileScreen(
                         Text("Save & Go! 🚀", style = MaterialTheme.typography.labelLarge)
                     }
                 }
+            }
+
+            // Settings cog — bottom right floating
+            IconButton(
+                onClick = onSettings,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .navigationBarsPadding()
+                    .padding(20.dp)
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(SoftPurple)
+            ) {
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = DeepPurple,
+                    modifier = Modifier.size(28.dp)
+                )
             }
         }
     }

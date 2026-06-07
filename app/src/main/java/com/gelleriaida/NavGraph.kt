@@ -57,6 +57,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
                 onStartLesson = { navController.navigate(Routes.GAME) },
                 onGallery = { navController.navigate(Routes.GALLERY) },
                 onSettings = { navController.navigate(Routes.SETTINGS) },
+                onEditProfile = { navController.navigate(Routes.PLAYER_PROFILE) },
                 onBack = { navController.navigate(Routes.PLAYER_SELECTION) { popUpTo(0) } }
             )
         }

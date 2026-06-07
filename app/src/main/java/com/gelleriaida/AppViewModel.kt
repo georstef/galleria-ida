@@ -1,13 +1,15 @@
 package com.gelleriaida.viewmodel
 
 import android.app.Application
+import android.content.Context
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.gelleriaida.data.AppSettings
 import com.gelleriaida.data.GalleryItem
+import com.gelleriaida.data.GeminiModel
 import com.gelleriaida.data.Player
 import com.gelleriaida.network.GeminiService
-import com.gelleriaida.network.ImageMeta
 import com.gelleriaida.network.MathQuestion
 import com.gelleriaida.storage.PreferencesManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,10 +18,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.io.File
 import java.util.UUID
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+
 sealed class UiState {
     object Idle : UiState()
     object Loading : UiState()
@@ -54,20 +56,31 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _apiKeyStatus = MutableStateFlow<String?>(null)
     val apiKeyStatus: StateFlow<String?> = _apiKeyStatus.asStateFlow()
 
-    fun selectPlayer(player: Player) {
-        _currentPlayer.value = player
+    private val _playersLoaded = MutableStateFlow(false)
+    val playersLoaded: StateFlow<Boolean> = _playersLoaded.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            prefs.playersFlow.collect { _playersLoaded.value = true }
+        }
     }
+
+    // ── Players ──────────────────────────────────────────────────────────────
+
+    fun selectPlayer(player: Player) { _currentPlayer.value = player }
 
     fun createPlayer(name: String, schoolClass: String, language: String) {
         viewModelScope.launch {
-            val newPlayer = Player(
-                id = UUID.randomUUID().toString(),
-                name = name.trim(),
-                schoolClass = schoolClass,
-                language = language
-            )
-            val updated = players.value + newPlayer
-            prefs.savePlayers(updated)
+            val newPlayer = Player(id = UUID.randomUUID().toString(), name = name.trim(), schoolClass = schoolClass, language = language)
+            prefs.savePlayers(players.value + newPlayer)
+            _currentPlayer.value = newPlayer
+        }
+    }
+
+    fun createPlayerBasic(name: String, language: String) {
+        viewModelScope.launch {
+            val newPlayer = Player(id = UUID.randomUUID().toString(), name = name.trim(), language = language)
+            prefs.savePlayers(players.value + newPlayer)
             _currentPlayer.value = newPlayer
         }
     }
@@ -75,32 +88,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun updatePlayer(player: Player) {
         viewModelScope.launch {
             _currentPlayer.value = player
-            val list = players.value.map { if (it.id == player.id) player else it }
-            prefs.savePlayers(list)
-        }
-    }
-
-    private val _playersLoaded = MutableStateFlow(false)
-    val playersLoaded: StateFlow<Boolean> = _playersLoaded.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            prefs.playersFlow.collect {
-                _playersLoaded.value = true
-            }
-        }
-    }
-
-    fun createPlayerBasic(name: String, language: String) {
-        viewModelScope.launch {
-            val newPlayer = Player(
-                id = UUID.randomUUID().toString(),
-                name = name.trim(),
-                language = language
-            )
-            val updated = players.value + newPlayer
-            prefs.savePlayers(updated)
-            _currentPlayer.value = newPlayer
+            prefs.savePlayers(players.value.map { if (it.id == player.id) player else it })
         }
     }
 
@@ -112,114 +100,33 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun deletePlayers(ids: List<String>) {
         viewModelScope.launch {
-            val updatedPlayers = players.value.filter { it.id !in ids }
-            prefs.savePlayers(updatedPlayers)
-            val updatedGallery = gallery.value.filter { it.playerId !in ids }
-            prefs.saveGallery(updatedGallery)
-            if (_currentPlayer.value?.id in ids) {
-                _currentPlayer.value = null
-            }
+            prefs.savePlayers(players.value.filter { it.id !in ids })
+            prefs.saveGallery(gallery.value.filter { it.playerId !in ids })
+            if (_currentPlayer.value?.id in ids) _currentPlayer.value = null
         }
     }
 
-    fun loadQuestions() {
-        viewModelScope.launch {
-            val player = _currentPlayer.value ?: return@launch
-            val apiKey = settings.value.geminiApiKey
-            if (apiKey.isBlank()) {
-                _uiState.value = UiState.Error("API key not set. Please go to Settings.")
-                return@launch
-            }
-            _uiState.value = UiState.Loading
-            val result = gemini.generateMathQuestions(apiKey, player.language)
-            result.onSuccess { qs ->
-                _questions.value = qs
-                _uiState.value = UiState.Idle
-            }.onFailure { e ->
-                _uiState.value = UiState.Error("Could not load questions: ${e.message}")
-            }
-        }
-    }
+    // ── API Key & Models ─────────────────────────────────────────────────────
 
-    fun awardStars(amount: Int) {
-        viewModelScope.launch {
-            val player = _currentPlayer.value ?: return@launch
-            val updated = player.copy(stars = player.stars + amount)
-            _currentPlayer.value = updated
-            val list = players.value.map { if (it.id == player.id) updated else it }
-            prefs.savePlayers(list)
-        }
-    }
-
-    fun generateGalleryImage(words: List<String>, onComplete: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            val player = _currentPlayer.value ?: return@launch
-            val apiKey = settings.value.geminiApiKey
-            if (apiKey.isBlank()) {
-                onComplete(false)
-                return@launch
-            }
-            if (player.stars < 100) {
-                onComplete(false)
-                return@launch
-            }
-            _uiState.value = UiState.Loading
-
-            val metaResult = gemini.generateImagePromptAndMeta(apiKey, words, player.language)
-            metaResult.onSuccess { meta ->
-                val imageUrl = "https://placehold.co/400x400/FFD6E0/FF6B6B?text=${meta.title.take(20).replace(" ", "+")}"
-                val item = GalleryItem(
-                    id = UUID.randomUUID().toString(),
-                    playerId = player.id,
-                    imageUrl = imageUrl,
-                    title = meta.title,
-                    sentence = meta.sentence,
-                    wordsUsed = words,
-                    cost = 100
-                )
-                val updatedGallery = gallery.value + item
-                prefs.saveGallery(updatedGallery)
-
-                val updatedPlayer = player.copy(stars = player.stars - 100)
-                _currentPlayer.value = updatedPlayer
-                val updatedPlayers = players.value.map { if (it.id == player.id) updatedPlayer else it }
-                prefs.savePlayers(updatedPlayers)
-
-                _uiState.value = UiState.Idle
-                onComplete(true)
-            }.onFailure {
-                _uiState.value = UiState.Error("Could not create image. Try again.")
-                onComplete(false)
-            }
-        }
-    }
-
-    fun saveApiKey(key: String) {
-        viewModelScope.launch {
-            prefs.saveSettings(AppSettings(geminiApiKey = key, apiValid = false))
-            _apiKeyStatus.value = null
-        }
-    }
-/*
-    fun testApiKey(key: String) {
-        viewModelScope.launch {
-            gemini.runValidationSpeedTest(key)
-        }
-    }
-    */
     fun testApiKey(key: String) {
         viewModelScope.launch {
             _apiKeyStatus.value = "testing"
             try {
-                // gemini.validateKey is already a suspend function running on Dispatchers.IO
-                // and contains its own native 15-second timeout parameters.
-                val valid = gemini.validateKey(key)
-
+                val (valid, modelsJson) = gemini.validateAndFetchModels(key)
                 if (valid) {
-                    prefs.saveSettings(AppSettings(geminiApiKey = key, apiValid = true))
+                    val bestModels = gemini.selectBestModels(modelsJson)
+                    prefs.saveSettings(settings.value.copy(
+                        geminiApiKey = key,
+                        apiValid = true,
+                        modelQuestions = bestModels["questions"] ?: "",
+                        modelTranslation = bestModels["translation"] ?: "",
+                        modelImagePrompt = bestModels["imagePrompt"] ?: "",
+                        modelImageGeneration = bestModels["imageGeneration"] ?: "",
+                        availableModelsJson = modelsJson
+                    ))
                     _apiKeyStatus.value = "valid"
                 } else {
-                    prefs.saveSettings(AppSettings(geminiApiKey = key, apiValid = false))
+                    prefs.saveSettings(settings.value.copy(geminiApiKey = key, apiValid = false))
                     _apiKeyStatus.value = "invalid"
                 }
             } catch (e: Exception) {
@@ -228,8 +135,129 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-
-    fun clearUiState() {
-        _uiState.value = UiState.Idle
+    fun updateModelSelection(category: String, model: String) {
+        viewModelScope.launch {
+            val current = settings.value
+            val updated = when (category) {
+                "questions" -> current.copy(modelQuestions = model)
+                "translation" -> current.copy(modelTranslation = model)
+                "imagePrompt" -> current.copy(modelImagePrompt = model)
+                "imageGeneration" -> current.copy(modelImageGeneration = model)
+                else -> current
+            }
+            prefs.saveSettings(updated)
+        }
     }
+
+    fun parseAvailableModels(): List<GeminiModel> {
+        val json = settings.value.availableModelsJson
+        if (json.isBlank()) return emptyList()
+        return try {
+            val arr = JSONObject(json).getJSONArray("models")
+            (0 until arr.length()).map { i ->
+                val obj = arr.getJSONObject(i)
+                val methods = obj.getJSONArray("supportedGenerationMethods")
+                    .let { m -> (0 until m.length()).map { m.getString(it) } }
+                GeminiModel(
+                    name = obj.getString("name"),
+                    displayName = obj.optString("displayName", obj.getString("name")),
+                    supportedMethods = methods
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("AppViewModel", "parseAvailableModels error: ${e.message}")
+            emptyList()
+        }
+    }
+
+    // ── Game / Questions ─────────────────────────────────────────────────────
+
+    fun loadQuestions() {
+        viewModelScope.launch {
+            val player = _currentPlayer.value ?: return@launch
+            val s = settings.value
+            if (s.geminiApiKey.isBlank()) {
+                _uiState.value = UiState.Error("API key not set. Please go to Settings.")
+                return@launch
+            }
+            val model = s.modelQuestions.ifBlank { "models/gemini-2.0-flash" }
+            _uiState.value = UiState.Loading
+            gemini.generateMathQuestions(s.geminiApiKey, model, player.language)
+                .onSuccess { _questions.value = it; _uiState.value = UiState.Idle }
+                .onFailure { _uiState.value = UiState.Error("Could not load questions: ${it.message}") }
+        }
+    }
+
+    fun awardStars(amount: Int) {
+        viewModelScope.launch {
+            val player = _currentPlayer.value ?: return@launch
+            val updated = player.copy(stars = player.stars + amount)
+            _currentPlayer.value = updated
+            prefs.savePlayers(players.value.map { if (it.id == player.id) updated else it })
+        }
+    }
+
+    // ── Gallery / Image generation ───────────────────────────────────────────
+
+    fun generateGalleryImage(words: List<String>, onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val player = _currentPlayer.value ?: return@launch
+            val s = settings.value
+            if (s.geminiApiKey.isBlank() || player.stars < 100) { onComplete(false); return@launch }
+
+            _uiState.value = UiState.Loading
+
+            val promptModel = s.modelImagePrompt.ifBlank { "models/gemini-2.0-flash" }
+            val imageModel = s.modelImageGeneration.ifBlank { "models/imagen-4.0-generate-001" }
+
+            // Step 1: generate title, sentence, image prompt
+            val metaResult = gemini.generateImagePromptAndMeta(s.geminiApiKey, promptModel, words, player.language)
+            if (metaResult.isFailure) {
+                _uiState.value = UiState.Error("Could not generate image description. Try again.")
+                onComplete(false)
+                return@launch
+            }
+            val meta = metaResult.getOrThrow()
+
+            // Step 2: generate actual image
+            val imageResult = gemini.generateImage(s.geminiApiKey, imageModel, meta.imagePrompt)
+            if (imageResult.isFailure) {
+                _uiState.value = UiState.Error("Could not generate image. Try again.")
+                onComplete(false)
+                return@launch
+            }
+            val base64 = imageResult.getOrThrow()
+
+            // Step 3: save image to local file
+            val localPath = saveBase64Image(getApplication(), base64, player.id)
+
+            val item = GalleryItem(
+                id = UUID.randomUUID().toString(),
+                playerId = player.id,
+                imageUrl = localPath,
+                title = meta.title,
+                sentence = meta.sentence,
+                wordsUsed = words,
+                cost = 100
+            )
+            prefs.saveGallery(gallery.value + item)
+
+            val updatedPlayer = player.copy(stars = player.stars - 100)
+            _currentPlayer.value = updatedPlayer
+            prefs.savePlayers(players.value.map { if (it.id == player.id) updatedPlayer else it })
+
+            _uiState.value = UiState.Idle
+            onComplete(true)
+        }
+    }
+
+    private fun saveBase64Image(context: Context, base64: String, playerId: String): String {
+        val bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
+        val dir = File(context.filesDir, "gallery/$playerId").also { it.mkdirs() }
+        val file = File(dir, "${UUID.randomUUID()}.jpg")
+        file.writeBytes(bytes)
+        return file.absolutePath
+    }
+
+    fun clearUiState() { _uiState.value = UiState.Idle }
 }

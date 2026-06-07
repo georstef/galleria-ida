@@ -13,7 +13,6 @@ data class Player(
     val createdAt: Long = System.currentTimeMillis()
 )
 
-
 @Serializable
 data class GalleryItem(
     val id: String,
@@ -28,5 +27,21 @@ data class GalleryItem(
 @Serializable
 data class AppSettings(
     val geminiApiKey: String = "",
-    val apiValid: Boolean = false
+    val apiValid: Boolean = false,
+    val modelQuestions: String = "",
+    val modelTranslation: String = "",
+    val modelImagePrompt: String = "",
+    val modelImageGeneration: String = "",
+    val availableModelsJson: String = ""
 )
+
+data class GeminiModel(
+    val name: String,
+    val displayName: String,
+    val supportedMethods: List<String>
+) {
+    val isTextModel: Boolean get() = "generateContent" in supportedMethods
+    val isImageModel: Boolean get() = "predict" in supportedMethods
+    val isPreview: Boolean get() = "preview" in name.lowercase()
+    val shortName: String get() = name.removePrefix("models/")
+}
