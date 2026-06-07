@@ -61,6 +61,7 @@ fun ImageCreationScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val player by viewModel.currentPlayer.collectAsState()
+    val uiStrings by viewModel.uiStrings.collectAsState()
 
     // Load word pool and pick 4 random from each category once
     val wordPool = remember { loadWordPool(context) }
@@ -129,7 +130,7 @@ fun ImageCreationScreen(
                         CircularProgressIndicator(color = ButtonPrimary, strokeWidth = 5.dp)
                         Spacer(Modifier.height(20.dp))
                         Text(
-                            "Creating your image... 🎨\nThis may take a moment",
+                            uiStrings.imageCreatingMsg,
                             style = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center,
                             color = MedText
@@ -146,7 +147,7 @@ fun ImageCreationScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        "Create your image! 🎨",
+                        uiStrings.imageTitle,
                         style = MaterialTheme.typography.titleLarge,
                         textAlign = TextAlign.Center
                     )
@@ -154,7 +155,7 @@ fun ImageCreationScreen(
                     Spacer(Modifier.height(6.dp))
 
                     Text(
-                        "Pick one from each group",
+                        uiStrings.imageSubtitle,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MedText,
                         textAlign = TextAlign.Center
@@ -183,7 +184,7 @@ fun ImageCreationScreen(
 
                     // Characters
                     WordCategory(
-                        title = "🦸 Character",
+                        title = uiStrings.imageCategoryCharacter,
                         words = shownCharacters,
                         selected = selectedCharacter,
                         color = SoftPurple,
@@ -194,7 +195,7 @@ fun ImageCreationScreen(
 
                     // Actions
                     WordCategory(
-                        title = "⚡ Action",
+                        title = uiStrings.imageCategoryAction,
                         words = shownActions,
                         selected = selectedAction,
                         color = SkyBlue,
@@ -205,7 +206,7 @@ fun ImageCreationScreen(
 
                     // Places
                     WordCategory(
-                        title = "🗺️ Place",
+                        title = uiStrings.imageCategoryPlace,
                         words = shownPlaces,
                         selected = selectedPlace,
                         color = MintGreen,
@@ -236,7 +237,7 @@ fun ImageCreationScreen(
 
                     if (!canAfford) {
                         Text(
-                            "You need 100 ⭐ to create an image (you have $stars)",
+                            uiStrings.imageNeedStars.format(stars),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MedText,
                             textAlign = TextAlign.Center
@@ -273,9 +274,9 @@ fun ImageCreationScreen(
                     ) {
                         Text(
                             when {
-                                !canAfford -> "Need 100 ⭐"
-                                !allSelected -> "Pick one from each group"
-                                else -> "Create Image! 🎨 (100 ⭐)"
+                                !canAfford -> uiStrings.imageButtonNeedStars
+                                !allSelected -> uiStrings.imageButtonPickAll
+                                else -> uiStrings.imageButtonCreate
                             },
                             style = MaterialTheme.typography.labelLarge
                         )

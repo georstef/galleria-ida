@@ -13,6 +13,7 @@ import com.galleriaida.network.GeminiService
 import com.galleriaida.network.MathQuestion
 import com.galleriaida.storage.PreferencesManager
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,9 +60,67 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _playersLoaded = MutableStateFlow(false)
     val playersLoaded: StateFlow<Boolean> = _playersLoaded.asStateFlow()
 
+    // ── UI translation ───────────────────────────────────────────────────────
+    private val _uiStrings = MutableStateFlow(com.galleriaida.ui.UiStrings())
+    val uiStrings: StateFlow<com.galleriaida.ui.UiStrings> = _uiStrings.asStateFlow()
+
+    private val _translating = MutableStateFlow(false)
+    val translating: StateFlow<Boolean> = _translating.asStateFlow()
+
     init {
         viewModelScope.launch {
             prefs.playersFlow.collect { _playersLoaded.value = true }
+        }
+        // Re-translate when player changes
+        viewModelScope.launch {
+            _currentPlayer.collect { player ->
+                if (player != null) {
+                    translateUiForPlayer(player.language)
+                } else {
+                    _uiStrings.value = com.galleriaida.ui.UiStrings()
+                }
+            }
+        }
+
+    }
+
+    private fun translateUiForPlayer(language: String) {
+        // English is the source language — skip the API call
+        if (language.equals("English", ignoreCase = true) ||
+            language.equals("en", ignoreCase = true)) {
+            _uiStrings.value = com.galleriaida.ui.UiStrings()
+            return
+        }
+        viewModelScope.launch {
+            val defaults = com.galleriaida.ui.UiStrings()
+            val context = getApplication<android.app.Application>()
+
+            // 1. Load whatever is already cached and apply it immediately
+            val cached = com.galleriaida.ui.UiStringsCache.buildUiStrings(context, language, defaults)
+            _uiStrings.value = cached
+
+            // 2. Find keys still missing or untranslated
+            val missing = com.galleriaida.ui.UiStringsCache.missingKeys(context, language, defaults)
+            if (missing.isEmpty()) {
+                Log.d("AppViewModel", "All strings cached for $language — no API call needed")
+                return@launch
+            }
+
+            Log.d("AppViewModel", "${missing.size} missing keys for $language — fetching from AI")
+
+            // 3. Wait for API key then translate only the missing keys
+            val s = settings.first { it.geminiApiKey.isNotBlank() }
+            val model = s.modelTranslation.ifBlank { s.modelQuestions.ifBlank { "models/gemini-2.0-flash" } }
+            _translating.value = true
+            gemini.translateKeys(s.geminiApiKey, model, language, missing)
+                .onSuccess { newTranslations ->
+                    // 4. Persist the new translations into the cache
+                    com.galleriaida.ui.UiStringsCache.save(context, language, newTranslations)
+                    // 5. Rebuild UiStrings from the now-complete cache
+                    _uiStrings.value = com.galleriaida.ui.UiStringsCache.buildUiStrings(context, language, defaults)
+                }
+                .onFailure { Log.e("AppViewModel", "UI translation failed: ${it.message}") }
+            _translating.value = false
         }
     }
 
@@ -87,8 +146,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updatePlayer(player: Player) {
         viewModelScope.launch {
+            val previousLanguage = _currentPlayer.value?.language
             _currentPlayer.value = player
             prefs.savePlayers(players.value.map { if (it.id == player.id) player else it })
+            // Re-translate if language changed
+            if (player.language != previousLanguage) {
+                translateUiForPlayer(player.language)
+            }
         }
     }
 

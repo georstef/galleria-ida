@@ -316,6 +316,56 @@ class GeminiService {
             Result.failure(e)
         }
     }
+
+    // ── UI translation ───────────────────────────────────────────────────────
+
+    /**
+     * Translates only the provided [keys] map (key → englishDefault) into [language].
+     * Returns a map of key → translatedValue for all successfully translated keys.
+     */
+    suspend fun translateKeys(
+        apiKey: String,
+        model: String,
+        language: String,
+        keys: Map<String, String>
+    ): Result<Map<String, String>> = withContext(Dispatchers.IO) {
+        try {
+            val inputJson = org.json.JSONObject()
+            keys.forEach { (k, v) -> inputJson.put(k, v) }
+
+            val prompt = """
+Translate every value in the following JSON object into $language.
+Rules:
+- Keep all placeholder tokens (%s, %d, %1${'$'}s, etc.) exactly as-is.
+- Keep all emoji exactly as-is.
+- Do NOT add, remove, or rename any keys.
+- Return ONLY a valid JSON object with the same keys, no markdown, no explanation.
+
+Input JSON:
+$inputJson
+            """.trimIndent()
+
+            Log.d("GeminiService", "translateKeys → model=$model lang=$language keys=${keys.size}")
+
+            val response = postGenerateContent(apiKey, model, prompt)
+            val text = extractText(response)
+            val cleaned = text.trim()
+                .removePrefix("```json").removePrefix("```")
+                .removeSuffix("```").trim()
+            val j = org.json.JSONObject(cleaned)
+
+            val result = mutableMapOf<String, String>()
+            keys.keys.forEach { key ->
+                if (j.has(key)) result[key] = j.getString(key)
+            }
+            Log.d("GeminiService", "translateKeys success: ${result.size} keys translated")
+            Result.success(result)
+        } catch (e: Exception) {
+            Log.e("GeminiService", "translateKeys error: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
 }
 
 data class MathQuestion(

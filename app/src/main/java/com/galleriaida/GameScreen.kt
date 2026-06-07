@@ -25,6 +25,7 @@ fun GameScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val questions by viewModel.questions.collectAsState()
+    val uiStrings by viewModel.uiStrings.collectAsState()
     var currentIndex by remember { mutableIntStateOf(0) }
     var userAnswer by remember { mutableStateOf("") }
     var totalEarned by remember { mutableIntStateOf(0) }
@@ -39,10 +40,10 @@ fun GameScreen(
     if (showEndDialog) {
         AlertDialog(
             onDismissRequest = {},
-            title = { Text("Lesson done! 🎉", style = MaterialTheme.typography.titleMedium) },
+            title = { Text(uiStrings.gameLessonDone, style = MaterialTheme.typography.titleMedium) },
             text = {
                 Text(
-                    "You earned $totalEarned ⭐ stars!",
+                    uiStrings.gameEarnedStars.format(totalEarned),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center
                 )
@@ -53,7 +54,7 @@ fun GameScreen(
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
                 ) {
-                    Text("OK!", style = MaterialTheme.typography.labelLarge)
+                    Text(uiStrings.gameOkButton, style = MaterialTheme.typography.labelLarge)
                 }
             }
         )
@@ -70,7 +71,7 @@ fun GameScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (questions.isNotEmpty()) "Question ${currentIndex + 1} / ${questions.size}" else "",
+                text = if (questions.isNotEmpty()) uiStrings.gameQuestionCounter.format(currentIndex + 1, questions.size) else "",
                 style = MaterialTheme.typography.bodyMedium
             )
             IconButton(onClick = onSettings) {
@@ -84,7 +85,7 @@ fun GameScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator(color = ButtonPrimary, strokeWidth = 5.dp)
                         Spacer(Modifier.height(20.dp))
-                        Text("Loading questions... 🤔", style = MaterialTheme.typography.bodyLarge)
+                        Text(uiStrings.gameLoadingQuestions, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }
@@ -101,7 +102,7 @@ fun GameScreen(
                         )
                         Spacer(Modifier.height(24.dp))
                         Button(onClick = onSettings, shape = RoundedCornerShape(16.dp)) {
-                            Text("Go to Settings", style = MaterialTheme.typography.labelLarge)
+                            Text(uiStrings.gameGoToSettings, style = MaterialTheme.typography.labelLarge)
                         }
                     }
                 }
@@ -116,6 +117,7 @@ fun GameScreen(
                         showResult = showResult,
                         lastCorrect = lastCorrect,
                         totalEarned = totalEarned,
+                        uiStrings = uiStrings,
                         onSubmit = {
                             val correct = userAnswer.trim().toIntOrNull() == q.answer
                             lastCorrect = correct
@@ -148,7 +150,8 @@ fun QuestionCard(
     lastCorrect: Boolean?,
     totalEarned: Int,
     onSubmit: () -> Unit,
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    uiStrings: com.galleriaida.ui.UiStrings = com.galleriaida.ui.UiStrings()
 ) {
     val starsLabel = when (question.difficulty) { 1 -> "⭐"; 2 -> "⭐⭐"; else -> "⭐⭐⭐" }
 
@@ -165,7 +168,7 @@ fun QuestionCard(
                 .background(LemonYellow)
                 .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
-            Text("Worth $starsLabel", style = MaterialTheme.typography.bodyMedium, color = DeepPurple)
+            Text(uiStrings.gameWorth.format(starsLabel), style = MaterialTheme.typography.bodyMedium, color = DeepPurple)
         }
 
         Spacer(Modifier.height(32.dp))
@@ -189,7 +192,7 @@ fun QuestionCard(
 
         if (showResult) {
             val bg = if (lastCorrect == true) MintGreen else PeachOrange
-            val emoji = if (lastCorrect == true) "✅ Correct!" else "❌ The answer was ${question.answer}"
+            val emoji = if (lastCorrect == true) uiStrings.gameCorrect else uiStrings.gameWrong.format(question.answer)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -207,13 +210,13 @@ fun QuestionCard(
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
             ) {
-                Text("Next ➡️", style = MaterialTheme.typography.labelLarge)
+                Text(uiStrings.gameNext, style = MaterialTheme.typography.labelLarge)
             }
         } else {
             OutlinedTextField(
                 value = userAnswer,
                 onValueChange = onAnswerChange,
-                label = { Text("Your answer", style = MaterialTheme.typography.bodyLarge) },
+                label = { Text(uiStrings.gameYourAnswer, style = MaterialTheme.typography.bodyLarge) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -227,11 +230,11 @@ fun QuestionCard(
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
             ) {
-                Text("Check Answer ✔️", style = MaterialTheme.typography.labelLarge)
+                Text(uiStrings.gameCheckAnswer, style = MaterialTheme.typography.labelLarge)
             }
         }
 
         Spacer(Modifier.height(16.dp))
-        Text("Earned so far: $totalEarned ⭐", style = MaterialTheme.typography.bodyMedium, color = MedText)
+        Text(uiStrings.gameEarnedSoFar.format(totalEarned), style = MaterialTheme.typography.bodyMedium, color = MedText)
     }
 }

@@ -31,6 +31,7 @@ fun PlayerProfileScreen(
     onSettings: () -> Unit = {}
 ) {
     val player by viewModel.currentPlayer.collectAsState()
+    val uiStrings by viewModel.uiStrings.collectAsState()
     val context = LocalContext.current
 
     val languageOptions = remember { getLanguageOptions(context) }
@@ -59,9 +60,9 @@ fun PlayerProfileScreen(
         }
 
         val yearOptions = listOf(
-            Pair("Beginning of the year", "beginning"),
-            Pair("Middle of the year", "middle"),
-            Pair("End of the year", "end")
+            Pair(uiStrings.profileYearBeginning, "beginning"),
+            Pair(uiStrings.profileYearMiddle, "middle"),
+            Pair(uiStrings.profileYearEnd, "end")
         )
         val selectedYearLabel = yearOptions.firstOrNull { it.second == schoolYearPosition }?.first ?: ""
         val classOptions = (1..12).map { "Class $it" }
@@ -87,7 +88,7 @@ fun PlayerProfileScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = DeepPurple)
                     }
-                    Text("My Profile", style = MaterialTheme.typography.titleMedium)
+                    Text(uiStrings.profileTitle, style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.width(48.dp))
                 }
 
@@ -128,7 +129,7 @@ fun PlayerProfileScreen(
                         Text("⭐", style = MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.width(6.dp))
                         Text(
-                            "${player?.stars ?: 0} stars collected",
+                            uiStrings.profileStarsCollected.format(player?.stars ?: 0),
                             style = MaterialTheme.typography.titleMedium,
                             color = DeepPurple
                         )
@@ -140,7 +141,7 @@ fun PlayerProfileScreen(
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it; nameError = "" },
-                        label = { Text("Name", style = MaterialTheme.typography.bodyLarge) },
+                        label = { Text(uiStrings.profileLabelName, style = MaterialTheme.typography.bodyLarge) },
                         isError = nameError.isNotBlank(),
                         singleLine = true,
                         modifier = Modifier
@@ -148,7 +149,7 @@ fun PlayerProfileScreen(
                             .onFocusChanged { focusState ->
                                 if (!focusState.isFocused && nameTouched && name.isNotBlank()) {
                                     if (viewModel.isNameTaken(name.trim(), excludeId = player?.id)) {
-                                        nameError = "This name is already taken"
+                                        nameError = uiStrings.profileErrorNameTaken
                                     }
                                 }
                                 if (focusState.isFocused) nameTouched = true
@@ -176,7 +177,7 @@ fun PlayerProfileScreen(
                             value = selectedLanguage.displayName,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Language", style = MaterialTheme.typography.bodyLarge) },
+                            label = { Text(uiStrings.profileLabelLanguage, style = MaterialTheme.typography.bodyLarge) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = langExpanded) },
                             modifier = Modifier.fillMaxWidth().menuAnchor(),
                             shape = RoundedCornerShape(16.dp),
@@ -213,7 +214,7 @@ fun PlayerProfileScreen(
                             value = schoolClass,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("School class", style = MaterialTheme.typography.bodyLarge) },
+                            label = { Text(uiStrings.profileLabelSchoolClass, style = MaterialTheme.typography.bodyLarge) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = classExpanded) },
                             modifier = Modifier.fillMaxWidth().menuAnchor(),
                             shape = RoundedCornerShape(16.dp),
@@ -243,7 +244,7 @@ fun PlayerProfileScreen(
                             value = selectedYearLabel,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Where are you in the school year?", style = MaterialTheme.typography.bodyLarge) },
+                            label = { Text(uiStrings.profileLabelSchoolYear, style = MaterialTheme.typography.bodyLarge) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = yearExpanded) },
                             modifier = Modifier.fillMaxWidth().menuAnchor(),
                             shape = RoundedCornerShape(16.dp),
@@ -268,10 +269,10 @@ fun PlayerProfileScreen(
                         onClick = {
                             when {
                                 name.isBlank() -> {
-                                    nameError = "Please enter a name"
+                                    nameError = uiStrings.profileErrorNameBlank
                                 }
                                 viewModel.isNameTaken(name.trim(), excludeId = player?.id) -> {
-                                    nameError = "This name is already taken"
+                                    nameError = uiStrings.profileErrorNameTaken
                                 }
                                 else -> {
                                     player?.let {
@@ -292,7 +293,7 @@ fun PlayerProfileScreen(
                         shape = RoundedCornerShape(20.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
                     ) {
-                        Text("Save & Go! 🚀", style = MaterialTheme.typography.labelLarge)
+                        Text(uiStrings.profileSaveButton, style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }

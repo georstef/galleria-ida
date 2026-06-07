@@ -32,6 +32,8 @@ fun PlayerHomeScreen(
     onBack: () -> Unit
 ) {
     val player by viewModel.currentPlayer.collectAsState()
+    val uiStrings by viewModel.uiStrings.collectAsState()
+    val translating by viewModel.translating.collectAsState()
     val initial = player?.name?.firstOrNull()?.uppercase() ?: "?"
 
     Box(
@@ -101,7 +103,7 @@ fun PlayerHomeScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Hi, ${player?.name ?: ""}! 👋",
+                    text = uiStrings.homeGreeting.format(player?.name ?: ""),
                     style = MaterialTheme.typography.displayLarge,
                     textAlign = TextAlign.Center
                 )
@@ -109,7 +111,7 @@ fun PlayerHomeScreen(
                 Spacer(Modifier.height(12.dp))
 
                 Text(
-                    text = "What do you want to do?",
+                    text = uiStrings.homeSubtitle,
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     color = MedText
@@ -123,7 +125,7 @@ fun PlayerHomeScreen(
                     shape = RoundedCornerShape(24.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
                 ) {
-                    Text("📚  Start Lesson", style = MaterialTheme.typography.labelLarge)
+                    Text(uiStrings.homeStartLesson, style = MaterialTheme.typography.labelLarge)
                 }
 
                 Spacer(Modifier.height(20.dp))
@@ -134,7 +136,7 @@ fun PlayerHomeScreen(
                     shape = RoundedCornerShape(24.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = ButtonSecondary)
                 ) {
-                    Text("🖼️  My Gallery", style = MaterialTheme.typography.labelLarge)
+                    Text(uiStrings.homeMyGallery, style = MaterialTheme.typography.labelLarge)
                 }
             }
         }

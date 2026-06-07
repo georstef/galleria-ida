@@ -11,6 +11,7 @@ import com.galleriaida.ui.screens.PlayerSelectionScreen
 import com.galleriaida.ui.screens.PlayerBasicSetupScreen
 import com.galleriaida.ui.screens.PlayerProfileScreen
 import com.galleriaida.ui.screens.PlayerHomeScreen
+import com.galleriaida.ui.screens.PlayerLoadingScreen
 import com.galleriaida.ui.screens.SettingsScreen
 import com.galleriaida.viewmodel.AppViewModel
 
@@ -18,6 +19,7 @@ object Routes {
     const val PLAYER_SELECTION = "player_selection"
     const val PLAYER_BASIC_SETUP = "player_basic_setup"
     const val PLAYER_PROFILE = "player_profile"
+    const val PLAYER_LOADING = "player_loading"
     const val PLAYER_HOME = "player_home"
     const val GAME = "game"
     const val GALLERY = "gallery"
@@ -31,7 +33,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
         composable(Routes.PLAYER_SELECTION) {
             PlayerSelectionScreen(
                 viewModel = viewModel,
-                onPlayerSelected = { navController.navigate(Routes.PLAYER_HOME) },
+                onPlayerSelected = { navController.navigate(Routes.PLAYER_LOADING) },
                 onNewPlayer = { navController.navigate(Routes.PLAYER_BASIC_SETUP) }
             )
         }
@@ -49,12 +51,22 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
             PlayerProfileScreen(
                 viewModel = viewModel,
                 onDone = {
-                    navController.navigate(Routes.PLAYER_HOME) {
+                    navController.navigate(Routes.PLAYER_LOADING) {
                         popUpTo(Routes.PLAYER_SELECTION)
                     }
                 },
                 onBack = { navController.popBackStack() },
                 onSettings = { navController.navigate(Routes.SETTINGS) }
+            )
+        }
+        composable(Routes.PLAYER_LOADING) {
+            PlayerLoadingScreen(
+                viewModel = viewModel,
+                onReady = {
+                    navController.navigate(Routes.PLAYER_HOME) {
+                        popUpTo(Routes.PLAYER_LOADING) { inclusive = true }
+                    }
+                }
             )
         }
         composable(Routes.PLAYER_HOME) {

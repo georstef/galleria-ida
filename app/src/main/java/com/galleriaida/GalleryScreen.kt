@@ -34,6 +34,7 @@ fun GalleryScreen(
     val player by viewModel.currentPlayer.collectAsState()
     val gallery by viewModel.gallery.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
+    val uiStrings by viewModel.uiStrings.collectAsState()
 
     val playerGallery = gallery.filter { it.playerId == player?.id }
     val stars = player?.stars ?: 0
@@ -68,7 +69,7 @@ fun GalleryScreen(
         }
 
         Text(
-            "My Gallery 🖼️",
+            uiStrings.galleryTitle,
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
             textAlign = TextAlign.Center
@@ -98,7 +99,7 @@ fun GalleryScreen(
                             Text("🌟", style = MaterialTheme.typography.displayLarge)
                             Spacer(Modifier.height(16.dp))
                             Text(
-                                "No images yet!\nEarn 100 ⭐ to create your first image.",
+                                uiStrings.galleryEmpty,
                                 style = MaterialTheme.typography.bodyLarge,
                                 textAlign = TextAlign.Center,
                                 color = MedText
@@ -123,7 +124,7 @@ fun GalleryScreen(
         Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)) {
             if (!canAfford) {
                 Text(
-                    "Need 100 ⭐ to create an image (you have $stars)",
+                    uiStrings.galleryNeedStars.format(stars),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MedText,
                     textAlign = TextAlign.Center,
@@ -141,7 +142,7 @@ fun GalleryScreen(
                     disabledContainerColor = DisabledGray
                 )
             ) {
-                Text("Create Image 🎨 (100 ⭐)", style = MaterialTheme.typography.labelLarge)
+                Text(uiStrings.galleryCreateButton, style = MaterialTheme.typography.labelLarge)
             }
         }
     }
