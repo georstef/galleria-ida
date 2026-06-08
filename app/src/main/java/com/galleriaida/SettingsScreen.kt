@@ -23,45 +23,54 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.galleriaida.data.POLLINATIONS_MODELS
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
 import org.json.JSONObject
 
-// Helper function to extract a model's description dynamically from the raw json
+// ── Helper ───────────────────────────────────────────────────────────────────
+
 fun getModelDescription(name: String, availableModelsJson: String): String {
     if (availableModelsJson.isBlank()) return ""
     return try {
         val arr = JSONObject(availableModelsJson).getJSONArray("models")
         for (i in 0 until arr.length()) {
             val obj = arr.getJSONObject(i)
-            if (obj.getString("name") == name) {
-                return obj.optString("description", "")
-            }
+            if (obj.getString("name") == name) return obj.optString("description", "")
         }
         ""
-    } catch (e: Exception) {
-        ""
-    }
+    } catch (e: Exception) { "" }
 }
+
+// ── Settings root ─────────────────────────────────────────────────────────────
 
 @Composable
 fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
-    val settings by viewModel.settings.collectAsState()
-    val apiKeyStatus by viewModel.apiKeyStatus.collectAsState()
-    var keyInput by remember(settings.geminiApiKey) { mutableStateOf(settings.geminiApiKey) }
-    var showKey by remember { mutableStateOf(false) }
-    var showDeleteScreen by remember { mutableStateOf(false) }
-    var showModelScreen by remember { mutableStateOf(false) }
+    val settings            by viewModel.settings.collectAsState()
+    val apiKeyStatus        by viewModel.apiKeyStatus.collectAsState()
+    val pollinationsStatus  by viewModel.pollinationsKeyStatus.collectAsState()
+
+    var keyInput             by remember(settings.geminiApiKey)        { mutableStateOf(settings.geminiApiKey) }
+    var pollinationsKeyInput by remember(settings.pollinationsApiKey)  { mutableStateOf(settings.pollinationsApiKey) }
+    var showGeminiKey        by remember { mutableStateOf(false) }
+    var showPollinationsKey  by remember { mutableStateOf(false) }
+    var showDeleteScreen     by remember { mutableStateOf(false) }
+    var showGeminiModels     by remember { mutableStateOf(false) }
+    var showPollinationsModels by remember { mutableStateOf(false) }
 
     when {
-        showDeleteScreen -> DeletePlayersScreen(
-            viewModel = viewModel,
-            onBack = { showDeleteScreen = false },
+        showDeleteScreen       -> DeletePlayersScreen(
+            viewModel  = viewModel,
+            onBack     = { showDeleteScreen = false },
             onAllDeleted = { onBack() }
         )
-        showModelScreen -> ModelSelectionScreen(
-            viewModel = viewModel,
-            onBack = { showModelScreen = false }
+        showGeminiModels       -> ModelSelectionScreen(
+            viewModel  = viewModel,
+            onBack     = { showGeminiModels = false }
+        )
+        showPollinationsModels -> PollinationsModelScreen(
+            viewModel  = viewModel,
+            onBack     = { showPollinationsModels = false }
         )
         else -> {
             Column(
@@ -69,8 +78,10 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
                     .statusBarsPadding()
+                    .verticalScroll(rememberScrollState())
                     .padding(24.dp)
             ) {
+                // ── Title ────────────────────────────────────────────────────
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = DeepPurple)
@@ -81,84 +92,168 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
 
                 Spacer(Modifier.height(32.dp))
 
-                Text("Gemini API Key", style = MaterialTheme.typography.titleMedium)
+                // ══════════════════════════════════════════════════════════════
+                // SECTION 1 – Gemini
+                // ══════════════════════════════════════════════════════════════
+                SectionHeader("🤖 Gemini API")
                 Spacer(Modifier.height(8.dp))
                 Text(
                     "Ask a parent or teacher to enter the Gemini API key here.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MedText
                 )
-
                 Spacer(Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = keyInput,
                     onValueChange = { keyInput = it },
-                    label = { Text("API Key", style = MaterialTheme.typography.bodyLarge) },
+                    label = { Text("Gemini API Key", style = MaterialTheme.typography.bodyLarge) },
                     singleLine = true,
-                    visualTransformation = if (showKey) VisualTransformation.None else PasswordVisualTransformation(),
+                    visualTransformation = if (showGeminiKey) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
-                        TextButton(onClick = { showKey = !showKey }) {
-                            Text(if (showKey) "Hide" else "Show", style = MaterialTheme.typography.bodyMedium)
+                        TextButton(onClick = { showGeminiKey = !showGeminiKey }) {
+                            Text(if (showGeminiKey) "Hide" else "Show", style = MaterialTheme.typography.bodyMedium)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    modifier  = Modifier.fillMaxWidth(),
+                    shape     = RoundedCornerShape(16.dp),
                     textStyle = MaterialTheme.typography.bodyMedium
                 )
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
 
-                val (statusText, statusColor) = when {
-                    apiKeyStatus == "testing" -> "Testing..." to MedText
-                    apiKeyStatus == "valid" -> "✅ API key is valid" to SuccessGreen
-                    apiKeyStatus == "invalid" -> "❌ API key is invalid" to ErrorRed
-                    settings.apiValid -> "✅ Key saved and valid" to SuccessGreen
+                val (geminiStatusText, geminiStatusColor) = when {
+                    apiKeyStatus == "testing"      -> "Testing…"         to MedText
+                    apiKeyStatus == "valid"        -> "✅ API key is valid" to SuccessGreen
+                    apiKeyStatus == "invalid"      -> "❌ API key is invalid" to ErrorRed
+                    settings.apiValid              -> "✅ Key saved and valid" to SuccessGreen
                     settings.geminiApiKey.isNotBlank() -> "⚠️ Not yet tested" to MedText
                     else -> "No API key set" to MedText
                 }
-                Text(statusText, style = MaterialTheme.typography.bodyMedium, color = statusColor)
-
-                Spacer(Modifier.height(24.dp))
-
-                Button(
-                    onClick = { viewModel.testApiKey(keyInput) },
-                    enabled = keyInput.isNotBlank() && apiKeyStatus != "testing",
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
-                ) {
-                    Text(
-                        if (apiKeyStatus == "testing") "Testing..." else "Test & Save Key",
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                }
+                Text(geminiStatusText, style = MaterialTheme.typography.bodyMedium, color = geminiStatusColor)
 
                 Spacer(Modifier.height(16.dp))
 
-                Button(
-                    onClick = { showModelScreen = true },
-                    enabled = settings.apiValid,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ButtonSecondary,
-                        disabledContainerColor = DisabledGray
-                    )
+                Row(
+                    modifier              = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("🤖 AI Models", style = MaterialTheme.typography.labelLarge)
+                    Button(
+                        onClick  = { viewModel.testApiKey(keyInput) },
+                        enabled  = keyInput.isNotBlank() && apiKeyStatus != "testing",
+                        modifier = Modifier.weight(1f).height(56.dp),
+                        shape    = RoundedCornerShape(16.dp),
+                        colors   = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
+                    ) {
+                        Text(
+                            if (apiKeyStatus == "testing") "Testing…" else "Test & Save",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                    Button(
+                        onClick  = { showGeminiModels = true },
+                        enabled  = settings.apiValid,
+                        modifier = Modifier.weight(1f).height(56.dp),
+                        shape    = RoundedCornerShape(16.dp),
+                        colors   = ButtonDefaults.buttonColors(
+                            containerColor         = ButtonSecondary,
+                            disabledContainerColor = DisabledGray
+                        )
+                    ) {
+                        Text("🤖 Models", style = MaterialTheme.typography.labelLarge)
+                    }
                 }
 
                 Spacer(Modifier.height(32.dp))
                 HorizontalDivider()
                 Spacer(Modifier.height(24.dp))
 
+                // ══════════════════════════════════════════════════════════════
+                // SECTION 2 – Pollinations
+                // ══════════════════════════════════════════════════════════════
+                SectionHeader("🌸 Pollinations.ai API (Backup Image Engine)")
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Used as a fallback when Gemini image generation is unavailable. " +
+                    "If you leave the key blank, the free tier will be used.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MedText
+                )
+                Spacer(Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = pollinationsKeyInput,
+                    onValueChange = { pollinationsKeyInput = it },
+                    label = { Text("Pollinations API Key (optional)", style = MaterialTheme.typography.bodyLarge) },
+                    singleLine = true,
+                    visualTransformation = if (showPollinationsKey) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        TextButton(onClick = { showPollinationsKey = !showPollinationsKey }) {
+                            Text(if (showPollinationsKey) "Hide" else "Show", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    },
+                    modifier  = Modifier.fillMaxWidth(),
+                    shape     = RoundedCornerShape(16.dp),
+                    textStyle = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                val (pollStatusText, pollStatusColor) = when {
+                    pollinationsStatus == "testing" -> "Testing…"                    to MedText
+                    pollinationsStatus == "valid"   -> "✅ Connection successful"     to SuccessGreen
+                    pollinationsStatus == "invalid" -> "❌ Could not reach Pollinations" to ErrorRed
+                    settings.pollinationsKeyValid   -> "✅ Key saved and verified"    to SuccessGreen
+                    settings.pollinationsApiKey.isNotBlank() -> "⚠️ Not yet tested"  to MedText
+                    else -> "Using free tier (no key)" to MedText
+                }
+                Text(pollStatusText, style = MaterialTheme.typography.bodyMedium, color = pollStatusColor)
+
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier              = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick  = { viewModel.testPollinationsKey(pollinationsKeyInput) },
+                        enabled  = pollinationsStatus != "testing",
+                        modifier = Modifier.weight(1f).height(56.dp),
+                        shape    = RoundedCornerShape(16.dp),
+                        colors   = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
+                    ) {
+                        Text(
+                            if (pollinationsStatus == "testing") "Testing…" else "Test & Save",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                    Button(
+                        onClick  = { showPollinationsModels = true },
+                        enabled  = settings.pollinationsKeyValid,
+                        modifier = Modifier.weight(1f).height(56.dp),
+                        shape    = RoundedCornerShape(16.dp),
+                        colors   = ButtonDefaults.buttonColors(
+                            containerColor         = ButtonSecondary,
+                            disabledContainerColor = DisabledGray
+                        )
+                    ) {
+                        Text("🌸 Models", style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+
+                Spacer(Modifier.height(32.dp))
+                HorizontalDivider()
+                Spacer(Modifier.height(24.dp))
+
+                // ══════════════════════════════════════════════════════════════
+                // SECTION 3 – Danger zone
+                // ══════════════════════════════════════════════════════════════
                 OutlinedButton(
-                    onClick = { showDeleteScreen = true },
+                    onClick  = { showDeleteScreen = true },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = ErrorRed),
-                    border = androidx.compose.foundation.BorderStroke(1.5.dp, ErrorRed)
+                    shape    = RoundedCornerShape(16.dp),
+                    colors   = ButtonDefaults.outlinedButtonColors(contentColor = ErrorRed),
+                    border   = androidx.compose.foundation.BorderStroke(1.5.dp, ErrorRed)
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = null, tint = ErrorRed)
                     Spacer(Modifier.width(8.dp))
@@ -170,62 +265,61 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                 Spacer(Modifier.height(16.dp))
 
                 Text(
-                    "🔒 The API key is stored only on this device and is never shared.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MedText,
+                    "🔒 All API keys are stored only on this device and are never shared.",
+                    style     = MaterialTheme.typography.bodyMedium,
+                    color     = MedText,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier  = Modifier.fillMaxWidth()
                 )
             }
         }
     }
 }
 
+// ── Small helpers ────────────────────────────────────────────────────────────
+
+@Composable
+private fun SectionHeader(text: String) {
+    Text(text, style = MaterialTheme.typography.titleMedium, color = DeepPurple)
+}
+
+// ── Gemini model selection screen ────────────────────────────────────────────
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModelSelectionScreen(viewModel: AppViewModel, onBack: () -> Unit) {
-    val settings by viewModel.settings.collectAsState()
-    val allModels = remember(settings.availableModelsJson) { viewModel.parseAvailableModels() }
+    val settings    by viewModel.settings.collectAsState()
+    val allModels   = remember(settings.availableModelsJson) { viewModel.parseAvailableModels() }
     var showJsonDialog by remember { mutableStateOf(false) }
 
     val categories = listOf(
-        Triple("questions", "📐 Math Questions", allModels),
-        Triple("translation", "🌍 Translation", allModels),
-        Triple("imagePrompt", "✏️ Image Description", allModels),
-        Triple("imageGeneration", "🎨 Image Generation", allModels)
+        Triple("questions",       "📐 Math Questions",      allModels),
+        Triple("translation",     "🌍 Translation",          allModels),
+        Triple("imagePrompt",     "✏️ Image Description",    allModels),
+        Triple("imageGeneration", "🎨 Image Generation",     allModels)
     )
 
     val currentModels = mapOf(
-        "questions" to settings.modelQuestions,
-        "translation" to settings.modelTranslation,
-        "imagePrompt" to settings.modelImagePrompt,
+        "questions"       to settings.modelQuestions,
+        "translation"     to settings.modelTranslation,
+        "imagePrompt"     to settings.modelImagePrompt,
         "imageGeneration" to settings.modelImageGeneration
     )
 
-    // JSON viewer dialog
     if (showJsonDialog) {
         val prettyJson = remember(settings.availableModelsJson) {
-            try {
-                JSONObject(settings.availableModelsJson).toString(2)
-            } catch (e: Exception) {
-                settings.availableModelsJson
-            }
+            try { JSONObject(settings.availableModelsJson).toString(2) }
+            catch (e: Exception) { settings.availableModelsJson }
         }
         AlertDialog(
             onDismissRequest = { showJsonDialog = false },
-            title = { Text("Available Models JSON", style = MaterialTheme.typography.titleMedium) },
-            text = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 400.dp)
-                        .verticalScroll(rememberScrollState())
-                ) {
+            title   = { Text("Available Models JSON", style = MaterialTheme.typography.titleMedium) },
+            text    = {
+                Box(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).verticalScroll(rememberScrollState())) {
                     Text(
-                        text = prettyJson,
+                        text  = prettyJson,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp
+                            fontFamily = FontFamily.Monospace, fontSize = 11.sp
                         ),
                         color = DarkText
                     )
@@ -246,10 +340,9 @@ fun ModelSelectionScreen(viewModel: AppViewModel, onBack: () -> Unit) {
             .statusBarsPadding()
             .padding(24.dp)
     ) {
-        // Top bar
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+            modifier              = Modifier.fillMaxWidth(),
+            verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -257,7 +350,7 @@ fun ModelSelectionScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = DeepPurple)
                 }
                 Spacer(Modifier.width(8.dp))
-                Text("AI Models 🤖", style = MaterialTheme.typography.titleLarge)
+                Text("Gemini Models 🤖", style = MaterialTheme.typography.titleLarge)
             }
             TextButton(onClick = { showJsonDialog = true }) {
                 Text("View JSON", style = MaterialTheme.typography.bodyMedium, color = ButtonSecondary)
@@ -265,53 +358,38 @@ fun ModelSelectionScreen(viewModel: AppViewModel, onBack: () -> Unit) {
         }
 
         Spacer(Modifier.height(8.dp))
-        Text(
-            "Choose which AI model is used for each task.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MedText
-        )
+        Text("Choose which Gemini model is used for each task.",
+            style = MaterialTheme.typography.bodyMedium, color = MedText)
         Spacer(Modifier.height(24.dp))
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             items(categories) { (key, label, models) ->
                 var expanded by remember { mutableStateOf(false) }
-                val current = currentModels[key] ?: ""
+                val current        = currentModels[key] ?: ""
                 val currentDisplay = allModels.firstOrNull { it.name == current }?.displayName
                     ?: current.removePrefix("models/").ifBlank { "Not set" }
-
-                // Retrieve the description of the currently active model
-                val currentDescription = remember(current, settings.availableModelsJson) {
+                val currentDesc = remember(current, settings.availableModelsJson) {
                     getModelDescription(current, settings.availableModelsJson)
                 }
 
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(CardBg)
-                        .padding(16.dp)
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
+                        .background(CardBg).padding(16.dp)
                 ) {
                     Text(label, style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(8.dp))
-
-                    ExposedDropdownMenuBox(
-                        expanded = expanded,
-                        onExpandedChange = { expanded = !expanded }
-                    ) {
+                    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
                         OutlinedTextField(
-                            value = currentDisplay,
+                            value        = currentDisplay,
                             onValueChange = {},
-                            readOnly = true,
+                            readOnly     = true,
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                            modifier = Modifier.fillMaxWidth().menuAnchor(),
-                            shape = RoundedCornerShape(12.dp),
-                            textStyle = MaterialTheme.typography.bodyMedium
+                            modifier     = Modifier.fillMaxWidth().menuAnchor(),
+                            shape        = RoundedCornerShape(12.dp),
+                            textStyle    = MaterialTheme.typography.bodyMedium
                         )
-                        ExposedDropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false },
-                            modifier = Modifier.heightIn(max = 280.dp) // Limits the dropdown height for better scrolling
-                        ) {
+                        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false },
+                            modifier = Modifier.heightIn(max = 280.dp)) {
                             models.forEach { model ->
                                 val desc = remember(model.name, settings.availableModelsJson) {
                                     getModelDescription(model.name, settings.availableModelsJson)
@@ -319,39 +397,23 @@ fun ModelSelectionScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                                 DropdownMenuItem(
                                     text = {
                                         Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                                            Text(
-                                                model.displayName,
-                                                style = MaterialTheme.typography.bodyLarge
-                                            )
+                                            Text(model.displayName, style = MaterialTheme.typography.bodyLarge)
                                             if (desc.isNotBlank()) {
                                                 Spacer(Modifier.height(2.dp))
-                                                Text(
-                                                    text = desc,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MedText,
-                                                    lineHeight = 14.sp
-                                                )
+                                                Text(desc, style = MaterialTheme.typography.bodySmall,
+                                                    color = MedText, lineHeight = 14.sp)
                                             }
                                         }
                                     },
-                                    onClick = {
-                                        viewModel.updateModelSelection(key, model.name)
-                                        expanded = false
-                                    }
+                                    onClick = { viewModel.updateModelSelection(key, model.name); expanded = false }
                                 )
                             }
                         }
                     }
-
-                    // Display the description below the text field when selected
-                    if (currentDescription.isNotBlank()) {
+                    if (currentDesc.isNotBlank()) {
                         Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = currentDescription,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MedText,
-                            lineHeight = 16.sp
-                        )
+                        Text(currentDesc, style = MaterialTheme.typography.bodySmall,
+                            color = MedText, lineHeight = 16.sp)
                     }
                 }
             }
@@ -359,25 +421,126 @@ fun ModelSelectionScreen(viewModel: AppViewModel, onBack: () -> Unit) {
     }
 }
 
+// ── Pollinations model selection screen ──────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PollinationsModelScreen(viewModel: AppViewModel, onBack: () -> Unit) {
+    val settings by viewModel.settings.collectAsState()
+
+    // The 3 slot values come straight from settings
+    val slotValues = listOf(
+        settings.pollinationsModel1,
+        settings.pollinationsModel2,
+        settings.pollinationsModel3
+    )
+    val slotLabels = listOf(
+        "🥇 Primary model (tried first)",
+        "🥈 Second fallback",
+        "🥉 Third fallback (last resort)"
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+            .padding(24.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = DeepPurple)
+            }
+            Spacer(Modifier.width(8.dp))
+            Text("Pollinations Models 🌸", style = MaterialTheme.typography.titleLarge)
+        }
+
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "When Gemini image generation fails, the app tries these models in order (1 → 2 → 3).",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MedText
+        )
+        Spacer(Modifier.height(24.dp))
+
+        slotValues.forEachIndexed { index, currentValue ->
+            val slot = index + 1          // 1-based
+            var expanded by remember { mutableStateOf(false) }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(CardBg)
+                    .padding(16.dp)
+            ) {
+                Text(slotLabels[index], style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+
+                ExposedDropdownMenuBox(
+                    expanded        = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value         = currentValue.ifBlank { "— not set —" },
+                        onValueChange = {},
+                        readOnly      = true,
+                        trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier      = Modifier.fillMaxWidth().menuAnchor(),
+                        shape         = RoundedCornerShape(12.dp),
+                        textStyle     = MaterialTheme.typography.bodyMedium
+                    )
+                    ExposedDropdownMenu(
+                        expanded          = expanded,
+                        onDismissRequest  = { expanded = false },
+                        modifier          = Modifier.heightIn(max = 280.dp)
+                    ) {
+                        POLLINATIONS_MODELS.forEach { model ->
+                            DropdownMenuItem(
+                                text    = { Text(model, style = MaterialTheme.typography.bodyLarge) },
+                                onClick = {
+                                    viewModel.updatePollinationsModel(slot, model)
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (index < 2) Spacer(Modifier.height(20.dp))
+        }
+
+        Spacer(Modifier.height(32.dp))
+        Text(
+            "💡 Tip: keep different models in each slot so if one fails, the next is likely to succeed.",
+            style     = MaterialTheme.typography.bodySmall,
+            color     = MedText,
+            textAlign = TextAlign.Center,
+            modifier  = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+// ── Delete players screen (unchanged logic) ──────────────────────────────────
+
 @Composable
 fun DeletePlayersScreen(
     viewModel: AppViewModel,
     onBack: () -> Unit,
     onAllDeleted: () -> Unit = {}
 ) {
-    val players by viewModel.players.collectAsState()
+    val players  by viewModel.players.collectAsState()
     val selected = remember { mutableStateListOf<String>() }
     var showConfirm by remember { mutableStateOf(false) }
 
-    LaunchedEffect(players) {
-        if (players.isEmpty()) onAllDeleted()
-    }
+    LaunchedEffect(players) { if (players.isEmpty()) onAllDeleted() }
 
     if (showConfirm) {
         AlertDialog(
             onDismissRequest = { showConfirm = false },
-            title = { Text("Delete players?", style = MaterialTheme.typography.titleMedium) },
-            text = {
+            title   = { Text("Delete players?", style = MaterialTheme.typography.titleMedium) },
+            text    = {
                 Text(
                     "This will permanently delete ${selected.size} player(s) and all their stars and gallery images.",
                     style = MaterialTheme.typography.bodyLarge
@@ -385,16 +548,10 @@ fun DeletePlayersScreen(
             },
             confirmButton = {
                 Button(
-                    onClick = {
-                        viewModel.deletePlayers(selected.toList())
-                        selected.clear()
-                        showConfirm = false
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = ErrorRed),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Delete", style = MaterialTheme.typography.labelLarge)
-                }
+                    onClick = { viewModel.deletePlayers(selected.toList()); selected.clear(); showConfirm = false },
+                    colors  = ButtonDefaults.buttonColors(containerColor = ErrorRed),
+                    shape   = RoundedCornerShape(12.dp)
+                ) { Text("Delete", style = MaterialTheme.typography.labelLarge) }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirm = false }) {
@@ -437,15 +594,13 @@ fun DeletePlayersScreen(
                             .clip(RoundedCornerShape(16.dp))
                             .background(if (isSelected) PeachOrange else CardBg)
                             .border(
-                                width = if (isSelected) 2.dp else 0.dp,
-                                color = if (isSelected) ErrorRed else androidx.compose.ui.graphics.Color.Transparent,
-                                shape = RoundedCornerShape(16.dp)
+                                width  = if (isSelected) 2.dp else 0.dp,
+                                color  = if (isSelected) ErrorRed else androidx.compose.ui.graphics.Color.Transparent,
+                                shape  = RoundedCornerShape(16.dp)
                             )
-                            .clickable {
-                                if (isSelected) selected.remove(player.id) else selected.add(player.id)
-                            }
+                            .clickable { if (isSelected) selected.remove(player.id) else selected.add(player.id) }
                             .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalAlignment     = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
@@ -457,11 +612,9 @@ fun DeletePlayersScreen(
                             )
                         }
                         Checkbox(
-                            checked = isSelected,
-                            onCheckedChange = {
-                                if (isSelected) selected.remove(player.id) else selected.add(player.id)
-                            },
-                            colors = CheckboxDefaults.colors(checkedColor = ErrorRed, uncheckedColor = MedText)
+                            checked         = isSelected,
+                            onCheckedChange = { if (isSelected) selected.remove(player.id) else selected.add(player.id) },
+                            colors          = CheckboxDefaults.colors(checkedColor = ErrorRed, uncheckedColor = MedText)
                         )
                     }
                 }
@@ -469,14 +622,13 @@ fun DeletePlayersScreen(
         }
 
         Spacer(Modifier.height(24.dp))
-
         Button(
-            onClick = { if (selected.isNotEmpty()) showConfirm = true },
-            enabled = selected.isNotEmpty(),
+            onClick  = { if (selected.isNotEmpty()) showConfirm = true },
+            enabled  = selected.isNotEmpty(),
             modifier = Modifier.fillMaxWidth().height(60.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = ErrorRed,
+            shape    = RoundedCornerShape(16.dp),
+            colors   = ButtonDefaults.buttonColors(
+                containerColor         = ErrorRed,
                 disabledContainerColor = DisabledGray
             )
         ) {

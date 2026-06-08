@@ -88,10 +88,11 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
         }
         composable(Routes.GALLERY) {
             GalleryScreen(
-                viewModel = viewModel,
-                onBack = { navController.popBackStack() },
-                onSettings = { navController.navigate(Routes.SETTINGS) },
-                onCreateImage = { navController.navigate(Routes.IMAGE_CREATION) }
+                viewModel     = viewModel,
+                onBack        = { navController.popBackStack() },
+                onSettings    = { navController.navigate(Routes.SETTINGS) },
+                onCreateImage = { navController.navigate(Routes.IMAGE_CREATION) },
+                onEditProfile = { navController.navigate(Routes.PLAYER_PROFILE) }
             )
         }
         composable(Routes.IMAGE_CREATION) {
