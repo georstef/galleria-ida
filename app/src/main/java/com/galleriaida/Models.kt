@@ -47,9 +47,9 @@ data class AppSettings(
     // Pollinations
     val pollinationsApiKey: String = "",
     val pollinationsKeyValid: Boolean = false,
-    val pollinationsModel1: String = "flux",
-    val pollinationsModel2: String = "turbo",
-    val pollinationsModel3: String = "gpt-image-1"
+    val pollinationsModel1: String = "kontext",
+    val pollinationsModel2: String = "nova-canvas",
+    val pollinationsModel3: String = "flux"
 )
 
 data class GeminiModel(
@@ -73,13 +73,11 @@ data class WordTranslations(
 
 // ── Pollinations models available for selection ──────────────────────────────
 val POLLINATIONS_MODELS = listOf(
+    "kontext",
+    "nova-canvas",
     "flux",
-    "flux-realism",
-    "flux-cablyai",
-    "flux-anime",
-    "flux-3d",
-    "any-dark",
-    "flux-pro",
-    "turbo",
-    "gpt-image-1"
+    "klein",
+    "gptimage-large",
+    "gptimage",
+    "zimage"
 )
