@@ -19,6 +19,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.galleriaida.R
 import com.galleriaida.network.PollinationsService
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
@@ -60,33 +62,85 @@ fun ImageCreationScreen(
     onBack: () -> Unit,
     onImageCreated: () -> Unit
 ) {
-    val context   = LocalContext.current
-    val scope     = rememberCoroutineScope()
-    val uiState   by viewModel.uiState.collectAsState()
-    val player    by viewModel.currentPlayer.collectAsState()
-    val settings  by viewModel.settings.collectAsState()
-    val uiStrings by viewModel.uiStrings.collectAsState()
+    val context          = LocalContext.current
+    val scope            = rememberCoroutineScope()
+    val uiState          by viewModel.uiState.collectAsState()
+    val player           by viewModel.currentPlayer.collectAsState()
+    val settings         by viewModel.settings.collectAsState()
+    val uiStrings        by viewModel.uiStrings.collectAsState()
+    val wordTranslations by viewModel.wordTranslations.collectAsState()
+    val translationError by viewModel.wordTranslationError.collectAsState()
 
-    val wordPool        = remember { loadWordPool(context) }
-    val shownCharacters = remember { wordPool.characters.shuffled().take(4) }
-    val shownActions    = remember { wordPool.actions.shuffled().take(4) }
-    val shownPlaces     = remember { wordPool.places.shuffled().take(4) }
+    // Load full English word pool once
+    val wordPool = remember { loadWordPool(context) }
 
-    var selectedCharacter by remember { mutableStateOf<String?>(null) }
-    var selectedAction    by remember { mutableStateOf<String?>(null) }
-    var selectedPlace     by remember { mutableStateOf<String?>(null) }
+    // Fixed random subset indices (stable across recompositions)
+    val charIndices  = remember { wordPool.characters.indices.shuffled().take(4) }
+    val actionIndices = remember { wordPool.actions.indices.shuffled().take(4) }
+    val placeIndices  = remember { wordPool.places.indices.shuffled().take(4) }
 
-    val allSelected = selectedCharacter != null && selectedAction != null && selectedPlace != null
+    // Trigger translation on first entry
+    LaunchedEffect(Unit) {
+        viewModel.clearUiState()
+        viewModel.ensureWordTranslations(
+            characters = wordPool.characters,
+            actions    = wordPool.actions,
+            places     = wordPool.places
+        )
+    }
+
+    // While translations are loading show logo + spinner
+    if (wordTranslations == null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // App logo — same as PlayerLoadingScreen
+                AsyncImage(
+                    model              = R.mipmap.galleria_ida_logo,
+                    contentDescription = "Logo",
+                    modifier           = Modifier.size(120.dp)
+                )
+                Spacer(Modifier.height(32.dp))
+                CircularProgressIndicator(color = ButtonPrimary, strokeWidth = 5.dp)
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text      = "Preparing words…",
+                    style     = MaterialTheme.typography.bodyLarge,
+                    color     = MedText,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        return
+    }
+
+    // Translated subset to show in the grids
+    val shownCharactersLocal = charIndices.map   { wordTranslations!!.characters[it] }
+    val shownActionsLocal    = actionIndices.map  { wordTranslations!!.actions[it] }
+    val shownPlacesLocal     = placeIndices.map   { wordTranslations!!.places[it] }
+
+    // Corresponding English words (same indices)
+    val shownCharactersEn = charIndices.map   { wordPool.characters[it] }
+    val shownActionsEn    = actionIndices.map  { wordPool.actions[it] }
+    val shownPlacesEn     = placeIndices.map   { wordPool.places[it] }
+
+    // Selection state — track index so we can look up both EN and Local
+    var selectedCharIdx by remember { mutableStateOf<Int?>(null) }
+    var selectedActionIdx by remember { mutableStateOf<Int?>(null) }
+    var selectedPlaceIdx  by remember { mutableStateOf<Int?>(null) }
+
+    val allSelected = selectedCharIdx != null && selectedActionIdx != null && selectedPlaceIdx != null
     val stars       = player?.stars ?: 0
     val canAfford   = (stars >= 100) || (player?.name == "George S.")
 
-    // Separate loading flag for the Pollinations fallback so we can show a custom message
     var isFallbackLoading    by remember { mutableStateOf(false) }
     var fallbackModelMessage by remember { mutableStateOf("") }
     val isLoading            = uiState is UiState.Loading || isFallbackLoading
     val errorMessage         = (uiState as? UiState.Error)?.message
-
-    LaunchedEffect(Unit) { viewModel.clearUiState() }
 
     Box(
         modifier = Modifier
@@ -128,10 +182,8 @@ fun ImageCreationScreen(
                         CircularProgressIndicator(color = ButtonPrimary, strokeWidth = 5.dp)
                         Spacer(Modifier.height(20.dp))
                         Text(
-                            text = if (isFallbackLoading)
-                                "✨ $fallbackModelMessage"
-                            else
-                                uiStrings.imageCreatingMsg,
+                            text = if (isFallbackLoading) "✨ $fallbackModelMessage"
+                            else uiStrings.imageCreatingMsg,
                             style     = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center,
                             color     = MedText
@@ -183,27 +235,27 @@ fun ImageCreationScreen(
                     Spacer(Modifier.height(24.dp))
 
                     WordCategory(
-                        title    = uiStrings.imageCategoryCharacter,
-                        words    = shownCharacters,
-                        selected = selectedCharacter,
-                        color    = SoftPurple,
-                        onSelect = { selectedCharacter = it }
+                        title        = uiStrings.imageCategoryCharacter,
+                        words        = shownCharactersLocal,
+                        selectedIdx  = selectedCharIdx,
+                        color        = SoftPurple,
+                        onSelect     = { selectedCharIdx = it }
                     )
                     Spacer(Modifier.height(20.dp))
                     WordCategory(
-                        title    = uiStrings.imageCategoryAction,
-                        words    = shownActions,
-                        selected = selectedAction,
-                        color    = SkyBlue,
-                        onSelect = { selectedAction = it }
+                        title        = uiStrings.imageCategoryAction,
+                        words        = shownActionsLocal,
+                        selectedIdx  = selectedActionIdx,
+                        color        = SkyBlue,
+                        onSelect     = { selectedActionIdx = it }
                     )
                     Spacer(Modifier.height(20.dp))
                     WordCategory(
-                        title    = uiStrings.imageCategoryPlace,
-                        words    = shownPlaces,
-                        selected = selectedPlace,
-                        color    = MintGreen,
-                        onSelect = { selectedPlace = it }
+                        title        = uiStrings.imageCategoryPlace,
+                        words        = shownPlacesLocal,
+                        selectedIdx  = selectedPlaceIdx,
+                        color        = MintGreen,
+                        onSelect     = { selectedPlaceIdx = it }
                     )
 
                     Spacer(Modifier.height(32.dp))
@@ -217,7 +269,7 @@ fun ImageCreationScreen(
                                 .padding(16.dp)
                         ) {
                             Text(
-                                "✨ $selectedCharacter + $selectedAction + $selectedPlace",
+                                "✨ ${shownCharactersLocal[selectedCharIdx!!]} + ${shownActionsLocal[selectedActionIdx!!]} + ${shownPlacesLocal[selectedPlaceIdx!!]}",
                                 style     = MaterialTheme.typography.titleMedium,
                                 color     = DeepPurple,
                                 textAlign = TextAlign.Center,
@@ -241,11 +293,21 @@ fun ImageCreationScreen(
                         onClick = {
                             if (!allSelected || !canAfford) return@Button
 
+                            val charEn    = shownCharactersEn[selectedCharIdx!!]
+                            val actionEn  = shownActionsEn[selectedActionIdx!!]
+                            val placeEn   = shownPlacesEn[selectedPlaceIdx!!]
+                            val charLocal = shownCharactersLocal[selectedCharIdx!!]
+                            val actLocal  = shownActionsLocal[selectedActionIdx!!]
+                            val plcLocal  = shownPlacesLocal[selectedPlaceIdx!!]
+
                             viewModel.generateGalleryImage(
-                                character  = selectedCharacter!!,
-                                action     = selectedAction!!,
-                                place      = selectedPlace!!,
-                                onComplete = { success, exactEnglishPrompt, phrases ->
+                                characterEn    = charEn,
+                                actionEn       = actionEn,
+                                placeEn        = placeEn,
+                                characterLocal = charLocal,
+                                actionLocal    = actLocal,
+                                placeLocal     = plcLocal,
+                                onComplete     = { success, exactEnglishPrompt, phrases ->
 
                                     if (success) {
                                         Log.d("GALLERIA_AI", "Gemini handled image directly.")
@@ -253,33 +315,30 @@ fun ImageCreationScreen(
                                         return@generateGalleryImage
                                     }
 
-                                    // ── Gemini image failed → try Pollinations chain ──────
-                                    Log.d("GALLERIA_AI", "Gemini image failed → starting Pollinations fallback chain")
-
                                     if (phrases == null) {
-                                        Log.e("GALLERIA_AI", "No phrases available for fallback, aborting.")
+                                        Log.e("GALLERIA_AI", "No phrases for fallback, aborting.")
                                         return@generateGalleryImage
                                     }
 
                                     scope.launch {
-                                        val s         = settings
-                                        val apiKey    = s.pollinationsApiKey
-                                        val model1    = s.pollinationsModel1.ifBlank { "flux" }
-                                        val model2    = s.pollinationsModel2.ifBlank { "turbo" }
-                                        val model3    = s.pollinationsModel3.ifBlank { "gpt-image-1" }
+                                        val s      = settings
+                                        val apiKey = s.pollinationsApiKey
+                                        val m1     = s.pollinationsModel1.ifBlank { "flux" }
+                                        val m2     = s.pollinationsModel2.ifBlank { "turbo" }
+                                        val m3     = s.pollinationsModel3.ifBlank { "gpt-image-1" }
 
                                         isFallbackLoading    = true
-                                        fallbackModelMessage = "Trying backup engine ($model1)..."
+                                        fallbackModelMessage = "Trying backup engine ($m1)…"
 
                                         val result = PollinationsService.generateImageWithFallbacks(
                                             context       = context,
                                             englishPrompt = exactEnglishPrompt,
-                                            model1        = model1,
-                                            model2        = model2,
-                                            model3        = model3,
+                                            model1        = m1,
+                                            model2        = m2,
+                                            model3        = m3,
                                             apiKey        = apiKey,
-                                            onModelSwitch = { nextModel ->
-                                                fallbackModelMessage = "Trying backup engine ($nextModel)..."
+                                            onModelSwitch = { next ->
+                                                fallbackModelMessage = "Trying backup engine ($next)…"
                                             }
                                         )
 
@@ -291,14 +350,16 @@ fun ImageCreationScreen(
                                             viewModel.registerFallbackImage(
                                                 downloadedFile = file,
                                                 phrases        = phrases,
-                                                character      = selectedCharacter!!,
-                                                action         = selectedAction!!,
-                                                place          = selectedPlace!!
+                                                characterEn    = charEn,
+                                                actionEn       = actionEn,
+                                                placeEn        = placeEn,
+                                                characterLocal = charLocal,
+                                                actionLocal    = actLocal,
+                                                placeLocal     = plcLocal
                                             )
                                             onImageCreated()
                                         } else {
                                             Log.e("GALLERIA_AI", "All Pollinations models failed.")
-                                            // uiState error is already set by viewModel; screen will show it
                                         }
                                     }
                                 }
@@ -329,13 +390,15 @@ fun ImageCreationScreen(
     }
 }
 
+// ── WordCategory — now index-based ───────────────────────────────────────────
+
 @Composable
 fun WordCategory(
     title: String,
     words: List<String>,
-    selected: String?,
+    selectedIdx: Int?,
     color: androidx.compose.ui.graphics.Color,
-    onSelect: (String) -> Unit
+    onSelect: (Int) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -350,28 +413,28 @@ fun WordCategory(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            words.forEach { word ->
-                val isSelected = word == selected
+            words.forEachIndexed { idx, word ->
+                val isSelected = idx == selectedIdx
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(12.dp))
                         .background(if (isSelected) DeepPurple else White)
                         .border(
-                            width  = if (isSelected) 0.dp else 1.dp,
-                            color  = if (isSelected) DeepPurple else DisabledGray,
-                            shape  = RoundedCornerShape(12.dp)
+                            width = if (isSelected) 0.dp else 1.dp,
+                            color = if (isSelected) DeepPurple else DisabledGray,
+                            shape = RoundedCornerShape(12.dp)
                         )
-                        .clickable { onSelect(word) }
+                        .clickable { onSelect(idx) }
                         .padding(vertical = 10.dp, horizontal = 4.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text     = word,
-                        style    = MaterialTheme.typography.bodyMedium,
-                        color    = if (isSelected) White else DarkText,
+                        text      = word,
+                        style     = MaterialTheme.typography.bodyMedium,
+                        color     = if (isSelected) White else DarkText,
                         textAlign = TextAlign.Center,
-                        maxLines = 2
+                        maxLines  = 2
                     )
                 }
             }

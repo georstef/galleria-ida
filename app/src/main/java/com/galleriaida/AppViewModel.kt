@@ -9,6 +9,7 @@ import com.galleriaida.data.AppSettings
 import com.galleriaida.data.GalleryItem
 import com.galleriaida.data.GeminiModel
 import com.galleriaida.data.Player
+import com.galleriaida.data.WordTranslations
 import com.galleriaida.network.GeminiService
 import com.galleriaida.network.MathQuestion
 import com.galleriaida.network.PollinationsService
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.util.UUID
@@ -58,7 +60,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _apiKeyStatus = MutableStateFlow<String?>(null)
     val apiKeyStatus: StateFlow<String?> = _apiKeyStatus.asStateFlow()
 
-    // "idle" | "testing" | "valid" | "invalid"
     private val _pollinationsKeyStatus = MutableStateFlow<String?>(null)
     val pollinationsKeyStatus: StateFlow<String?> = _pollinationsKeyStatus.asStateFlow()
 
@@ -72,14 +73,26 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _translating = MutableStateFlow(false)
     val translating: StateFlow<Boolean> = _translating.asStateFlow()
 
+    // ── Word translations ────────────────────────────────────────────────────
+    // null = not yet loaded / loading in progress
+    private val _wordTranslations = MutableStateFlow<WordTranslations?>(null)
+    val wordTranslations: StateFlow<WordTranslations?> = _wordTranslations.asStateFlow()
+
+    private val _wordTranslationError = MutableStateFlow<String?>(null)
+    val wordTranslationError: StateFlow<String?> = _wordTranslationError.asStateFlow()
+
     init {
         viewModelScope.launch {
             prefs.playersFlow.collect { _playersLoaded.value = true }
         }
         viewModelScope.launch {
             _currentPlayer.collect { player ->
-                if (player != null) translateUiForPlayer(player.language)
-                else _uiStrings.value = com.galleriaida.ui.UiStrings()
+                if (player != null) {
+                    translateUiForPlayer(player.language)
+                } else {
+                    _uiStrings.value = com.galleriaida.ui.UiStrings()
+                    _wordTranslations.value = null
+                }
             }
         }
     }
@@ -112,6 +125,81 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // ── Word translation ─────────────────────────────────────────────────────
+
+    /**
+     * Called by ImageCreationScreen on entry.
+     * For English players returns the English words immediately.
+     * Otherwise: checks file cache → hits = done, miss = calls API → caches → done.
+     */
+    fun ensureWordTranslations(
+        characters: List<String>,
+        actions: List<String>,
+        places: List<String>
+    ) {
+        val player = _currentPlayer.value ?: return
+        val language = player.language
+
+        // English — just expose the originals directly, no API needed
+        if (language.equals("English", ignoreCase = true) || language.equals("en", ignoreCase = true)) {
+            _wordTranslations.value = WordTranslations(
+                language   = language,
+                characters = characters,
+                actions    = actions,
+                places     = places
+            )
+            return
+        }
+
+        // Already loaded for this language
+        val current = _wordTranslations.value
+        if (current != null && current.language.equals(language, ignoreCase = true)) return
+
+        viewModelScope.launch {
+            _wordTranslations.value = null          // triggers loading state in UI
+            _wordTranslationError.value = null
+
+            // Check file cache first
+            val cached = prefs.loadWordTranslations(language)
+            if (cached != null &&
+                cached.characters.size == characters.size &&
+                cached.actions.size    == actions.size    &&
+                cached.places.size     == places.size) {
+                Log.d("AppViewModel", "Word translations loaded from cache for $language")
+                _wordTranslations.value = cached
+                return@launch
+            }
+
+            // Cache miss — call API
+            Log.d("AppViewModel", "Translating word lists for $language via API…")
+            val s     = settings.first { it.geminiApiKey.isNotBlank() }
+            val model = s.modelTranslation.ifBlank { s.modelQuestions.ifBlank { "models/gemini-2.0-flash" } }
+
+            gemini.translateWordLists(s.geminiApiKey, model, language, characters, actions, places)
+                .onSuccess { translated ->
+                    val wt = WordTranslations(
+                        language   = language,
+                        characters = translated.characters,
+                        actions    = translated.actions,
+                        places     = translated.places
+                    )
+                    prefs.saveWordTranslations(wt)
+                    _wordTranslations.value = wt
+                    Log.d("AppViewModel", "Word translations complete and cached for $language")
+                }
+                .onFailure { e ->
+                    Log.e("AppViewModel", "Word translation failed: ${e.message}")
+                    _wordTranslationError.value = "Could not translate words: ${e.message}"
+                    // Fallback to English so the screen is not permanently blocked
+                    _wordTranslations.value = WordTranslations(language, characters, actions, places)
+                }
+        }
+    }
+
+    fun clearWordTranslations() {
+        _wordTranslations.value = null
+    }
+
     // ── Players ──────────────────────────────────────────────────────────────
 
     fun selectPlayer(player: Player) { _currentPlayer.value = player }
@@ -137,7 +225,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val prevLang = _currentPlayer.value?.language
             _currentPlayer.value = player
             prefs.savePlayers(players.value.map { if (it.id == player.id) player else it })
-            if (player.language != prevLang) translateUiForPlayer(player.language)
+            if (player.language != prevLang) {
+                _wordTranslations.value = null   // force re-translation for new language
+                translateUiForPlayer(player.language)
+            }
         }
     }
 
@@ -223,7 +314,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             _pollinationsKeyStatus.value = "testing"
             val ok = PollinationsService.pingTest(key)
             prefs.saveSettings(settings.value.copy(
-                pollinationsApiKey  = key,
+                pollinationsApiKey   = key,
                 pollinationsKeyValid = ok
             ))
             _pollinationsKeyStatus.value = if (ok) "valid" else "invalid"
@@ -272,20 +363,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // ── Gallery / Image generation ───────────────────────────────────────────
 
-    /**
-     * Main image generation flow:
-     *  1. Generate phrase + title in EN + player language via Gemini text model.
-     *  2. Try Gemini image model.
-     *  3. On failure pass (success=false, englishPrompt) back to the screen so it can
-     *     run the Pollinations fallback with the 3-model chain.
-     */
     fun generateGalleryImage(
-        character: String,
-        action: String,
-        place: String,
+        characterEn: String,
+        actionEn: String,
+        placeEn: String,
+        characterLocal: String,
+        actionLocal: String,
+        placeLocal: String,
         onComplete: (success: Boolean, englishPrompt: String, phrases: GeminiService.GeminiPhrases?) -> Unit
     ) {
-        Log.d("GALLERIA_AI", "=== generateGalleryImage === char=$character action=$action place=$place")
+        Log.d("GALLERIA_AI", "=== generateGalleryImage === char=$characterEn action=$actionEn place=$placeEn")
         viewModelScope.launch {
             val player = _currentPlayer.value ?: return@launch
             val s      = settings.value
@@ -299,13 +386,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val promptModel = s.modelImagePrompt.ifBlank    { "models/gemini-2.0-flash" }
             val imageModel  = s.modelImageGeneration.ifBlank { "models/imagen-4.0-generate-001" }
 
-            // Step 1 — generate creative phrases
+            // Step 1 — generate creative phrases using English words
             val phrasesResult = gemini.generatePhrase(
                 apiKey    = s.geminiApiKey,
                 model     = promptModel,
-                character = character,
-                action    = action,
-                place     = place,
+                character = characterEn,
+                action    = actionEn,
+                place     = placeEn,
                 language  = player.language
             )
             if (phrasesResult.isFailure) {
@@ -328,36 +415,38 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val imageResult = gemini.generateImage(s.geminiApiKey, imageModel, imagePrompt)
             if (imageResult.isFailure) {
                 Log.w("GALLERIA_AI", "Gemini image failed → handing off to Pollinations")
-                _uiState.value = UiState.Idle          // screen will show its own fallback loader
+                _uiState.value = UiState.Idle
                 onComplete(false, imagePrompt, phrases)
                 return@launch
             }
 
-            // Step 3 — save base64 image and record gallery item
+            // Step 3 — save and record
             val localPath = saveBase64Image(getApplication(), imageResult.getOrThrow(), player.id)
             saveGalleryItem(
-                player     = player,
-                imageUrl   = localPath,
-                phrases    = phrases,
-                character  = character,
-                action     = action,
-                place      = place
+                player         = player,
+                imageUrl       = localPath,
+                phrases        = phrases,
+                characterEn    = characterEn,
+                actionEn       = actionEn,
+                placeEn        = placeEn,
+                characterLocal = characterLocal,
+                actionLocal    = actionLocal,
+                placeLocal     = placeLocal
             )
             _uiState.value = UiState.Idle
             onComplete(true, imagePrompt, phrases)
         }
     }
 
-    /**
-     * Called by the screen after a successful Pollinations download.
-     * Moves the temp cache file to permanent storage and records it in the gallery.
-     */
     fun registerFallbackImage(
         downloadedFile: File,
         phrases: GeminiService.GeminiPhrases,
-        character: String,
-        action: String,
-        place: String
+        characterEn: String,
+        actionEn: String,
+        placeEn: String,
+        characterLocal: String,
+        actionLocal: String,
+        placeLocal: String
     ) {
         val player = _currentPlayer.value ?: return
         Log.d("GALLERIA_AI", "=== registerFallbackImage ===")
@@ -375,12 +464,15 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             saveGalleryItem(
-                player    = player,
-                imageUrl  = permanentFile.absolutePath,
-                phrases   = phrases,
-                character = character,
-                action    = action,
-                place     = place
+                player         = player,
+                imageUrl       = permanentFile.absolutePath,
+                phrases        = phrases,
+                characterEn    = characterEn,
+                actionEn       = actionEn,
+                placeEn        = placeEn,
+                characterLocal = characterLocal,
+                actionLocal    = actionLocal,
+                placeLocal     = placeLocal
             )
             Log.d("GALLERIA_AI", "Fallback item saved to gallery.")
             _uiState.value = UiState.Idle
@@ -391,22 +483,28 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         player: Player,
         imageUrl: String,
         phrases: GeminiService.GeminiPhrases,
-        character: String,
-        action: String,
-        place: String
+        characterEn: String,
+        actionEn: String,
+        placeEn: String,
+        characterLocal: String,
+        actionLocal: String,
+        placeLocal: String
     ) {
         val item = GalleryItem(
-            id            = UUID.randomUUID().toString(),
-            playerId      = player.id,
-            imageUrl      = imageUrl,
-            phraseEn      = phrases.phraseEn,
-            titleEn       = phrases.titleEn,
-            phraseLocal   = phrases.phrasePlayer,
-            titleLocal    = phrases.titlePlayer,
-            wordCharacter = character,
-            wordAction    = action,
-            wordPlace     = place,
-            cost          = 100
+            id                 = UUID.randomUUID().toString(),
+            playerId           = player.id,
+            imageUrl           = imageUrl,
+            phraseEn           = phrases.phraseEn,
+            titleEn            = phrases.titleEn,
+            phraseLocal        = phrases.phrasePlayer,
+            titleLocal         = phrases.titlePlayer,
+            wordCharacter      = characterEn,
+            wordAction         = actionEn,
+            wordPlace          = placeEn,
+            wordCharacterLocal = characterLocal,
+            wordActionLocal    = actionLocal,
+            wordPlaceLocal     = placeLocal,
+            cost               = 100
         )
         prefs.saveGallery(gallery.value + item)
 

@@ -14,7 +14,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -177,49 +176,33 @@ fun GalleryScreen(
             }
         }
 
-        // Bottom bar: create button (left/centre) + settings cog (right)
-        Row(
-            modifier              = Modifier
+        // Bottom bar: create button
+        Column(
+            modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            // Create image button fills remaining space
-            Column(modifier = Modifier.weight(1f)) {
-                if (!canAfford) {
-                    Text(
-                        uiStrings.galleryNeedStars.format(stars),
-                        style     = MaterialTheme.typography.bodySmall,
-                        color     = MedText,
-                        textAlign = TextAlign.Center,
-                        modifier  = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(4.dp))
-                }
-                Button(
-                    onClick  = onCreateImage,
-                    enabled  = canAfford,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape    = RoundedCornerShape(16.dp),
-                    colors   = ButtonDefaults.buttonColors(
-                        containerColor         = ButtonPrimary,
-                        disabledContainerColor = DisabledGray
-                    )
-                ) {
-                    Text(uiStrings.galleryCreateButton, style = MaterialTheme.typography.labelLarge)
-                }
+            if (!canAfford) {
+                Text(
+                    uiStrings.galleryNeedStars.format(stars),
+                    style     = MaterialTheme.typography.bodySmall,
+                    color     = MedText,
+                    textAlign = TextAlign.Center,
+                    modifier  = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(4.dp))
             }
-
-            // Settings cog — bottom-right
-            IconButton(
-                onClick  = onSettings,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(CardBg)
+            Button(
+                onClick  = onCreateImage,
+                enabled  = canAfford,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape    = RoundedCornerShape(16.dp),
+                colors   = ButtonDefaults.buttonColors(
+                    containerColor         = ButtonPrimary,
+                    disabledContainerColor = DisabledGray
+                )
             ) {
-                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = DeepPurple)
+                Text(uiStrings.galleryCreateButton, style = MaterialTheme.typography.labelLarge)
             }
         }
     }

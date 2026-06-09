@@ -54,4 +54,46 @@ class PreferencesManager(private val context: Context) {
             prefs[SETTINGS_KEY] = Json.encodeToString(settings)
         }
     }
+
+    // ── Word translation cache (per language, stored as JSON file) ───────────
+
+    private fun translationFile(language: String): java.io.File {
+        val dir = java.io.File(context.filesDir, "word_translations").also { it.mkdirs() }
+        return java.io.File(dir, "${language.lowercase()}.json")
+    }
+
+    fun loadWordTranslations(language: String): com.galleriaida.data.WordTranslations? {
+        return try {
+            val file = translationFile(language)
+            if (!file.exists()) return null
+            val j    = org.json.JSONObject(file.readText())
+            fun arr(key: String): List<String> {
+                val a = j.getJSONArray(key)
+                return (0 until a.length()).map { a.getString(it) }
+            }
+            com.galleriaida.data.WordTranslations(
+                language   = language,
+                characters = arr("characters"),
+                actions    = arr("actions"),
+                places     = arr("places")
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("PreferencesManager", "loadWordTranslations error: ${e.message}")
+            null
+        }
+    }
+
+    fun saveWordTranslations(translations: com.galleriaida.data.WordTranslations) {
+        try {
+            val j = org.json.JSONObject().apply {
+                put("characters", org.json.JSONArray(translations.characters))
+                put("actions",    org.json.JSONArray(translations.actions))
+                put("places",     org.json.JSONArray(translations.places))
+            }
+            translationFile(translations.language).writeText(j.toString())
+            android.util.Log.d("PreferencesManager", "Word translations saved for ${translations.language}")
+        } catch (e: Exception) {
+            android.util.Log.e("PreferencesManager", "saveWordTranslations error: ${e.message}")
+        }
+    }
 }

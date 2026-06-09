@@ -338,6 +338,64 @@ $inputJson
             Result.failure(e)
         }
     }
+
+    // ── Word list translation ─────────────────────────────────────────────────
+
+    data class TranslatedWordLists(
+        val characters: List<String>,
+        val actions: List<String>,
+        val places: List<String>
+    )
+
+    suspend fun translateWordLists(
+        apiKey: String,
+        model: String,
+        language: String,
+        characters: List<String>,
+        actions: List<String>,
+        places: List<String>
+    ): Result<TranslatedWordLists> = withContext(Dispatchers.IO) {
+        try {
+            val payload = org.json.JSONObject().apply {
+                put("characters", org.json.JSONArray(characters))
+                put("actions",    org.json.JSONArray(actions))
+                put("places",     org.json.JSONArray(places))
+            }
+
+            val prompt = """
+Translate every word/phrase in the following JSON into $language.
+Rules:
+- Keep the same JSON structure with keys "characters", "actions", "places".
+- Each array must have EXACTLY the same number of items as the input.
+- Translate each item at the same index — do not reorder, skip, or merge items.
+- Return ONLY a valid JSON object, no markdown, no explanation.
+
+Input:
+$payload
+            """.trimIndent()
+
+            Log.d("GeminiService", "translateWordLists → model=$model language=$language items=${characters.size}+${actions.size}+${places.size}")
+
+            val response = postGenerateContent(apiKey, model, prompt)
+            val text     = extractText(response)
+            val cleaned  = text.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+            val j        = org.json.JSONObject(cleaned)
+
+            fun parseArray(key: String, fallback: List<String>): List<String> {
+                val arr = j.optJSONArray(key) ?: return fallback
+                return (0 until arr.length()).map { arr.getString(it) }
+            }
+
+            Result.success(TranslatedWordLists(
+                characters = parseArray("characters", characters),
+                actions    = parseArray("actions",    actions),
+                places     = parseArray("places",     places)
+            ))
+        } catch (e: Exception) {
+            Log.e("GeminiService", "translateWordLists error: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 }
 
 data class MathQuestion(

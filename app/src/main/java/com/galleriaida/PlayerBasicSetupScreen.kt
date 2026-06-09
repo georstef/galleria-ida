@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -84,7 +86,8 @@ fun getLanguageOptions(context: android.content.Context): List<LanguageOption?> 
 @Composable
 fun PlayerBasicSetupScreen(
     viewModel: AppViewModel,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val languageOptions = remember { getLanguageOptions(context) }
@@ -101,126 +104,143 @@ fun PlayerBasicSetupScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
             .imePadding()
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 28.dp)
-                .padding(top = 80.dp, bottom = 40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            modifier = Modifier.fillMaxSize()
         ) {
-            Text(
-                text = "🌟 Welcome!",
-                style = MaterialTheme.typography.displayLarge,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                text = "Let's create your profile",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MedText,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(Modifier.height(48.dp))
-
-            var nameTouched by remember { mutableStateOf(false) }
-
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it; nameError = false },
-                label = { Text("Your name", style = MaterialTheme.typography.bodyLarge) },
-                isError = nameError,
-                singleLine = true,
-                modifier = Modifier
+            // Top bar with back arrow
+            Row(
+                modifier          = Modifier
                     .fillMaxWidth()
-                    .onFocusChanged { focusState ->
-                        if (!focusState.isFocused && nameTouched && name.isNotBlank()) {
-                            nameError = viewModel.isNameTaken(name.trim())
-                        }
-                        if (focusState.isFocused) nameTouched = true
-                    },
-                shape = RoundedCornerShape(16.dp),
-                textStyle = MaterialTheme.typography.bodyLarge
-            )
-            if (nameError) {
-                Text(
-                    "This name is already taken",
-                    color = ErrorRed,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-
-            Spacer(Modifier.height(20.dp))
-
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
-                    value = selectedLanguage.displayName,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Language", style = MaterialTheme.typography.bodyLarge) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(),
-                    shape = RoundedCornerShape(16.dp),
-                    textStyle = MaterialTheme.typography.bodyLarge
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    languageOptions.forEach { option ->
-                        if (option == null) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 4.dp),
-                                color = DisabledGray
-                            )
-                        } else {
-                            DropdownMenuItem(
-                                text = {
-                                    Text(option.displayName, style = MaterialTheme.typography.bodyLarge)
-                                },
-                                onClick = {
-                                    selectedLanguage = option
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = DeepPurple)
                 }
             }
 
-            Spacer(Modifier.height(48.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 28.dp)
+                    .padding(top = 24.dp, bottom = 40.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
+            ) {
+                Text(
+                    text = "🌟 Welcome!",
+                    style = MaterialTheme.typography.displayLarge,
+                    textAlign = TextAlign.Center
+                )
 
-            Button(
-                onClick = {
-                    when {
-                        name.isBlank() -> { nameError = true }
-                        viewModel.isNameTaken(name.trim()) -> { nameError = true }
-                        else -> {
-                            viewModel.createPlayerBasic(name, selectedLanguage.code)
-                            onContinue()
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = "Let's create your profile",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MedText,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(48.dp))
+
+                var nameTouched by remember { mutableStateOf(false) }
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it; nameError = false },
+                    label = { Text("Your name", style = MaterialTheme.typography.bodyLarge) },
+                    isError = nameError,
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { focusState ->
+                            if (!focusState.isFocused && nameTouched && name.isNotBlank()) {
+                                nameError = viewModel.isNameTaken(name.trim())
+                            }
+                            if (focusState.isFocused) nameTouched = true
+                        },
+                    shape = RoundedCornerShape(16.dp),
+                    textStyle = MaterialTheme.typography.bodyLarge
+                )
+                if (nameError) {
+                    Text(
+                        "This name is already taken",
+                        color = ErrorRed,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                Spacer(Modifier.height(20.dp))
+
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedLanguage.displayName,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Language", style = MaterialTheme.typography.bodyLarge) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        shape = RoundedCornerShape(16.dp),
+                        textStyle = MaterialTheme.typography.bodyLarge
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        languageOptions.forEach { option ->
+                            if (option == null) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 4.dp),
+                                    color = DisabledGray
+                                )
+                            } else {
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(option.displayName, style = MaterialTheme.typography.bodyLarge)
+                                    },
+                                    onClick = {
+                                        selectedLanguage = option
+                                        expanded = false
+                                    }
+                                )
+                            }
                         }
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
-            ) {
-                Text("Continue ➡️", style = MaterialTheme.typography.labelLarge)
+                }
+
+                Spacer(Modifier.height(48.dp))
+
+                Button(
+                    onClick = {
+                        when {
+                            name.isBlank() -> { nameError = true }
+                            viewModel.isNameTaken(name.trim()) -> { nameError = true }
+                            else -> {
+                                viewModel.createPlayerBasic(name, selectedLanguage.code)
+                                onContinue()
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
+                ) {
+                    Text("Continue ➡️", style = MaterialTheme.typography.labelLarge)
+                }
             }
-        }
+        } // end outer Column
     }
 }

@@ -24,10 +24,14 @@ data class GalleryItem(
     // Player-language display phrase + short title
     val phraseLocal: String,
     val titleLocal: String,
-    // The 3 words chosen by the player
+    // The 3 words in English (used for API calls)
     val wordCharacter: String,
     val wordAction: String,
     val wordPlace: String,
+    // The 3 words in the player's language (for display)
+    val wordCharacterLocal: String = "",
+    val wordActionLocal: String = "",
+    val wordPlaceLocal: String = "",
     val cost: Int = 100
 )
 
@@ -43,9 +47,9 @@ data class AppSettings(
     // Pollinations
     val pollinationsApiKey: String = "",
     val pollinationsKeyValid: Boolean = false,
-    val pollinationsModel1: String = "kontext",
-    val pollinationsModel2: String = "nova-canvas",
-    val pollinationsModel3: String = "flux"
+    val pollinationsModel1: String = "flux",
+    val pollinationsModel2: String = "turbo",
+    val pollinationsModel3: String = "gpt-image-1"
 )
 
 data class GeminiModel(
@@ -59,14 +63,23 @@ data class GeminiModel(
     val shortName: String get() = name.removePrefix("models/")
 }
 
+// Translated word lists for one language
+data class WordTranslations(
+    val language: String,
+    val characters: List<String>,
+    val actions: List<String>,
+    val places: List<String>
+)
+
 // ── Pollinations models available for selection ──────────────────────────────
-// ADD / REMOVE model strings here as Pollinations updates their API.
 val POLLINATIONS_MODELS = listOf(
-    "kontext",
-    "nova-canvas",
     "flux",
-    "klein",
-    "gptimage-large",
-    "gptimage",
-    "zimage"
+    "flux-realism",
+    "flux-cablyai",
+    "flux-anime",
+    "flux-3d",
+    "any-dark",
+    "flux-pro",
+    "turbo",
+    "gpt-image-1"
 )

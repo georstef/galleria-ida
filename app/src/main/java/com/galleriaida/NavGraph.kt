@@ -39,7 +39,8 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
         }
         composable(Routes.PLAYER_BASIC_SETUP) {
             PlayerBasicSetupScreen(
-                viewModel = viewModel,
+                viewModel  = viewModel,
+                onBack     = { navController.popBackStack() },
                 onContinue = {
                     navController.navigate(Routes.PLAYER_PROFILE) {
                         popUpTo(Routes.PLAYER_SELECTION)

@@ -42,7 +42,10 @@ fun PlayerProfileScreen(
         var nameError by remember { mutableStateOf("") }
         var nameTouched by remember { mutableStateOf(false) }
         var schoolClass by remember {
-            mutableStateOf(player?.schoolClass?.takeIf { it != "—" } ?: "")
+            mutableStateOf(
+                (player?.schoolClass?.takeIf { it != "—" } ?: "")
+                    .removePrefix("Class ").trim()
+            )
         }
         var schoolYearPosition by remember {
             mutableStateOf(player?.schoolYearPosition ?: "")
@@ -65,7 +68,7 @@ fun PlayerProfileScreen(
             Pair(uiStrings.profileYearEnd, "end")
         )
         val selectedYearLabel = yearOptions.firstOrNull { it.second == schoolYearPosition }?.first ?: ""
-        val classOptions = (1..12).map { "Class $it" }
+        val classOptions = (1..6).map { it.toString() }
         val initial = player?.name?.firstOrNull()?.uppercase() ?: "?"
 
         Box(
