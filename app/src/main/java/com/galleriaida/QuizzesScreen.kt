@@ -23,18 +23,18 @@ import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
 
 @Composable
-fun PlayerHomeScreen(
+fun QuizzesScreen(
     viewModel: AppViewModel,
-    onQuizzes: () -> Unit,
-    onGallery: () -> Unit,
+    onBack: () -> Unit,
+    onStartQuiz: () -> Unit,
+    onHistory: () -> Unit,
     onSettings: () -> Unit,
-    onEditProfile: () -> Unit,
-    onBack: () -> Unit
+    onEditProfile: () -> Unit
 ) {
-    val player by viewModel.currentPlayer.collectAsState()
+    val player    by viewModel.currentPlayer.collectAsState()
     val uiStrings by viewModel.uiStrings.collectAsState()
-    val translating by viewModel.translating.collectAsState()
-    val initial = player?.name?.firstOrNull()?.uppercase() ?: "?"
+    val stars     = player?.stars ?: 0
+    val initial   = player?.name?.firstOrNull()?.uppercase() ?: "?"
 
     Box(
         modifier = Modifier
@@ -43,10 +43,9 @@ fun PlayerHomeScreen(
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Top bar
+        Column(modifier = Modifier.fillMaxSize()) {
+
+            // ── Top bar ──────────────────────────────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -69,13 +68,13 @@ fun PlayerHomeScreen(
                     Text("⭐", style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = "${player?.stars ?: 0}",
+                        text  = "$stars",
                         style = MaterialTheme.typography.titleMedium,
                         color = DeepPurple
                     )
                 }
 
-                // Avatar circle → taps to edit profile
+                // Player avatar → edit profile
                 Box(
                     modifier = Modifier
                         .size(44.dp)
@@ -85,15 +84,15 @@ fun PlayerHomeScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = initial,
-                        fontSize = 20.sp,
+                        text       = initial,
+                        fontSize   = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = DeepPurple
+                        color      = DeepPurple
                     )
                 }
             }
 
-            // Main content
+            // ── Main content ─────────────────────────────────────────────
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -103,47 +102,38 @@ fun PlayerHomeScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = uiStrings.homeGreeting.format(player?.name ?: ""),
-                    style = MaterialTheme.typography.displayLarge,
+                    text      = uiStrings.quizzesTitle,
+                    style     = MaterialTheme.typography.displayLarge,
                     textAlign = TextAlign.Center
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                Text(
-                    text = uiStrings.homeSubtitle,
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    color = MedText
                 )
 
                 Spacer(Modifier.height(56.dp))
 
                 Button(
-                    onClick = onQuizzes,
+                    onClick  = onStartQuiz,
                     modifier = Modifier.fillMaxWidth().height(72.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
+                    shape    = RoundedCornerShape(24.dp),
+                    colors   = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
                 ) {
-                    Text(uiStrings.homeQuizzes, style = MaterialTheme.typography.labelLarge)
+                    Text(uiStrings.quizzesStartQuiz, style = MaterialTheme.typography.labelLarge)
                 }
 
                 Spacer(Modifier.height(20.dp))
 
                 Button(
-                    onClick = onGallery,
+                    onClick  = onHistory,
                     modifier = Modifier.fillMaxWidth().height(72.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = ButtonSecondary)
+                    shape    = RoundedCornerShape(24.dp),
+                    colors   = ButtonDefaults.buttonColors(containerColor = ButtonSecondary)
                 ) {
-                    Text(uiStrings.homeMyGallery, style = MaterialTheme.typography.labelLarge)
+                    Text(uiStrings.quizzesHistory, style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
 
-        // Settings cog — bottom right, floating
+        // ── Settings cog — bottom right, floating ────────────────────────
         IconButton(
-            onClick = onSettings,
+            onClick  = onSettings,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(20.dp)
@@ -154,7 +144,7 @@ fun PlayerHomeScreen(
             Icon(
                 Icons.Default.Settings,
                 contentDescription = "Settings",
-                tint = DeepPurple,
+                tint     = DeepPurple,
                 modifier = Modifier.size(28.dp)
             )
         }

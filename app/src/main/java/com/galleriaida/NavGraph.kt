@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import com.galleriaida.ui.screens.GameScreen
 import com.galleriaida.ui.screens.GalleryScreen
 import com.galleriaida.ui.screens.ImageCreationScreen
+import com.galleriaida.ui.screens.QuizzesScreen
 import com.galleriaida.ui.screens.PlayerSelectionScreen
 import com.galleriaida.ui.screens.PlayerBasicSetupScreen
 import com.galleriaida.ui.screens.PlayerProfileScreen
@@ -21,6 +22,7 @@ object Routes {
     const val PLAYER_PROFILE = "player_profile"
     const val PLAYER_LOADING = "player_loading"
     const val PLAYER_HOME = "player_home"
+    const val QUIZZES = "quizzes"
     const val GAME = "game"
     const val GALLERY = "gallery"
     const val IMAGE_CREATION = "image_creation"
@@ -73,11 +75,21 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
         composable(Routes.PLAYER_HOME) {
             PlayerHomeScreen(
                 viewModel = viewModel,
-                onStartLesson = { navController.navigate(Routes.GAME) },
+                onQuizzes = { navController.navigate(Routes.QUIZZES) },
                 onGallery = { navController.navigate(Routes.GALLERY) },
                 onSettings = { navController.navigate(Routes.SETTINGS) },
                 onEditProfile = { navController.navigate(Routes.PLAYER_PROFILE) },
                 onBack = { navController.navigate(Routes.PLAYER_SELECTION) { popUpTo(0) } }
+            )
+        }
+        composable(Routes.QUIZZES) {
+            QuizzesScreen(
+                viewModel     = viewModel,
+                onBack        = { navController.popBackStack() },
+                onStartQuiz   = { navController.navigate(Routes.GAME) },
+                onHistory     = { /* TODO */ },
+                onSettings    = { navController.navigate(Routes.SETTINGS) },
+                onEditProfile = { navController.navigate(Routes.PLAYER_PROFILE) }
             )
         }
         composable(Routes.GAME) {

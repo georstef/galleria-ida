@@ -12,8 +12,13 @@ data class UiStrings(
     // ── PlayerHomeScreen ────────────────────────────────────────────────────
     val homeGreeting: String = "Hi, %s! 👋",          // %s = player name
     val homeSubtitle: String = "What do you want to do?",
-    val homeStartLesson: String = "📚  Start Lesson",
+    val homeQuizzes: String = "📝  Quizzes",
     val homeMyGallery: String = "🖼️  My Gallery",
+
+    // ── QuizzesScreen ────────────────────────────────────────────────────
+    val quizzesTitle: String = "Quizzes 📝",
+    val quizzesStartQuiz: String = "Start Quiz 🚀",
+    val quizzesHistory: String = "History 📖",
 
     // ── PlayerProfileScreen ──────────────────────────────────────────────
     val profileTitle: String = "My Profile",
