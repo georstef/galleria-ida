@@ -163,10 +163,10 @@ fun GalleryScreen(
                     }
                 } else {
                     LazyVerticalGrid(
-                        columns             = GridCells.Fixed(2),
-                        modifier            = Modifier.weight(1f).padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement   = Arrangement.spacedBy(12.dp)
+                        columns             = GridCells.Fixed(3),
+                        modifier            = Modifier.weight(1f).padding(horizontal = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement   = Arrangement.spacedBy(8.dp)
                     ) {
                         items(playerGallery) { item ->
                             GalleryCard(item = item, onClick = { fullscreenItem = item })
@@ -218,10 +218,10 @@ fun GalleryCard(item: GalleryItem, onClick: () -> Unit) {
     }
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(CardBg)
             .clickable { onClick() }
-            .padding(8.dp)
+            .padding(5.dp)
     ) {
         AsyncImage(
             model              = imageModel,
@@ -230,13 +230,12 @@ fun GalleryCard(item: GalleryItem, onClick: () -> Unit) {
             modifier           = Modifier
                 .fillMaxWidth()
                 .aspectRatio(768f / 1200f)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(8.dp))
         )
-        Spacer(Modifier.height(6.dp))
-        // Player-language title in small font
+        Spacer(Modifier.height(4.dp))
         Text(
             text       = item.titleLocal.ifBlank { item.titleEn },
-            style      = MaterialTheme.typography.bodySmall,
+            fontSize   = 9.sp,
             color      = DeepPurple,
             maxLines   = 2,
             overflow   = TextOverflow.Ellipsis,

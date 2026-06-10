@@ -21,11 +21,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.galleriaida.R
-import com.galleriaida.network.PollinationsService
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
 import com.galleriaida.viewmodel.UiState
-import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 data class WordPool(
@@ -63,13 +61,19 @@ fun ImageCreationScreen(
     onImageCreated: () -> Unit
 ) {
     val context          = LocalContext.current
-    val scope            = rememberCoroutineScope()
     val uiState          by viewModel.uiState.collectAsState()
     val player           by viewModel.currentPlayer.collectAsState()
-    val settings         by viewModel.settings.collectAsState()
     val uiStrings        by viewModel.uiStrings.collectAsState()
     val wordTranslations by viewModel.wordTranslations.collectAsState()
-    val translationError by viewModel.wordTranslationError.collectAsState()
+
+    // Fallback state lives in the ViewModel — safe to observe from any thread
+    val isFallbackLoading    by viewModel.isFallbackLoading.collectAsState()
+    val fallbackModelMessage by viewModel.fallbackModelMessage.collectAsState()
+
+    // One-shot navigation event from the ViewModel
+    LaunchedEffect(Unit) {
+        viewModel.navigateToGallery.collect { onImageCreated() }
+    }
 
     // Load full English word pool once
     val wordPool = remember { loadWordPool(context) }
@@ -137,10 +141,8 @@ fun ImageCreationScreen(
     val stars       = player?.stars ?: 0
     val canAfford   = (stars >= 100) || (player?.name == "George S.")
 
-    var isFallbackLoading    by remember { mutableStateOf(false) }
-    var fallbackModelMessage by remember { mutableStateOf("") }
-    val isLoading            = uiState is UiState.Loading || isFallbackLoading
-    val errorMessage         = (uiState as? UiState.Error)?.message
+    val isLoading    = uiState is UiState.Loading || isFallbackLoading
+    val errorMessage = (uiState as? UiState.Error)?.message
 
     Box(
         modifier = Modifier
@@ -260,25 +262,6 @@ fun ImageCreationScreen(
 
                     Spacer(Modifier.height(32.dp))
 
-                    if (allSelected) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(LemonYellow)
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                "✨ ${shownCharactersLocal[selectedCharIdx!!]} + ${shownActionsLocal[selectedActionIdx!!]} + ${shownPlacesLocal[selectedPlaceIdx!!]}",
-                                style     = MaterialTheme.typography.titleMedium,
-                                color     = DeepPurple,
-                                textAlign = TextAlign.Center,
-                                modifier  = Modifier.fillMaxWidth()
-                            )
-                        }
-                        Spacer(Modifier.height(20.dp))
-                    }
-
                     if (!canAfford) {
                         Text(
                             uiStrings.imageNeedStars.format(stars),
@@ -306,63 +289,7 @@ fun ImageCreationScreen(
                                 placeEn        = placeEn,
                                 characterLocal = charLocal,
                                 actionLocal    = actLocal,
-                                placeLocal     = plcLocal,
-                                onComplete     = { success, exactEnglishPrompt, phrases ->
-
-                                    if (success) {
-                                        Log.d("GALLERIA_AI", "Gemini handled image directly.")
-                                        onImageCreated()
-                                        return@generateGalleryImage
-                                    }
-
-                                    if (phrases == null) {
-                                        Log.e("GALLERIA_AI", "No phrases for fallback, aborting.")
-                                        return@generateGalleryImage
-                                    }
-
-                                    scope.launch {
-                                        val s      = settings
-                                        val apiKey = s.pollinationsApiKey
-                                        val m1     = s.pollinationsModel1.ifBlank { "flux" }
-                                        val m2     = s.pollinationsModel2.ifBlank { "turbo" }
-                                        val m3     = s.pollinationsModel3.ifBlank { "gpt-image-1" }
-
-                                        isFallbackLoading    = true
-                                        fallbackModelMessage = "Trying backup engine ($m1)…"
-
-                                        val result = PollinationsService.generateImageWithFallbacks(
-                                            context       = context,
-                                            englishPrompt = exactEnglishPrompt,
-                                            model1        = m1,
-                                            model2        = m2,
-                                            model3        = m3,
-                                            apiKey        = apiKey,
-                                            onModelSwitch = { next ->
-                                                fallbackModelMessage = "Trying backup engine ($next)…"
-                                            }
-                                        )
-
-                                        isFallbackLoading = false
-
-                                        if (result != null) {
-                                            val (file, usedModel) = result
-                                            Log.d("GALLERIA_AI", "Pollinations success via model=$usedModel")
-                                            viewModel.registerFallbackImage(
-                                                downloadedFile = file,
-                                                phrases        = phrases,
-                                                characterEn    = charEn,
-                                                actionEn       = actionEn,
-                                                placeEn        = placeEn,
-                                                characterLocal = charLocal,
-                                                actionLocal    = actLocal,
-                                                placeLocal     = plcLocal
-                                            )
-                                            onImageCreated()
-                                        } else {
-                                            Log.e("GALLERIA_AI", "All Pollinations models failed.")
-                                        }
-                                    }
-                                }
+                                placeLocal     = plcLocal
                             )
                         },
                         enabled = allSelected && canAfford,

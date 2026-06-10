@@ -14,8 +14,10 @@ import com.galleriaida.network.GeminiService
 import com.galleriaida.network.MathQuestion
 import com.galleriaida.network.PollinationsService
 import com.galleriaida.storage.PreferencesManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,6 +64,15 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _pollinationsKeyStatus = MutableStateFlow<String?>(null)
     val pollinationsKeyStatus: StateFlow<String?> = _pollinationsKeyStatus.asStateFlow()
+
+    // ── Pollinations fallback state ──────────────────────────────────────────
+    // True while the Pollinations network call is in progress
+    private val _isFallbackLoading = MutableStateFlow(false)
+    val isFallbackLoading: StateFlow<Boolean> = _isFallbackLoading.asStateFlow()
+
+    // Human-readable status message updated as models are tried
+    private val _fallbackModelMessage = MutableStateFlow("")
+    val fallbackModelMessage: StateFlow<String> = _fallbackModelMessage.asStateFlow()
 
     private val _playersLoaded = MutableStateFlow(false)
     val playersLoaded: StateFlow<Boolean> = _playersLoaded.asStateFlow()
@@ -363,28 +374,32 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // ── Gallery / Image generation ───────────────────────────────────────────
 
+    // Emits a one-shot signal when the screen should navigate away after success.
+    // Using Channel as a single-consumer event bus (not StateFlow, to avoid re-delivery).
+    private val _navigateToGallery = kotlinx.coroutines.channels.Channel<Unit>(kotlinx.coroutines.channels.Channel.CONFLATED)
+    val navigateToGallery: kotlinx.coroutines.flow.Flow<Unit> = _navigateToGallery.receiveAsFlow()
+
     fun generateGalleryImage(
         characterEn: String,
         actionEn: String,
         placeEn: String,
         characterLocal: String,
         actionLocal: String,
-        placeLocal: String,
-        onComplete: (success: Boolean, englishPrompt: String, phrases: GeminiService.GeminiPhrases?) -> Unit
+        placeLocal: String
     ) {
         Log.d("GALLERIA_AI", "=== generateGalleryImage === char=$characterEn action=$actionEn place=$placeEn")
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val player = _currentPlayer.value ?: return@launch
             val s      = settings.value
             if (s.geminiApiKey.isBlank() || (player.stars < 100 && player.name != "George S.")) {
-                onComplete(false, "", null)
+                _uiState.value = UiState.Error("Not enough stars or API key missing.")
                 return@launch
             }
 
             _uiState.value = UiState.Loading
 
-            val promptModel = s.modelImagePrompt.ifBlank    { "models/gemini-2.0-flash" }
-            val imageModel  = s.modelImageGeneration.ifBlank { "models/imagen-4.0-generate-001" }
+            val promptModel = s.modelImagePrompt
+            val imageModel  = s.modelImageGeneration
 
             // Step 1 — generate creative phrases using English words
             val phrasesResult = gemini.generatePhrase(
@@ -397,7 +412,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             )
             if (phrasesResult.isFailure) {
                 _uiState.value = UiState.Error("Could not generate phrase. Try again.")
-                onComplete(false, "", null)
                 return@launch
             }
 
@@ -413,28 +427,67 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
             // Step 2 — try Gemini image model
             val imageResult = gemini.generateImage(s.geminiApiKey, imageModel, imagePrompt)
-            if (imageResult.isFailure) {
-                Log.w("GALLERIA_AI", "Gemini image failed → handing off to Pollinations")
+            if (imageResult.isSuccess) {
+                val localPath = saveBase64Image(getApplication(), imageResult.getOrThrow(), player.id)
+                saveGalleryItem(
+                    player         = player,
+                    imageUrl       = localPath,
+                    phrases        = phrases,
+                    characterEn    = characterEn,
+                    actionEn       = actionEn,
+                    placeEn        = placeEn,
+                    characterLocal = characterLocal,
+                    actionLocal    = actionLocal,
+                    placeLocal     = placeLocal
+                )
                 _uiState.value = UiState.Idle
-                onComplete(false, imagePrompt, phrases)
+                Log.d("GALLERIA_AI", "Gemini handled image directly.")
+                _navigateToGallery.trySend(Unit)
                 return@launch
             }
 
-            // Step 3 — save and record
-            val localPath = saveBase64Image(getApplication(), imageResult.getOrThrow(), player.id)
-            saveGalleryItem(
-                player         = player,
-                imageUrl       = localPath,
-                phrases        = phrases,
-                characterEn    = characterEn,
-                actionEn       = actionEn,
-                placeEn        = placeEn,
-                characterLocal = characterLocal,
-                actionLocal    = actionLocal,
-                placeLocal     = placeLocal
+            // Step 3 — Gemini failed, try Pollinations in the same coroutine
+            Log.w("GALLERIA_AI", "Gemini image failed → trying Pollinations")
+            val m1 = s.pollinationsModel1
+            val m2 = s.pollinationsModel2
+            val m3 = s.pollinationsModel3
+            Log.d("GALLERIA_AI", "=== Pollinations fallback models=$m1/$m2/$m3 ===")
+
+            _isFallbackLoading.value    = true
+            _fallbackModelMessage.value = "Trying backup engine ($m1)…"
+
+            val result = PollinationsService.generateImageWithFallbacks(
+                context       = getApplication(),
+                englishPrompt = imagePrompt,
+                model1        = m1,
+                model2        = m2,
+                model3        = m3,
+                apiKey        = s.pollinationsApiKey,
+                onModelSwitch = { next ->
+                    _fallbackModelMessage.value = "Trying backup engine ($next)…"
+                }
             )
-            _uiState.value = UiState.Idle
-            onComplete(true, imagePrompt, phrases)
+
+            _isFallbackLoading.value = false
+
+            if (result != null) {
+                val (file, usedModel) = result
+                Log.d("GALLERIA_AI", "Pollinations success via model=$usedModel")
+                registerFallbackImage(
+                    downloadedFile = file,
+                    phrases        = phrases,
+                    characterEn    = characterEn,
+                    actionEn       = actionEn,
+                    placeEn        = placeEn,
+                    characterLocal = characterLocal,
+                    actionLocal    = actionLocal,
+                    placeLocal     = placeLocal
+                )
+                _navigateToGallery.trySend(Unit)
+            } else {
+                Log.e("GALLERIA_AI", "All Pollinations models failed.")
+                _uiState.value = UiState.Error("Image generation failed. Please try again.")
+            }
         }
     }
 
