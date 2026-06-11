@@ -1,6 +1,8 @@
 package com.galleriaida.network
 
+import android.content.Context
 import android.util.Log
+import com.galleriaida.data.QuizQuestion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -40,7 +42,7 @@ class GeminiService {
         try {
             okHttpClient.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
-                    val body = response.body?.string() ?: ""
+                    val body  = response.body?.string() ?: ""
                     val valid = JSONObject(body).has("models")
                     Log.d("GeminiService", "Validation: $valid")
                     return@withContext Pair(valid, if (valid) body else "")
@@ -60,13 +62,13 @@ class GeminiService {
     fun selectBestModels(modelsJson: String): Map<String, String> {
         val result = mutableMapOf<String, String>()
         try {
-            val arr = JSONObject(modelsJson).getJSONArray("models")
-            val textModels = mutableListOf<String>()
+            val arr         = JSONObject(modelsJson).getJSONArray("models")
+            val textModels  = mutableListOf<String>()
             val imageModels = mutableListOf<String>()
 
             for (i in 0 until arr.length()) {
-                val obj = arr.getJSONObject(i)
-                val name = obj.getString("name")
+                val obj     = arr.getJSONObject(i)
+                val name    = obj.getString("name")
                 val methods = obj.getJSONArray("supportedGenerationMethods")
                     .let { m -> (0 until m.length()).map { m.getString(it) } }
                 if ("generateContent" in methods) textModels.add(name)
@@ -93,9 +95,9 @@ class GeminiService {
                 ?: imageModels.filterNot { "preview" in it.lowercase() }.firstOrNull()
                 ?: imageModels.firstOrNull() ?: ""
 
-            result["questions"] = bestText
-            result["translation"] = bestText
-            result["imagePrompt"] = bestText
+            result["questions"]       = bestText
+            result["translation"]     = bestText
+            result["imagePrompt"]     = bestText
             result["imageGeneration"] = bestImage
 
             Log.d("GeminiService", "Auto-selected text: $bestText, image: $bestImage")
@@ -105,7 +107,7 @@ class GeminiService {
         return result
     }
 
-    // ── Text generation ──────────────────────────────────────────────────────
+    // ── Text generation (internal) ───────────────────────────────────────────
 
     private fun postGenerateContent(apiKey: String, model: String, prompt: String): String {
         val generationConfig = JSONObject().apply { put("responseMimeType", "application/json") }
@@ -141,39 +143,91 @@ class GeminiService {
             .getJSONObject(0)
             .getString("text")
 
-    // ── Math questions ───────────────────────────────────────────────────────
+    // ── Quiz questions ───────────────────────────────────────────────────────
 
-    suspend fun generateMathQuestions(
+    companion object {
+        private const val QUIZ_QUESTION_COUNT = 10
+
+        // Maps the integer stored in Player.schoolYearPosition to the
+        // English phrase the prompt expects
+        fun schoolYearPositionLabel(position: String): String = when (position.trim()) {
+            "1"  -> "beginning of the school year"
+            "2"  -> "middle of the school year"
+            "3"  -> "end of the school year"
+            else -> "middle of the school year"   // safe fallback
+        }
+    }
+
+    /**
+     * Loads quiz_prompt.txt from assets, substitutes all placeholders,
+     * sends to Gemini, and parses the returned JSON array into [QuizQuestion]s.
+     */
+    suspend fun generateQuizQuestions(
+        context: Context,
         apiKey: String,
         model: String,
         language: String,
-        count: Int = 10
-    ): Result<List<MathQuestion>> = withContext(Dispatchers.IO) {
+        grade: String,
+        level: String
+    ): Result<List<QuizQuestion>> = withContext(Dispatchers.IO) {
         try {
-            val prompt = """
-                Generate $count math questions for children aged 6-12, in $language language.
-                Mix of addition, subtraction, and simple multiplication.
-                Return ONLY a JSON array, no markdown, in this exact format:
-                [{"question":"2 + 3 = ?","answer":5,"difficulty":1},...]
-                difficulty: 1=easy(1 star), 2=medium(2 stars), 3=hard(3 stars)
-            """.trimIndent()
+            // Load prompt template from assets
+            val template = context.assets.open("quiz_prompt.txt")
+                .bufferedReader()
+                .use { it.readText() }
+
+            // Substitute all placeholders
+            val prompt = template
+                .replace("{{player_language}}",    language)
+                .replace("{{selection}}",          QUIZ_QUESTION_COUNT.toString())
+                .replace("{{school_year_position}}", schoolYearPositionLabel(level))
+                .replace("{{player_class}}",       grade)
+
+            Log.d("GeminiService", "generateQuizQuestions → model=$model lang=$language grade=$grade level=$level")
 
             val response = postGenerateContent(apiKey, model, prompt)
-            val text = extractText(response)
-            val cleaned = text.trim().removePrefix("```json").removeSuffix("```").trim()
+            val text     = extractText(response)
+
+            // Strip any accidental markdown fences the model may have added
+            val cleaned = text.trim()
+                .removePrefix("```json")
+                .removePrefix("```")
+                .removeSuffix("```")
+                .trim()
+
             val jsonArray = JSONArray(cleaned)
-            val questions = mutableListOf<MathQuestion>()
+            val questions = mutableListOf<QuizQuestion>()
+
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
-                questions.add(MathQuestion(
-                    question = obj.getString("question"),
-                    answer = obj.getInt("answer"),
-                    difficulty = obj.getInt("difficulty")
-                ))
+
+                // options — only present for multiple_choice
+                val optionsArray = obj.optJSONArray("options")
+                val options: List<String>? = if (optionsArray != null) {
+                    (0 until optionsArray.length()).map { optionsArray.getString(it) }
+                } else {
+                    null
+                }
+
+                questions.add(
+                    QuizQuestion(
+                        id          = obj.optString("id", i.toString()),
+                        subject     = obj.optString("subject", ""),
+                        category    = obj.optString("category", ""),
+                        level       = obj.optInt("level", 1),
+                        type        = obj.optString("type", "text"),
+                        instruction = obj.optString("instruction", ""),
+                        question    = obj.getString("question"),
+                        options     = options,
+                        answer      = obj.getString("answer")
+                    )
+                )
             }
+
+            Log.d("GeminiService", "generateQuizQuestions → parsed ${questions.size} questions")
             Result.success(questions)
         } catch (e: Exception) {
-            Log.e("GeminiService", "generateMathQuestions error: ${e.message}")
+            Log.e("GeminiService", "generateQuizQuestions error: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -210,13 +264,13 @@ Write a short, imaginative, child-friendly descriptive paragraph that naturally 
             Log.d("GALLERIA_AI", "Model: $model  Language: $language")
 
             val response = postGenerateContent(apiKey, model, prompt)
-            val text = extractText(response)
-            val cleaned = text.trim().removePrefix("```json").removeSuffix("```").trim()
+            val text     = extractText(response)
+            val cleaned  = text.trim().removePrefix("```json").removeSuffix("```").trim()
 
             val j = JSONObject(cleaned)
             val result = GeminiPhrases(
-                phraseEn    = j.getString("phrase_en"),
-                titleEn     = j.getString("title_en"),
+                phraseEn     = j.getString("phrase_en"),
+                titleEn      = j.getString("title_en"),
                 phrasePlayer = j.getString("phrase_local"),
                 titlePlayer  = j.getString("title_local")
             )
@@ -326,10 +380,10 @@ $inputJson
             """.trimIndent()
 
             val response = postGenerateContent(apiKey, model, prompt)
-            val text = extractText(response)
-            val cleaned = text.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
-            val j = org.json.JSONObject(cleaned)
-            val result = mutableMapOf<String, String>()
+            val text     = extractText(response)
+            val cleaned  = text.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+            val j        = org.json.JSONObject(cleaned)
+            val result   = mutableMapOf<String, String>()
             keys.keys.forEach { key -> if (j.has(key)) result[key] = j.getString(key) }
             Log.d("GeminiService", "translateKeys success: ${result.size} keys")
             Result.success(result)
@@ -397,9 +451,3 @@ $payload
         }
     }
 }
-
-data class MathQuestion(
-    val question: String,
-    val answer: Int,
-    val difficulty: Int
-)

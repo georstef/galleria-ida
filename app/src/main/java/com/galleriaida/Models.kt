@@ -71,7 +71,51 @@ data class WordTranslations(
     val places: List<String>
 )
 
-// ── Pollinations models available for selection ──────────────────────────────
+// ── Quiz ─────────────────────────────────────────────────────────────────────
+
+// A single question as returned by the AI and held in memory during the quiz
+data class QuizQuestion(
+    val id: String,
+    val subject: String,
+    val category: String,
+    val level: Int,                  // 1 / 2 / 3 — also used as star value if correct
+    val type: String,                // "multiple_choice" | "text" | "true_false"
+    val instruction: String,
+    val question: String,
+    val options: List<String>?,      // only populated for multiple_choice
+    val answer: String
+)
+
+// One answer record stored inside a completed Quiz
+@Serializable
+data class QuizAnswer(
+    val id: String,
+    val subject: String,
+    val category: String,
+    val level: Int,
+    val type: String,
+    val instruction: String,
+    val question: String,
+    val options: List<String>? = null,
+    val correctAnswer: String,
+    val playerAnswer: String,
+    val wasCorrect: Boolean
+)
+
+// A fully submitted quiz persisted to storage
+@Serializable
+data class Quiz(
+    val id: String,
+    val playerId: String,
+    val startedAt: Long,
+    val submittedAt: Long,
+    val totalQuestions: Int,
+    val correctAnswers: Int,
+    val starsEarned: Int,
+    val answers: List<QuizAnswer>
+)
+
+// ── Pollinations models available for selection ───────────────────────────────
 val POLLINATIONS_MODELS = listOf(
     "kontext",
     "nova-canvas",

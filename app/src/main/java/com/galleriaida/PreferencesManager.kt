@@ -9,6 +9,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.galleriaida.data.AppSettings
 import com.galleriaida.data.GalleryItem
 import com.galleriaida.data.Player
+import com.galleriaida.data.Quiz
+import com.galleriaida.data.WordTranslations
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
@@ -18,23 +20,16 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "ki
 
 class PreferencesManager(private val context: Context) {
 
-    private val PLAYERS_KEY = stringPreferencesKey("players")
-    private val GALLERY_KEY = stringPreferencesKey("gallery")
+    private val PLAYERS_KEY  = stringPreferencesKey("players")
+    private val GALLERY_KEY  = stringPreferencesKey("gallery")
     private val SETTINGS_KEY = stringPreferencesKey("settings")
+    private val QUIZZES_KEY  = stringPreferencesKey("quizzes")
+
+    // ── Players ──────────────────────────────────────────────────────────────
 
     val playersFlow: Flow<List<Player>> = context.dataStore.data.map { prefs ->
         val json = prefs[PLAYERS_KEY] ?: "[]"
         runCatching { Json.decodeFromString<List<Player>>(json) }.getOrDefault(emptyList())
-    }
-
-    val galleryFlow: Flow<List<GalleryItem>> = context.dataStore.data.map { prefs ->
-        val json = prefs[GALLERY_KEY] ?: "[]"
-        runCatching { Json.decodeFromString<List<GalleryItem>>(json) }.getOrDefault(emptyList())
-    }
-
-    val settingsFlow: Flow<AppSettings> = context.dataStore.data.map { prefs ->
-        val json = prefs[SETTINGS_KEY] ?: "{}"
-        runCatching { Json.decodeFromString<AppSettings>(json) }.getOrDefault(AppSettings())
     }
 
     suspend fun savePlayers(players: List<Player>) {
@@ -43,15 +38,42 @@ class PreferencesManager(private val context: Context) {
         }
     }
 
+    // ── Gallery ──────────────────────────────────────────────────────────────
+
+    val galleryFlow: Flow<List<GalleryItem>> = context.dataStore.data.map { prefs ->
+        val json = prefs[GALLERY_KEY] ?: "[]"
+        runCatching { Json.decodeFromString<List<GalleryItem>>(json) }.getOrDefault(emptyList())
+    }
+
     suspend fun saveGallery(items: List<GalleryItem>) {
         context.dataStore.edit { prefs ->
             prefs[GALLERY_KEY] = Json.encodeToString(items)
         }
     }
 
+    // ── Settings ─────────────────────────────────────────────────────────────
+
+    val settingsFlow: Flow<AppSettings> = context.dataStore.data.map { prefs ->
+        val json = prefs[SETTINGS_KEY] ?: "{}"
+        runCatching { Json.decodeFromString<AppSettings>(json) }.getOrDefault(AppSettings())
+    }
+
     suspend fun saveSettings(settings: AppSettings) {
         context.dataStore.edit { prefs ->
             prefs[SETTINGS_KEY] = Json.encodeToString(settings)
+        }
+    }
+
+    // ── Quizzes ──────────────────────────────────────────────────────────────
+
+    val quizzesFlow: Flow<List<Quiz>> = context.dataStore.data.map { prefs ->
+        val json = prefs[QUIZZES_KEY] ?: "[]"
+        runCatching { Json.decodeFromString<List<Quiz>>(json) }.getOrDefault(emptyList())
+    }
+
+    suspend fun saveQuizzes(quizzes: List<Quiz>) {
+        context.dataStore.edit { prefs ->
+            prefs[QUIZZES_KEY] = Json.encodeToString(quizzes)
         }
     }
 
@@ -62,7 +84,7 @@ class PreferencesManager(private val context: Context) {
         return java.io.File(dir, "${language.lowercase()}.json")
     }
 
-    fun loadWordTranslations(language: String): com.galleriaida.data.WordTranslations? {
+    fun loadWordTranslations(language: String): WordTranslations? {
         return try {
             val file = translationFile(language)
             if (!file.exists()) return null
@@ -71,7 +93,7 @@ class PreferencesManager(private val context: Context) {
                 val a = j.getJSONArray(key)
                 return (0 until a.length()).map { a.getString(it) }
             }
-            com.galleriaida.data.WordTranslations(
+            WordTranslations(
                 language   = language,
                 characters = arr("characters"),
                 actions    = arr("actions"),
@@ -83,7 +105,7 @@ class PreferencesManager(private val context: Context) {
         }
     }
 
-    fun saveWordTranslations(translations: com.galleriaida.data.WordTranslations) {
+    fun saveWordTranslations(translations: WordTranslations) {
         try {
             val j = org.json.JSONObject().apply {
                 put("characters", org.json.JSONArray(translations.characters))

@@ -9,9 +9,11 @@ import com.galleriaida.data.AppSettings
 import com.galleriaida.data.GalleryItem
 import com.galleriaida.data.GeminiModel
 import com.galleriaida.data.Player
+import com.galleriaida.data.Quiz
+import com.galleriaida.data.QuizAnswer
 import com.galleriaida.data.WordTranslations
 import com.galleriaida.network.GeminiService
-import com.galleriaida.network.MathQuestion
+import com.galleriaida.data.QuizQuestion
 import com.galleriaida.network.PollinationsService
 import com.galleriaida.storage.PreferencesManager
 import kotlinx.coroutines.Dispatchers
@@ -56,8 +58,24 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _currentPlayer = MutableStateFlow<Player?>(null)
     val currentPlayer: StateFlow<Player?> = _currentPlayer.asStateFlow()
 
-    private val _questions = MutableStateFlow<List<MathQuestion>>(emptyList())
-    val questions: StateFlow<List<MathQuestion>> = _questions.asStateFlow()
+    // ── Quiz / Questions ─────────────────────────────────────────────────────
+
+    private val _questions = MutableStateFlow<List<QuizQuestion>>(emptyList())
+    val questions: StateFlow<List<QuizQuestion>> = _questions.asStateFlow()
+
+    // Timestamp recorded when GameScreen is first composed and questions are loaded
+    private val _quizStartedAt = MutableStateFlow(0L)
+    val quizStartedAt: StateFlow<Long> = _quizStartedAt.asStateFlow()
+
+    // Holds the last completed quiz so the Summary screen can read it
+    private val _lastCompletedQuiz = MutableStateFlow<Quiz?>(null)
+    val lastCompletedQuiz: StateFlow<Quiz?> = _lastCompletedQuiz.asStateFlow()
+
+    // Quiz history — loaded on demand (only when history screen opens)
+    private val _quizHistory = MutableStateFlow<List<Quiz>>(emptyList())
+    val quizHistory: StateFlow<List<Quiz>> = _quizHistory.asStateFlow()
+
+    // ── API key status ───────────────────────────────────────────────────────
 
     private val _apiKeyStatus = MutableStateFlow<String?>(null)
     val apiKeyStatus: StateFlow<String?> = _apiKeyStatus.asStateFlow()
@@ -66,11 +84,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val pollinationsKeyStatus: StateFlow<String?> = _pollinationsKeyStatus.asStateFlow()
 
     // ── Pollinations fallback state ──────────────────────────────────────────
-    // True while the Pollinations network call is in progress
+
     private val _isFallbackLoading = MutableStateFlow(false)
     val isFallbackLoading: StateFlow<Boolean> = _isFallbackLoading.asStateFlow()
 
-    // Human-readable status message updated as models are tried
     private val _fallbackModelMessage = MutableStateFlow("")
     val fallbackModelMessage: StateFlow<String> = _fallbackModelMessage.asStateFlow()
 
@@ -78,6 +95,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val playersLoaded: StateFlow<Boolean> = _playersLoaded.asStateFlow()
 
     // ── UI translation ───────────────────────────────────────────────────────
+
     private val _uiStrings = MutableStateFlow(com.galleriaida.ui.UiStrings())
     val uiStrings: StateFlow<com.galleriaida.ui.UiStrings> = _uiStrings.asStateFlow()
 
@@ -85,12 +103,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val translating: StateFlow<Boolean> = _translating.asStateFlow()
 
     // ── Word translations ────────────────────────────────────────────────────
-    // null = not yet loaded / loading in progress
+
     private val _wordTranslations = MutableStateFlow<WordTranslations?>(null)
     val wordTranslations: StateFlow<WordTranslations?> = _wordTranslations.asStateFlow()
 
     private val _wordTranslationError = MutableStateFlow<String?>(null)
     val wordTranslationError: StateFlow<String?> = _wordTranslationError.asStateFlow()
+
+    // ── Init ─────────────────────────────────────────────────────────────────
 
     init {
         viewModelScope.launch {
@@ -107,6 +127,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+    // ── UI translation ───────────────────────────────────────────────────────
 
     private fun translateUiForPlayer(language: String) {
         if (language.equals("English", ignoreCase = true) ||
@@ -138,11 +160,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // ── Word translation ─────────────────────────────────────────────────────
 
-    /**
-     * Called by ImageCreationScreen on entry.
-     * For English players returns the English words immediately.
-     * Otherwise: checks file cache → hits = done, miss = calls API → caches → done.
-     */
     fun ensureWordTranslations(
         characters: List<String>,
         actions: List<String>,
@@ -151,7 +168,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val player = _currentPlayer.value ?: return
         val language = player.language
 
-        // English — just expose the originals directly, no API needed
         if (language.equals("English", ignoreCase = true) || language.equals("en", ignoreCase = true)) {
             _wordTranslations.value = WordTranslations(
                 language   = language,
@@ -162,15 +178,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-        // Already loaded for this language
         val current = _wordTranslations.value
         if (current != null && current.language.equals(language, ignoreCase = true)) return
 
         viewModelScope.launch {
-            _wordTranslations.value = null          // triggers loading state in UI
+            _wordTranslations.value = null
             _wordTranslationError.value = null
 
-            // Check file cache first
             val cached = prefs.loadWordTranslations(language)
             if (cached != null &&
                 cached.characters.size == characters.size &&
@@ -181,7 +195,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 return@launch
             }
 
-            // Cache miss — call API
             Log.d("AppViewModel", "Translating word lists for $language via API…")
             val s     = settings.first { it.geminiApiKey.isNotBlank() }
             val model = s.modelTranslation.ifBlank { s.modelQuestions.ifBlank { "models/gemini-2.0-flash" } }
@@ -201,7 +214,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 .onFailure { e ->
                     Log.e("AppViewModel", "Word translation failed: ${e.message}")
                     _wordTranslationError.value = "Could not translate words: ${e.message}"
-                    // Fallback to English so the screen is not permanently blocked
                     _wordTranslations.value = WordTranslations(language, characters, actions, places)
                 }
         }
@@ -237,7 +249,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             _currentPlayer.value = player
             prefs.savePlayers(players.value.map { if (it.id == player.id) player else it })
             if (player.language != prevLang) {
-                _wordTranslations.value = null   // force re-translation for new language
+                _wordTranslations.value = null
                 translateUiForPlayer(player.language)
             }
         }
@@ -352,30 +364,160 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val player = _currentPlayer.value ?: return@launch
             val s      = settings.value
             if (s.geminiApiKey.isBlank()) {
-                _uiState.value = UiState.Error("API key not set. Please go to Settings.")
+                _uiState.value = UiState.Error(_uiStrings.value.gameApiKeyMissing)
                 return@launch
             }
             val model = s.modelQuestions.ifBlank { "models/gemini-2.0-flash" }
             _uiState.value = UiState.Loading
-            gemini.generateMathQuestions(s.geminiApiKey, model, player.language)
-                .onSuccess { _questions.value = it; _uiState.value = UiState.Idle }
-                .onFailure { _uiState.value = UiState.Error("Could not load questions: ${it.message}") }
+
+            // Clear any previous completed quiz so the summary screen doesn't flash stale data
+            _lastCompletedQuiz.value = null
+
+            gemini.generateQuizQuestions(
+                context   = getApplication(),
+                apiKey    = s.geminiApiKey,
+                model     = model,
+                language  = player.language,
+                grade     = player.schoolClass,
+                level     = player.schoolYearPosition
+            )
+                .onSuccess { questions ->
+                    _questions.value     = questions
+                    _quizStartedAt.value = System.currentTimeMillis()
+                    _uiState.value       = UiState.Idle
+                }
+                .onFailure {
+                    _uiState.value = UiState.Error(_uiStrings.value.gameServerBusy)
+                }
         }
     }
 
-    fun awardStars(amount: Int) {
+    /**
+     * Called when the player submits the quiz.
+     * [playerAnswers] is a map of question id → player's answer string.
+     * Stars are awarded before the summary screen is shown.
+     */
+    fun submitQuiz(playerAnswers: Map<String, String>) {
         viewModelScope.launch {
-            val player  = _currentPlayer.value ?: return@launch
-            val updated = player.copy(stars = player.stars + amount)
-            _currentPlayer.value = updated
-            prefs.savePlayers(players.value.map { if (it.id == player.id) updated else it })
+            val player    = _currentPlayer.value ?: return@launch
+            val questions = _questions.value
+            val now       = System.currentTimeMillis()
+
+            val uiStr   = _uiStrings.value
+            val answers = questions.map { q ->
+                val rawPlayerAnswer = playerAnswers[q.id] ?: ""
+
+                // For true_false the AI may return the answer in English OR in the player's
+                // language — it is inconsistent. Normalize both sides to English canonical
+                // values before comparing so the language of either side doesn't matter.
+                fun normalizeTrueFalse(value: String): String = when {
+                    value.trim().equals("true",        ignoreCase = true) -> "True"
+                    value.trim().equals("false",       ignoreCase = true) -> "False"
+                    value.trim().equals(uiStr.gameTrue,  ignoreCase = true) -> "True"
+                    value.trim().equals(uiStr.gameFalse, ignoreCase = true) -> "False"
+                    else -> value
+                }
+
+                val wasCorrect = if (q.type == "true_false") {
+                    normalizeTrueFalse(rawPlayerAnswer) == normalizeTrueFalse(q.answer)
+                } else {
+                    rawPlayerAnswer.trim().equals(q.answer.trim(), ignoreCase = true)
+                }
+
+                val playerAnswer = rawPlayerAnswer   // store original (localized) answer for display
+                QuizAnswer(
+                    id            = UUID.randomUUID().toString(),
+                    subject       = q.subject,
+                    category      = q.category,
+                    level         = q.level,
+                    type          = q.type,
+                    instruction   = q.instruction,
+                    question      = q.question,
+                    options       = q.options,
+                    correctAnswer = q.answer,
+                    playerAnswer  = playerAnswer,
+                    wasCorrect    = wasCorrect
+                )
+            }
+
+            val starsEarned    = answers.filter { it.wasCorrect }.sumOf { it.level }
+            val correctAnswers = answers.count { it.wasCorrect }
+
+            val quiz = Quiz(
+                id             = UUID.randomUUID().toString(),
+                playerId       = player.id,
+                startedAt      = _quizStartedAt.value,
+                submittedAt    = now,
+                totalQuestions = questions.size,
+                correctAnswers = correctAnswers,
+                starsEarned    = starsEarned,
+                answers        = answers
+            )
+
+            // Persist quiz to storage
+            val existing = prefs.quizzesFlow.first()
+            prefs.saveQuizzes(existing + quiz)
+
+            // Award stars to player immediately
+            val updatedPlayer = player.copy(stars = player.stars + starsEarned)
+            _currentPlayer.value = updatedPlayer
+            prefs.savePlayers(players.value.map { if (it.id == player.id) updatedPlayer else it })
+
+            // Expose completed quiz for the summary screen
+            _lastCompletedQuiz.value = quiz
+
+            // Clear active quiz state
+            _questions.value     = emptyList()
+            _quizStartedAt.value = 0L
+
+            _uiState.value = UiState.Idle
         }
+    }
+
+    /**
+     * Called when the player abandons a quiz via the back button.
+     * No data is saved — the quiz is simply discarded.
+     */
+    fun discardQuiz() {
+        _questions.value     = emptyList()
+        _quizStartedAt.value = 0L
+        _uiState.value       = UiState.Idle
+    }
+
+    /**
+     * Called when the summary screen is closed.
+     * Clears the completed quiz from memory.
+     */
+    fun clearLastCompletedQuiz() {
+        _lastCompletedQuiz.value = null
+    }
+
+    // ── Quiz history ─────────────────────────────────────────────────────────
+
+    /**
+     * Loads quiz history from storage for the current player.
+     * Call when the history screen opens.
+     */
+    fun loadQuizHistory() {
+        viewModelScope.launch {
+            val playerId = _currentPlayer.value?.id ?: return@launch
+            _quizHistory.value = prefs.quizzesFlow.first()
+                .filter { it.playerId == playerId }
+                .sortedByDescending { it.submittedAt }
+        }
+    }
+
+    /**
+     * Clears quiz history from memory.
+     * Call when the history screen closes.
+     */
+    fun clearQuizHistory() {
+        _quizHistory.value = emptyList()
     }
 
     // ── Gallery / Image generation ───────────────────────────────────────────
 
-    // Emits a one-shot signal when the screen should navigate away after success.
-    // Using Channel as a single-consumer event bus (not StateFlow, to avoid re-delivery).
+    // One-shot navigation signal using Channel to avoid re-delivery on recomposition
     private val _navigateToGallery = kotlinx.coroutines.channels.Channel<Unit>(kotlinx.coroutines.channels.Channel.CONFLATED)
     val navigateToGallery: kotlinx.coroutines.flow.Flow<Unit> = _navigateToGallery.receiveAsFlow()
 
@@ -446,7 +588,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 return@launch
             }
 
-            // Step 3 — Gemini failed, try Pollinations in the same coroutine
+            // Step 3 — Gemini failed, try Pollinations fallback
             Log.w("GALLERIA_AI", "Gemini image failed → trying Pollinations")
             val m1 = s.pollinationsModel1
             val m2 = s.pollinationsModel2
