@@ -26,12 +26,14 @@ import com.galleriaida.viewmodel.AppViewModel
 @Composable
 fun QuizSummaryScreen(
     viewModel: AppViewModel,
+    fromHistory: Boolean = false,
     onClose: () -> Unit
 ) {
     val quiz      by viewModel.lastCompletedQuiz.collectAsState()
     val uiStrings by viewModel.uiStrings.collectAsState()
 
-    // Both the close button and the Android back gesture go to PlayerHome
+    // Both the close button and the Android back gesture use onClose,
+    // which is context-aware in NavGraph (history → pop, post-quiz → PlayerHome)
     BackHandler { onClose() }
 
     // Should never be null when this screen is shown, but guard defensively

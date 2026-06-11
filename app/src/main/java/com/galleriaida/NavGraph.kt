@@ -2,12 +2,15 @@ package com.galleriaida.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.galleriaida.ui.screens.GameScreen
 import com.galleriaida.ui.screens.GalleryScreen
 import com.galleriaida.ui.screens.ImageCreationScreen
 import com.galleriaida.ui.screens.QuizzesScreen
+import com.galleriaida.ui.screens.QuizHistoryScreen
 import com.galleriaida.ui.screens.QuizSummaryScreen
 import com.galleriaida.ui.screens.PlayerSelectionScreen
 import com.galleriaida.ui.screens.PlayerBasicSetupScreen
@@ -18,17 +21,21 @@ import com.galleriaida.ui.screens.SettingsScreen
 import com.galleriaida.viewmodel.AppViewModel
 
 object Routes {
-    const val PLAYER_SELECTION  = "player_selection"
+    const val PLAYER_SELECTION   = "player_selection"
     const val PLAYER_BASIC_SETUP = "player_basic_setup"
-    const val PLAYER_PROFILE    = "player_profile"
-    const val PLAYER_LOADING    = "player_loading"
-    const val PLAYER_HOME       = "player_home"
-    const val QUIZZES           = "quizzes"
-    const val GAME              = "game"
-    const val QUIZ_SUMMARY      = "quiz_summary"
-    const val GALLERY           = "gallery"
-    const val IMAGE_CREATION    = "image_creation"
-    const val SETTINGS          = "settings"
+    const val PLAYER_PROFILE     = "player_profile"
+    const val PLAYER_LOADING     = "player_loading"
+    const val PLAYER_HOME        = "player_home"
+    const val QUIZZES            = "quizzes"
+    const val GAME               = "game"
+    const val QUIZ_HISTORY       = "quiz_history"
+    // fromHistory: true when reached from history, false when reached after submitting a quiz
+    const val QUIZ_SUMMARY       = "quiz_summary/{fromHistory}"
+    const val GALLERY            = "gallery"
+    const val IMAGE_CREATION     = "image_creation"
+    const val SETTINGS           = "settings"
+
+    fun quizSummary(fromHistory: Boolean) = "quiz_summary/$fromHistory"
 }
 
 @Composable
@@ -37,9 +44,9 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
 
         composable(Routes.PLAYER_SELECTION) {
             PlayerSelectionScreen(
-                viewModel       = viewModel,
+                viewModel        = viewModel,
                 onPlayerSelected = { navController.navigate(Routes.PLAYER_LOADING) },
-                onNewPlayer     = { navController.navigate(Routes.PLAYER_BASIC_SETUP) }
+                onNewPlayer      = { navController.navigate(Routes.PLAYER_BASIC_SETUP) }
             )
         }
 
@@ -95,7 +102,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
                 viewModel     = viewModel,
                 onBack        = { navController.popBackStack() },
                 onStartQuiz   = { navController.navigate(Routes.GAME) },
-                onHistory     = { /* TODO */ },
+                onHistory     = { navController.navigate(Routes.QUIZ_HISTORY) },
                 onSettings    = { navController.navigate(Routes.SETTINGS) },
                 onEditProfile = { navController.navigate(Routes.PLAYER_PROFILE) }
             )
@@ -105,14 +112,13 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
             GameScreen(
                 viewModel   = viewModel,
                 onAbandoned = {
-                    // Discard quiz and go back to quizzes screen, clear game from back stack
                     navController.navigate(Routes.QUIZZES) {
                         popUpTo(Routes.QUIZZES) { inclusive = true }
                     }
                 },
                 onSubmitted = {
-                    // Stars already awarded inside ViewModel — go to summary, clear game from back stack
-                    navController.navigate(Routes.QUIZ_SUMMARY) {
+                    // Stars already awarded — go to summary (not from history), clear game from stack
+                    navController.navigate(Routes.quizSummary(fromHistory = false)) {
                         popUpTo(Routes.GAME) { inclusive = true }
                     }
                 },
@@ -120,13 +126,35 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
             )
         }
 
-        composable(Routes.QUIZ_SUMMARY) {
-            QuizSummaryScreen(
+        composable(Routes.QUIZ_HISTORY) {
+            QuizHistoryScreen(
                 viewModel = viewModel,
-                onClose   = {
-                    // Clear summary and game from back stack, land on player home
-                    navController.navigate(Routes.PLAYER_HOME) {
-                        popUpTo(Routes.PLAYER_HOME) { inclusive = true }
+                onBack    = { navController.popBackStack() },
+                onQuizSelected = { quiz ->
+                    viewModel.selectHistoryQuiz(quiz)
+                    navController.navigate(Routes.quizSummary(fromHistory = true))
+                }
+            )
+        }
+
+        composable(
+            route     = Routes.QUIZ_SUMMARY,
+            arguments = listOf(navArgument("fromHistory") { type = NavType.BoolType })
+        ) { backStackEntry ->
+            val fromHistory = backStackEntry.arguments?.getBoolean("fromHistory") ?: false
+            QuizSummaryScreen(
+                viewModel   = viewModel,
+                fromHistory = fromHistory,
+                onClose     = {
+                    viewModel.clearLastCompletedQuiz()
+                    if (fromHistory) {
+                        // Return to history list
+                        navController.popBackStack()
+                    } else {
+                        // Return to player home, clear full back stack
+                        navController.navigate(Routes.PLAYER_HOME) {
+                            popUpTo(Routes.PLAYER_HOME) { inclusive = true }
+                        }
                     }
                 }
             )

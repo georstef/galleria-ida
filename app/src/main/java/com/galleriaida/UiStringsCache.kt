@@ -145,6 +145,14 @@ object UiStringsCache {
             summaryOptions              = s("summaryOptions",              defaults.summaryOptions),
             summaryClose                = s("summaryClose",                defaults.summaryClose),
 
+            // ── QuizHistoryScreen ─────────────────────────────────────────────
+            historyTitle                = s("historyTitle",                defaults.historyTitle),
+            historyEmpty                = s("historyEmpty",                defaults.historyEmpty),
+            historyColumnDate           = s("historyColumnDate",           defaults.historyColumnDate),
+            historyColumnTime           = s("historyColumnTime",           defaults.historyColumnTime),
+            historyColumnScore          = s("historyColumnScore",          defaults.historyColumnScore),
+            historyColumnStars          = s("historyColumnStars",          defaults.historyColumnStars),
+
             // ── ImageCreationScreen ───────────────────────────────────────────
             imageTitle                  = s("imageTitle",                  defaults.imageTitle),
             imageSubtitle               = s("imageSubtitle",               defaults.imageSubtitle),
@@ -166,6 +174,14 @@ object UiStringsCache {
         "homeSubtitle"                to d.homeSubtitle,
         "homeQuizzes"                 to d.homeQuizzes,
         "homeMyGallery"               to d.homeMyGallery,
+
+        // ── QuizHistoryScreen ─────────────────────────────────────────────────
+        "historyTitle"                to d.historyTitle,
+        "historyEmpty"                to d.historyEmpty,
+        "historyColumnDate"           to d.historyColumnDate,
+        "historyColumnTime"           to d.historyColumnTime,
+        "historyColumnScore"          to d.historyColumnScore,
+        "historyColumnStars"          to d.historyColumnStars,
 
         // ── QuizzesScreen ─────────────────────────────────────────────────────
         "quizzesTitle"                to d.quizzesTitle,
@@ -236,6 +252,14 @@ object UiStringsCache {
         "summaryNoAnswer"             to d.summaryNoAnswer,
         "summaryOptions"              to d.summaryOptions,
         "summaryClose"                to d.summaryClose,
+
+        // ── QuizHistoryScreen ─────────────────────────────────────────────────
+        "historyTitle"                to d.historyTitle,
+        "historyEmpty"                to d.historyEmpty,
+        "historyColumnDate"           to d.historyColumnDate,
+        "historyColumnTime"           to d.historyColumnTime,
+        "historyColumnScore"          to d.historyColumnScore,
+        "historyColumnStars"          to d.historyColumnStars,
 
         // ── ImageCreationScreen ───────────────────────────────────────────────
         "imageTitle"                  to d.imageTitle,

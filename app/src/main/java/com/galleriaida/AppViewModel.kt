@@ -515,6 +515,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         _quizHistory.value = emptyList()
     }
 
+    /**
+     * Sets a quiz from history as the active quiz for QuizSummaryScreen.
+     * Call before navigating to QUIZ_SUMMARY from the history screen.
+     */
+    fun selectHistoryQuiz(quiz: Quiz) {
+        _lastCompletedQuiz.value = quiz
+    }
+
     // ── Gallery / Image generation ───────────────────────────────────────────
 
     // One-shot navigation signal using Channel to avoid re-delivery on recomposition

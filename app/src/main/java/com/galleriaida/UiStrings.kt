@@ -92,6 +92,14 @@ data class UiStrings(
     val summaryOptions: String = "Options:",
     val summaryClose: String = "Close 🏠",
 
+    // ── QuizHistoryScreen ─────────────────────────────────────────────────────
+    val historyTitle: String = "Quiz History 📖",
+    val historyEmpty: String = "No quizzes completed yet! Start your first quiz and come back here to see your results.",
+    val historyColumnDate: String = "Date",
+    val historyColumnTime: String = "Time",
+    val historyColumnScore: String = "Score",
+    val historyColumnStars: String = "Stars",
+
     // ── ImageCreationScreen ───────────────────────────────────────────────────
     val imageTitle: String = "Create your image! 🎨",
     val imageSubtitle: String = "Pick one from each group",
