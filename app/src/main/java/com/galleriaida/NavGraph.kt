@@ -122,7 +122,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
                         popUpTo(Routes.GAME) { inclusive = true }
                     }
                 },
-                onSettings  = { navController.navigate(Routes.SETTINGS) }
+                onEditProfile = { navController.navigate(Routes.PLAYER_PROFILE) }
             )
         }
 

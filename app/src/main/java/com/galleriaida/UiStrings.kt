@@ -70,6 +70,7 @@ data class UiStrings(
     val gameUnansweredQuestion: String = "Question %d",         // %d = question number
     val gameUnansweredClose: String = "Got it!",
 
+/*
     // Kept for backwards compatibility (no longer shown in the new flow)
     val gameLessonDone: String = "Lesson done! 🎉",
     val gameEarnedStars: String = "You earned %d ⭐ stars!",
@@ -78,7 +79,7 @@ data class UiStrings(
     val gameWrong: String = "❌ The answer was %d",
     val gameCheckAnswer: String = "Check Answer ✔️",
     val gameEarnedSoFar: String = "Earned so far: %d ⭐",
-
+*/
     // ── QuizSummaryScreen ─────────────────────────────────────────────────────
     val summaryTitle: String = "Quiz Complete! 🎉",
     val summaryStarsEarned: String = "+%d ⭐",                  // %d = stars earned
@@ -97,11 +98,12 @@ data class UiStrings(
     val historyEmpty: String = "No quizzes completed yet! Start your first quiz and come back here to see your results.",
     val historyColumnDate: String = "Date",
     val historyColumnTime: String = "Time",
+    val historyColumnDuration: String = "Duration",
     val historyColumnScore: String = "Score",
     val historyColumnStars: String = "Stars",
 
     // ── ImageCreationScreen ───────────────────────────────────────────────────
-    val imageTitle: String = "Create your image! 🎨",
+    val imageTitle: String = "Create your image!",
     val imageSubtitle: String = "Pick one from each group",
     val imageCreatingMsg: String = "Creating your image... 🎨\nThis may take a moment",
     val imageCategoryCharacter: String = "🦸 Character",

@@ -124,14 +124,14 @@ object UiStringsCache {
             gameUnansweredClose         = s("gameUnansweredClose",         defaults.gameUnansweredClose),
 
             // Kept for backwards compatibility
-            gameLessonDone              = s("gameLessonDone",              defaults.gameLessonDone),
+/*            gameLessonDone              = s("gameLessonDone",              defaults.gameLessonDone),
             gameEarnedStars             = s("gameEarnedStars",             defaults.gameEarnedStars),
             gameOkButton                = s("gameOkButton",                defaults.gameOkButton),
             gameCorrect                 = s("gameCorrect",                 defaults.gameCorrect),
             gameWrong                   = s("gameWrong",                   defaults.gameWrong),
             gameCheckAnswer             = s("gameCheckAnswer",             defaults.gameCheckAnswer),
             gameEarnedSoFar             = s("gameEarnedSoFar",             defaults.gameEarnedSoFar),
-
+*/
             // ── QuizSummaryScreen ─────────────────────────────────────────────
             summaryTitle                = s("summaryTitle",                defaults.summaryTitle),
             summaryStarsEarned          = s("summaryStarsEarned",          defaults.summaryStarsEarned),
@@ -150,6 +150,7 @@ object UiStringsCache {
             historyEmpty                = s("historyEmpty",                defaults.historyEmpty),
             historyColumnDate           = s("historyColumnDate",           defaults.historyColumnDate),
             historyColumnTime           = s("historyColumnTime",           defaults.historyColumnTime),
+            historyColumnDuration       = s("historyColumnDuration",       defaults.historyColumnDuration),
             historyColumnScore          = s("historyColumnScore",          defaults.historyColumnScore),
             historyColumnStars          = s("historyColumnStars",          defaults.historyColumnStars),
 
@@ -180,6 +181,7 @@ object UiStringsCache {
         "historyEmpty"                to d.historyEmpty,
         "historyColumnDate"           to d.historyColumnDate,
         "historyColumnTime"           to d.historyColumnTime,
+        "historyColumnDuration"       to d.historyColumnDuration,
         "historyColumnScore"          to d.historyColumnScore,
         "historyColumnStars"          to d.historyColumnStars,
 
@@ -232,14 +234,14 @@ object UiStringsCache {
         "gameUnansweredClose"         to d.gameUnansweredClose,
 
         // Kept for backwards compatibility
-        "gameLessonDone"              to d.gameLessonDone,
+/*        "gameLessonDone"              to d.gameLessonDone,
         "gameEarnedStars"             to d.gameEarnedStars,
         "gameOkButton"                to d.gameOkButton,
         "gameCorrect"                 to d.gameCorrect,
         "gameWrong"                   to d.gameWrong,
         "gameCheckAnswer"             to d.gameCheckAnswer,
         "gameEarnedSoFar"             to d.gameEarnedSoFar,
-
+*/
         // ── QuizSummaryScreen ─────────────────────────────────────────────────
         "summaryTitle"                to d.summaryTitle,
         "summaryStarsEarned"          to d.summaryStarsEarned,
@@ -258,6 +260,7 @@ object UiStringsCache {
         "historyEmpty"                to d.historyEmpty,
         "historyColumnDate"           to d.historyColumnDate,
         "historyColumnTime"           to d.historyColumnTime,
+        "historyColumnDuration"       to d.historyColumnDuration,
         "historyColumnScore"          to d.historyColumnScore,
         "historyColumnStars"          to d.historyColumnStars,
 

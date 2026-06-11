@@ -336,33 +336,38 @@ fun WordCategory(
     ) {
         Text(title, style = MaterialTheme.typography.titleMedium, color = DeepPurple)
         Spacer(Modifier.height(12.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            words.forEachIndexed { idx, word ->
-                val isSelected = idx == selectedIdx
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) DeepPurple else White)
-                        .border(
-                            width = if (isSelected) 0.dp else 1.dp,
-                            color = if (isSelected) DeepPurple else DisabledGray,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .clickable { onSelect(idx) }
-                        .padding(vertical = 10.dp, horizontal = 4.dp),
-                    contentAlignment = Alignment.Center
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(0..1, 2..3).forEach { range ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text      = word,
-                        style     = MaterialTheme.typography.bodyMedium,
-                        color     = if (isSelected) White else DarkText,
-                        textAlign = TextAlign.Center,
-                        maxLines  = 2
-                    )
+                    range.forEach { idx ->
+                        val word = words.getOrNull(idx) ?: return@forEach
+                        val isSelected = idx == selectedIdx
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isSelected) DeepPurple else White)
+                                .border(
+                                    width = if (isSelected) 0.dp else 1.dp,
+                                    color = if (isSelected) DeepPurple else DisabledGray,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .clickable { onSelect(idx) }
+                                .padding(vertical = 14.dp, horizontal = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text      = word,
+                                style     = MaterialTheme.typography.bodyMedium,
+                                color     = if (isSelected) White else DarkText,
+                                textAlign = TextAlign.Center,
+                                maxLines  = 2
+                            )
+                        }
+                    }
                 }
             }
         }

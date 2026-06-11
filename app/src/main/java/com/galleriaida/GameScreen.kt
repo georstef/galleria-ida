@@ -6,22 +6,25 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.galleriaida.data.QuizQuestion
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
@@ -32,11 +35,13 @@ fun GameScreen(
     viewModel: AppViewModel,
     onAbandoned: () -> Unit,
     onSubmitted: () -> Unit,
-    onSettings: () -> Unit
+    onEditProfile: () -> Unit
 ) {
     val uiState   by viewModel.uiState.collectAsState()
     val questions by viewModel.questions.collectAsState()
     val uiStrings by viewModel.uiStrings.collectAsState()
+    val player    by viewModel.currentPlayer.collectAsState()
+    val initial   = player?.name?.firstOrNull()?.uppercase() ?: "?"
 
     // Map of questionId → player's current answer
     val playerAnswers = remember { mutableStateMapOf<String, String>() }
@@ -179,9 +184,21 @@ fun GameScreen(
                 )
             }
 
-            // Settings
-            IconButton(onClick = onSettings) {
-                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = DeepPurple)
+            // Player avatar → edit profile
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(SoftPurple)
+                    .clickable { onEditProfile() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text       = initial,
+                    fontSize   = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color      = DeepPurple
+                )
             }
         }
 
@@ -223,15 +240,6 @@ fun GameScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(uiStrings.gameTryAgain, style = MaterialTheme.typography.labelLarge)
-                        }
-                        Spacer(Modifier.height(12.dp))
-                        // Secondary — go to settings in case the API key is the issue
-                        OutlinedButton(
-                            onClick  = onSettings,
-                            shape    = RoundedCornerShape(16.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(uiStrings.gameGoToSettings, style = MaterialTheme.typography.labelLarge)
                         }
                     }
                 }
@@ -404,7 +412,7 @@ fun QuestionPage(
         ) {
             Text(
                 text      = question.question,
-                style     = MaterialTheme.typography.titleLarge,
+                style     = MaterialTheme.typography.titleMedium,
                 textAlign = TextAlign.Center
             )
         }
