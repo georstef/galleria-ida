@@ -165,7 +165,6 @@ fun QuizAnswerCard(
         // Question number + subject + level
         Row(
             modifier              = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment     = Alignment.CenterVertically
         ) {
             // Question number and subject
@@ -175,11 +174,27 @@ fun QuizAnswerCard(
                 color = MedText
             )
 
-            // Level stars + result indicator
+            Spacer(Modifier.width(8.dp))
+
+            // Level pill
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(40.dp))
+                    .background(SoftPurple)
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text  = "${answer.level}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = DeepPurple,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            // Result indicator
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val starsLabel = when (answer.level) { 1 -> "⭐"; 2 -> "⭐⭐"; else -> "⭐⭐⭐" }
-                Text(starsLabel, style = MaterialTheme.typography.bodySmall)
-                Spacer(Modifier.width(6.dp))
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(40.dp))

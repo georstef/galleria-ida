@@ -161,8 +161,8 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
                         navController.popBackStack()
                     } else {
                         // Return to player home, clear full back stack
-                        navController.navigate(Routes.PLAYER_HOME) {
-                            popUpTo(Routes.PLAYER_HOME) { inclusive = true }
+                        navController.navigate(Routes.QUIZZES) {
+                            popUpTo(Routes.PLAYER_HOME) { inclusive = false }
                         }
                     }
                 }

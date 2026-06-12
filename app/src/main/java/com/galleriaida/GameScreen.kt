@@ -151,9 +151,10 @@ fun GameScreen(
             confirmButton = {
                 OutlinedButton(
                     onClick = { showUnansweredDialog = false },
-                    shape   = RoundedCornerShape(16.dp)
+                    shape   = RoundedCornerShape(16.dp),
+                    colors  = ButtonDefaults.outlinedButtonColors(containerColor = ButtonPrimary)
                 ) {
-                    Text(uiStrings.gameUnansweredClose, style = MaterialTheme.typography.labelLarge)
+                    Text(uiStrings.gameUnansweredClose, style = MaterialTheme.typography.labelLarge, color = androidx.compose.ui.graphics.Color.White)
                 }
             }
         )
@@ -384,7 +385,7 @@ fun QuestionPage(
                 Text(question.subject, style = MaterialTheme.typography.bodySmall, color = DeepPurple)
             }
             // Level → stars
-            val starsLabel = when (question.level) { 1 -> "⭐"; 2 -> "⭐⭐"; else -> "⭐⭐⭐" }
+            val starsLabel = "⭐⭐⭐"
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(40.dp))

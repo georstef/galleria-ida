@@ -440,12 +440,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
 
-            val baseStars      = answers.filter { it.wasCorrect }.sumOf { it.level }
+            val baseStars      = answers.count { it.wasCorrect } * 3
             val correctAnswers = answers.count { it.wasCorrect }
             val totalQuestions = answers.size
             val bonusStars = when {
                 correctAnswers == totalQuestions && totalQuestions > 0 -> 10
-                correctAnswers == totalQuestions - 1 && totalQuestions > 0 -> 5
+                correctAnswers == totalQuestions - 1 && totalQuestions > 0 -> 3
                 else -> 0
             }
             val starsEarned = baseStars + bonusStars
