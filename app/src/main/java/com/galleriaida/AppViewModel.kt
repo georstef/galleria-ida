@@ -440,8 +440,15 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
 
-            val starsEarned    = answers.filter { it.wasCorrect }.sumOf { it.level }
+            val baseStars      = answers.filter { it.wasCorrect }.sumOf { it.level }
             val correctAnswers = answers.count { it.wasCorrect }
+            val totalQuestions = answers.size
+            val bonusStars = when {
+                correctAnswers == totalQuestions && totalQuestions > 0 -> 10
+                correctAnswers == totalQuestions - 1 && totalQuestions > 0 -> 5
+                else -> 0
+            }
+            val starsEarned = baseStars + bonusStars
 
             val quiz = Quiz(
                 id             = UUID.randomUUID().toString(),
@@ -451,6 +458,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 totalQuestions = questions.size,
                 correctAnswers = correctAnswers,
                 starsEarned    = starsEarned,
+                bonusStars     = bonusStars,
                 answers        = answers
             )
 

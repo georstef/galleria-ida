@@ -151,9 +151,9 @@ class GeminiService {
         // Maps the integer stored in Player.schoolYearPosition to the
         // English phrase the prompt expects
         fun schoolYearPositionLabel(position: String): String = when (position.trim()) {
-            "1"  -> "beginning of the school year"
-            "2"  -> "middle of the school year"
-            "3"  -> "end of the school year"
+            "beginning" -> "beginning of the school year"
+            "middle"    -> "middle of the school year"
+            "end"       -> "end of the school year"
             else -> "middle of the school year"   // safe fallback
         }
     }
@@ -184,6 +184,7 @@ class GeminiService {
                 .replace("{{player_class}}",       grade)
 
             Log.d("GeminiService", "generateQuizQuestions → model=$model lang=$language grade=$grade level=$level")
+            Log.d("GALLERIA_AI", "Resolved quiz prompt:\n$prompt")
 
             val response = postGenerateContent(apiKey, model, prompt)
             val text     = extractText(response)

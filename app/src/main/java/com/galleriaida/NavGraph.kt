@@ -23,7 +23,7 @@ import com.galleriaida.viewmodel.AppViewModel
 object Routes {
     const val PLAYER_SELECTION   = "player_selection"
     const val PLAYER_BASIC_SETUP = "player_basic_setup"
-    const val PLAYER_PROFILE     = "player_profile"
+    const val PLAYER_PROFILE     = "player_profile/{isNewPlayer}"
     const val PLAYER_LOADING     = "player_loading"
     const val PLAYER_HOME        = "player_home"
     const val QUIZZES            = "quizzes"
@@ -36,6 +36,7 @@ object Routes {
     const val SETTINGS           = "settings"
 
     fun quizSummary(fromHistory: Boolean) = "quiz_summary/$fromHistory"
+    fun playerProfile(isNewPlayer: Boolean = false) = "player_profile/$isNewPlayer"
 }
 
 @Composable
@@ -55,19 +56,27 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
                 viewModel  = viewModel,
                 onBack     = { navController.popBackStack() },
                 onContinue = {
-                    navController.navigate(Routes.PLAYER_PROFILE) {
+                    navController.navigate(Routes.playerProfile(isNewPlayer = true)) {
                         popUpTo(Routes.PLAYER_SELECTION)
                     }
                 }
             )
         }
 
-        composable(Routes.PLAYER_PROFILE) {
+        composable(
+            route     = Routes.PLAYER_PROFILE,
+            arguments = listOf(navArgument("isNewPlayer") { type = NavType.BoolType; defaultValue = false })
+        ) { backStackEntry ->
+            val isNewPlayer = backStackEntry.arguments?.getBoolean("isNewPlayer") ?: false
             PlayerProfileScreen(
                 viewModel  = viewModel,
                 onDone     = {
-                    navController.navigate(Routes.PLAYER_LOADING) {
-                        popUpTo(Routes.PLAYER_SELECTION)
+                    if (isNewPlayer) {
+                        navController.navigate(Routes.PLAYER_LOADING) {
+                            popUpTo(Routes.PLAYER_SELECTION)
+                        }
+                    } else {
+                        navController.popBackStack()
                     }
                 },
                 onBack     = { navController.popBackStack() },
@@ -92,7 +101,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
                 onQuizzes     = { navController.navigate(Routes.QUIZZES) },
                 onGallery     = { navController.navigate(Routes.GALLERY) },
                 onSettings    = { navController.navigate(Routes.SETTINGS) },
-                onEditProfile = { navController.navigate(Routes.PLAYER_PROFILE) },
+                onEditProfile = { navController.navigate(Routes.playerProfile()) },
                 onBack        = { navController.navigate(Routes.PLAYER_SELECTION) { popUpTo(0) } }
             )
         }
@@ -104,7 +113,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
                 onStartQuiz   = { navController.navigate(Routes.GAME) },
                 onHistory     = { navController.navigate(Routes.QUIZ_HISTORY) },
                 onSettings    = { navController.navigate(Routes.SETTINGS) },
-                onEditProfile = { navController.navigate(Routes.PLAYER_PROFILE) }
+                onEditProfile = { navController.navigate(Routes.playerProfile()) }
             )
         }
 
@@ -122,7 +131,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
                         popUpTo(Routes.GAME) { inclusive = true }
                     }
                 },
-                onEditProfile = { navController.navigate(Routes.PLAYER_PROFILE) }
+                onEditProfile = { navController.navigate(Routes.playerProfile()) }
             )
         }
 
@@ -166,7 +175,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
                 onBack        = { navController.popBackStack() },
                 onSettings    = { navController.navigate(Routes.SETTINGS) },
                 onCreateImage = { navController.navigate(Routes.IMAGE_CREATION) },
-                onEditProfile = { navController.navigate(Routes.PLAYER_PROFILE) }
+                onEditProfile = { navController.navigate(Routes.playerProfile()) }
             )
         }
 

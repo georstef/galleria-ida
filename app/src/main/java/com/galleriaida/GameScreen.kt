@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -59,9 +60,11 @@ fun GameScreen(
     var showUnansweredDialog by remember { mutableStateOf(false) }
     var unansweredIndices by remember { mutableStateOf<List<Int>>(emptyList()) }
 
-    // Load questions when the screen first appears
+    // Load questions when the screen first appears — but not if we already have a quiz in progress
     LaunchedEffect(Unit) {
-        viewModel.loadQuestions()
+        if (questions.isEmpty()) {
+            viewModel.loadQuestions()
+        }
     }
 
     // Intercept Android back gesture — treat same as back button
@@ -289,6 +292,10 @@ fun GameScreen(
                                     currentIndex--
                                 },
                                 shape  = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = DeepPurple
+                                ),
+                                border = BorderStroke(1.dp, DeepPurple),
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Icon(Icons.Default.ArrowBack, contentDescription = null)

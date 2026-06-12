@@ -112,6 +112,7 @@ data class Quiz(
     val totalQuestions: Int,
     val correctAnswers: Int,
     val starsEarned: Int,
+    val bonusStars: Int = 0,
     val answers: List<QuizAnswer>
 )
 

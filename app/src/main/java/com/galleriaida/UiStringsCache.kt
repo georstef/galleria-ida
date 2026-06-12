@@ -123,19 +123,11 @@ object UiStringsCache {
             gameUnansweredQuestion      = s("gameUnansweredQuestion",      defaults.gameUnansweredQuestion),
             gameUnansweredClose         = s("gameUnansweredClose",         defaults.gameUnansweredClose),
 
-            // Kept for backwards compatibility
-/*            gameLessonDone              = s("gameLessonDone",              defaults.gameLessonDone),
-            gameEarnedStars             = s("gameEarnedStars",             defaults.gameEarnedStars),
-            gameOkButton                = s("gameOkButton",                defaults.gameOkButton),
-            gameCorrect                 = s("gameCorrect",                 defaults.gameCorrect),
-            gameWrong                   = s("gameWrong",                   defaults.gameWrong),
-            gameCheckAnswer             = s("gameCheckAnswer",             defaults.gameCheckAnswer),
-            gameEarnedSoFar             = s("gameEarnedSoFar",             defaults.gameEarnedSoFar),
-*/
             // ── QuizSummaryScreen ─────────────────────────────────────────────
             summaryTitle                = s("summaryTitle",                defaults.summaryTitle),
             summaryStarsEarned          = s("summaryStarsEarned",          defaults.summaryStarsEarned),
             summaryScore                = s("summaryScore",                defaults.summaryScore),
+            summaryBonus                = s("summaryBonus",                defaults.summaryBonus),
             summaryQuestionNumber       = s("summaryQuestionNumber",       defaults.summaryQuestionNumber),
             summaryCorrect              = s("summaryCorrect",              defaults.summaryCorrect),
             summaryWrong                = s("summaryWrong",                defaults.summaryWrong),
@@ -233,19 +225,11 @@ object UiStringsCache {
         "gameUnansweredQuestion"      to d.gameUnansweredQuestion,
         "gameUnansweredClose"         to d.gameUnansweredClose,
 
-        // Kept for backwards compatibility
-/*        "gameLessonDone"              to d.gameLessonDone,
-        "gameEarnedStars"             to d.gameEarnedStars,
-        "gameOkButton"                to d.gameOkButton,
-        "gameCorrect"                 to d.gameCorrect,
-        "gameWrong"                   to d.gameWrong,
-        "gameCheckAnswer"             to d.gameCheckAnswer,
-        "gameEarnedSoFar"             to d.gameEarnedSoFar,
-*/
         // ── QuizSummaryScreen ─────────────────────────────────────────────────
         "summaryTitle"                to d.summaryTitle,
         "summaryStarsEarned"          to d.summaryStarsEarned,
         "summaryScore"                to d.summaryScore,
+        "summaryBonus"                to d.summaryBonus,
         "summaryQuestionNumber"       to d.summaryQuestionNumber,
         "summaryCorrect"              to d.summaryCorrect,
         "summaryWrong"                to d.summaryWrong,

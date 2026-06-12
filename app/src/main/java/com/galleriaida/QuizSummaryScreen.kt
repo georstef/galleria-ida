@@ -92,6 +92,16 @@ fun QuizSummaryScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 color = DeepPurple
             )
+
+            if (completedQuiz.bonusStars > 0) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text  = uiStrings.summaryBonus.format(completedQuiz.bonusStars),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = DeepPurple,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         // ── Answer list ──────────────────────────────────────────────────────

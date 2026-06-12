@@ -70,20 +70,11 @@ data class UiStrings(
     val gameUnansweredQuestion: String = "Question %d",         // %d = question number
     val gameUnansweredClose: String = "Got it!",
 
-/*
-    // Kept for backwards compatibility (no longer shown in the new flow)
-    val gameLessonDone: String = "Lesson done! 🎉",
-    val gameEarnedStars: String = "You earned %d ⭐ stars!",
-    val gameOkButton: String = "OK!",
-    val gameCorrect: String = "✅ Correct!",
-    val gameWrong: String = "❌ The answer was %d",
-    val gameCheckAnswer: String = "Check Answer ✔️",
-    val gameEarnedSoFar: String = "Earned so far: %d ⭐",
-*/
     // ── QuizSummaryScreen ─────────────────────────────────────────────────────
     val summaryTitle: String = "Quiz Complete! 🎉",
     val summaryStarsEarned: String = "+%d ⭐",                  // %d = stars earned
     val summaryScore: String = "%d / %d correct",               // correct / total
+    val summaryBonus: String = "Bonus +%d ⭐",                    // %d = bonus stars
     val summaryQuestionNumber: String = "Q%d · %s",             // number · subject
     val summaryCorrect: String = "✓ Correct",
     val summaryWrong: String = "✗ Wrong",
