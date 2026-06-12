@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galleriaida.data.QuizQuestion
@@ -98,7 +99,7 @@ fun GameScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = ErrorRed),
                     shape  = RoundedCornerShape(16.dp)
                 ) {
-                    Text(uiStrings.gameAbandonConfirm, style = MaterialTheme.typography.labelLarge)
+                    Text(uiStrings.gameAbandonConfirm, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             },
             dismissButton = {
@@ -106,7 +107,7 @@ fun GameScreen(
                     onClick = { showAbandonDialog = false },
                     shape   = RoundedCornerShape(16.dp)
                 ) {
-                    Text(uiStrings.gameAbandonCancel, style = MaterialTheme.typography.labelLarge)
+                    Text(uiStrings.gameAbandonCancel, style = MaterialTheme.typography.labelLarge, color = ErrorRed, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         )
@@ -300,7 +301,7 @@ fun GameScreen(
                             ) {
                                 Icon(Icons.Default.ArrowBack, contentDescription = null)
                                 Spacer(Modifier.width(6.dp))
-                                Text(uiStrings.gamePrevious, style = MaterialTheme.typography.labelLarge)
+                                Text(uiStrings.gamePrevious, style = MaterialTheme.typography.labelLarge, color = DeepPurple, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
                             Spacer(Modifier.width(12.dp))
                         }
@@ -331,11 +332,14 @@ fun GameScreen(
                         ) {
                             Text(
                                 if (isLast) uiStrings.gameSubmit else uiStrings.gameNext,
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                             if (!isLast) {
                                 Spacer(Modifier.width(6.dp))
                                 Icon(Icons.Default.ArrowForward, contentDescription = null)
+
                             }
                         }
                     }
