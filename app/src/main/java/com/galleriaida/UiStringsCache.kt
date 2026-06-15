@@ -13,12 +13,45 @@ import java.io.File
  * IMPORTANT: whenever a new key is added to UiStrings, it must also be added to
  * both [buildUiStrings] and [defaultsMap] below, otherwise it will never be
  * translated or applied.
+ *
+ * CACHE VERSION: bump [CACHE_VERSION] whenever English default strings change value
+ * (not just when new keys are added). On version mismatch all translation cache
+ * files are wiped so they get rebuilt fresh — player data and images are untouched.
  */
 object UiStringsCache {
 
+    /**
+     * Bump this number whenever an existing English string changes its value.
+     * New keys don't require a bump — they're detected automatically via missingKeys().
+     */
+    private const val CACHE_VERSION = 2
+
+    private fun translationsDir(context: Context) =
+        File(context.filesDir, "translations").also { it.mkdirs() }
+
+    private fun versionFile(context: Context) =
+        File(translationsDir(context), "cache_version.txt")
+
+    /**
+     * Call once at app startup (e.g. from AppViewModel.init).
+     * If the stored version doesn't match CACHE_VERSION, all translation
+     * cache files are deleted so they get retranslated fresh.
+     */
+    fun invalidateIfVersionChanged(context: Context) {
+        val dir     = translationsDir(context)
+        val vFile   = versionFile(context)
+        val stored  = try { vFile.readText().trim().toInt() } catch (e: Exception) { -1 }
+        if (stored != CACHE_VERSION) {
+            Log.d("UiStringsCache", "Cache version changed ($stored → $CACHE_VERSION), wiping translation files")
+            dir.listFiles()
+                ?.filter { it.name.startsWith("translations_") && it.name.endsWith(".json") }
+                ?.forEach { it.delete() }
+            vFile.writeText(CACHE_VERSION.toString())
+        }
+    }
+
     private fun cacheFile(context: Context, language: String): File {
-        val dir = File(context.filesDir, "translations").also { it.mkdirs() }
-        return File(dir, "translations_${language.lowercase().replace(" ", "_")}.json")
+        return File(translationsDir(context), "translations_${language.lowercase().replace(" ", "_")}.json")
     }
 
     /** Load the cached JSON for [language]. Returns empty JSONObject if none exists. */
@@ -157,6 +190,27 @@ object UiStringsCache {
             imageButtonNeedStars        = s("imageButtonNeedStars",        defaults.imageButtonNeedStars),
             imageButtonPickAll          = s("imageButtonPickAll",          defaults.imageButtonPickAll),
             imageButtonCreate           = s("imageButtonCreate",           defaults.imageButtonCreate),
+
+            // ── MiniGamesScreen ───────────────────────────────────────────────
+            miniGamesTitle              = s("miniGamesTitle",              defaults.miniGamesTitle),
+            miniGamesLockedHint         = s("miniGamesLockedHint",         defaults.miniGamesLockedHint),
+            miniGamesCostHint           = s("miniGamesCostHint",           defaults.miniGamesCostHint),
+            miniGamesPuzzleName         = s("miniGamesPuzzleName",         defaults.miniGamesPuzzleName),
+            miniGamesPuzzleDesc         = s("miniGamesPuzzleDesc",         defaults.miniGamesPuzzleDesc),
+
+            // ── PuzzleScreen ──────────────────────────────────────────────────
+            puzzleTitle                 = s("puzzleTitle",                 defaults.puzzleTitle),
+            puzzleSelectSize            = s("puzzleSelectSize",            defaults.puzzleSelectSize),
+            puzzleEasy                  = s("puzzleEasy",                  defaults.puzzleEasy),
+            puzzleMedium                = s("puzzleMedium",                defaults.puzzleMedium),
+            puzzleHard                  = s("puzzleHard",                  defaults.puzzleHard),
+            puzzleReroll                = s("puzzleReroll",                defaults.puzzleReroll),
+            puzzlePlay                  = s("puzzlePlay",                  defaults.puzzlePlay),
+            puzzleNotEnoughStars        = s("puzzleNotEnoughStars",        defaults.puzzleNotEnoughStars),
+            puzzleSolved                = s("puzzleSolved",                defaults.puzzleSolved),
+            puzzleClose                 = s("puzzleClose",                 defaults.puzzleClose),
+            puzzleShowImage             = s("puzzleShowImage",             defaults.puzzleShowImage),
+            puzzleTapToReturn           = s("puzzleTapToReturn",           defaults.puzzleTapToReturn),
         )
     }
 
@@ -259,5 +313,26 @@ object UiStringsCache {
         "imageButtonNeedStars"        to d.imageButtonNeedStars,
         "imageButtonPickAll"          to d.imageButtonPickAll,
         "imageButtonCreate"           to d.imageButtonCreate,
+
+        // ── MiniGamesScreen ───────────────────────────────────────────────────
+        "miniGamesTitle"              to d.miniGamesTitle,
+        "miniGamesLockedHint"         to d.miniGamesLockedHint,
+        "miniGamesCostHint"           to d.miniGamesCostHint,
+        "miniGamesPuzzleName"         to d.miniGamesPuzzleName,
+        "miniGamesPuzzleDesc"         to d.miniGamesPuzzleDesc,
+
+        // ── PuzzleScreen ──────────────────────────────────────────────────────
+        "puzzleTitle"                 to d.puzzleTitle,
+        "puzzleSelectSize"            to d.puzzleSelectSize,
+        "puzzleEasy"                  to d.puzzleEasy,
+        "puzzleMedium"                to d.puzzleMedium,
+        "puzzleHard"                  to d.puzzleHard,
+        "puzzleReroll"                to d.puzzleReroll,
+        "puzzlePlay"                  to d.puzzlePlay,
+        "puzzleNotEnoughStars"        to d.puzzleNotEnoughStars,
+        "puzzleSolved"                to d.puzzleSolved,
+        "puzzleClose"                 to d.puzzleClose,
+        "puzzleShowImage"             to d.puzzleShowImage,
+        "puzzleTapToReturn"           to d.puzzleTapToReturn,
     )
 }

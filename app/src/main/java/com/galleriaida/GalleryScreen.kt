@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.galleriaida.AppConstants
 import com.galleriaida.data.GalleryItem
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
@@ -50,7 +51,7 @@ fun GalleryScreen(
 
     val playerGallery = gallery.filter { it.playerId == player?.id }
     val stars     = player?.stars ?: 0
-    val canAfford = (stars >= 100) || (player?.name == "George S.")
+    val canAfford = (stars >= 100) || (player?.name == AppConstants.DEV_PLAYER_NAME)
     val initial   = player?.name?.firstOrNull()?.uppercase() ?: "?"
 
     // Full-screen viewer state — null = closed

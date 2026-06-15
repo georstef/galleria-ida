@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import org.json.JSONArray
+import com.galleriaida.AppConstants
 import org.json.JSONObject
 import java.io.File
 import java.util.UUID
@@ -113,6 +113,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     // ── Init ─────────────────────────────────────────────────────────────────
 
     init {
+        com.galleriaida.ui.UiStringsCache.invalidateIfVersionChanged(application)
         viewModelScope.launch {
             prefs.playersFlow.collect { _playersLoaded.value = true }
         }
@@ -549,7 +550,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             val player = _currentPlayer.value ?: return@launch
             val s      = settings.value
-            if (s.geminiApiKey.isBlank() || (player.stars < 100 && player.name != "George S.")) {
+            if (s.geminiApiKey.isBlank() || (player.stars < 100 && player.name != AppConstants.DEV_PLAYER_NAME)) {
                 _uiState.value = UiState.Error("Not enough stars or API key missing.")
                 return@launch
             }
@@ -733,4 +734,18 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun clearUiState() { _uiState.value = UiState.Idle }
+
+    // ── Stars spending ────────────────────────────────────────────────────────
+
+    /** Deducts [amount] stars from the current player. Returns false if not enough stars. */
+    fun spendStars(amount: Int): Boolean {
+        val player = _currentPlayer.value ?: return false
+        if (player.stars < amount) return false
+        val updated = player.copy(stars = player.stars - amount)
+        _currentPlayer.value = updated
+        viewModelScope.launch {
+            prefs.savePlayers(players.value.map { if (it.id == player.id) updated else it })
+        }
+        return true
+    }
 }

@@ -104,4 +104,25 @@ data class UiStrings(
     val imageButtonNeedStars: String = "Need 100 ⭐",
     val imageButtonPickAll: String = "Pick one from each group",
     val imageButtonCreate: String = "Create Image! 🎨 (100 ⭐)",
+
+    // ── MiniGamesScreen ───────────────────────────────────────────────────────
+    val miniGamesTitle: String = "🎮 Mini Games",
+    val miniGamesLockedHint: String = "Unlocks after %d images",
+    val miniGamesCostHint: String = "10 ⭐ to play",
+    val miniGamesPuzzleName: String = "🧩 Puzzle",
+    val miniGamesPuzzleDesc: String = "Reassemble a picture from your gallery",
+
+    // ── PuzzleScreen ──────────────────────────────────────────────────────────
+    val puzzleTitle: String = "Puzzle 🧩",
+    val puzzleSelectSize: String = "Choose difficulty",
+    val puzzleEasy: String = "Easy  4×4",
+    val puzzleMedium: String = "Medium  4×5",
+    val puzzleHard: String = "Hard  4×8",
+    val puzzleReroll: String = "Try another image 🔀",
+    val puzzlePlay: String = "Play!  (10 ⭐)",
+    val puzzleNotEnoughStars: String = "Not enough stars",
+    val puzzleSolved: String = "Puzzle solved! 🎉",
+    val puzzleClose: String = "Back",
+    val puzzleShowImage: String = "👁 Show Image",
+    val puzzleTapToReturn: String = "Tap to return to puzzle",
 )

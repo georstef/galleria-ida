@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
 
@@ -27,6 +28,7 @@ fun PlayerHomeScreen(
     viewModel: AppViewModel,
     onQuizzes: () -> Unit,
     onGallery: () -> Unit,
+    onMiniGames: () -> Unit,
     onSettings: () -> Unit,
     onEditProfile: () -> Unit,
     onBack: () -> Unit
@@ -137,6 +139,17 @@ fun PlayerHomeScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = ButtonSecondary)
                 ) {
                     Text(uiStrings.homeMyGallery, style = MaterialTheme.typography.labelLarge)
+                }
+
+                Spacer(Modifier.height(20.dp))
+
+                Button(
+                    onClick = onMiniGames,
+                    modifier = Modifier.fillMaxWidth().height(72.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6F00))
+                ) {
+                    Text(uiStrings.miniGamesTitle, style = MaterialTheme.typography.labelLarge)
                 }
             }
         }

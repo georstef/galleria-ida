@@ -3,6 +3,7 @@ package com.galleriaida.ui.screens
 import android.util.Log
 import android.content.Context
 import androidx.compose.foundation.background
+import com.galleriaida.AppConstants
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -139,7 +140,7 @@ fun ImageCreationScreen(
 
     val allSelected = selectedCharIdx != null && selectedActionIdx != null && selectedPlaceIdx != null
     val stars       = player?.stars ?: 0
-    val canAfford   = (stars >= 100) || (player?.name == "George S.")
+    val canAfford   = (stars >= 100) || (player?.name == AppConstants.DEV_PLAYER_NAME)
 
     val isLoading    = uiState is UiState.Loading || isFallbackLoading
     val errorMessage = (uiState as? UiState.Error)?.message

@@ -18,6 +18,8 @@ import com.galleriaida.ui.screens.PlayerProfileScreen
 import com.galleriaida.ui.screens.PlayerHomeScreen
 import com.galleriaida.ui.screens.PlayerLoadingScreen
 import com.galleriaida.ui.screens.SettingsScreen
+import com.galleriaida.ui.screens.MiniGamesScreen
+import com.galleriaida.ui.screens.PuzzleScreen
 import com.galleriaida.viewmodel.AppViewModel
 
 object Routes {
@@ -34,6 +36,8 @@ object Routes {
     const val GALLERY            = "gallery"
     const val IMAGE_CREATION     = "image_creation"
     const val SETTINGS           = "settings"
+    const val MINI_GAMES         = "mini_games"
+    const val PUZZLE             = "puzzle"
 
     fun quizSummary(fromHistory: Boolean) = "quiz_summary/$fromHistory"
     fun playerProfile(isNewPlayer: Boolean = false) = "player_profile/$isNewPlayer"
@@ -100,6 +104,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
                 viewModel     = viewModel,
                 onQuizzes     = { navController.navigate(Routes.QUIZZES) },
                 onGallery     = { navController.navigate(Routes.GALLERY) },
+                onMiniGames   = { navController.navigate(Routes.MINI_GAMES) },
                 onSettings    = { navController.navigate(Routes.SETTINGS) },
                 onEditProfile = { navController.navigate(Routes.playerProfile()) },
                 onBack        = { navController.navigate(Routes.PLAYER_SELECTION) { popUpTo(0) } }
@@ -203,6 +208,22 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
                         navController.popBackStack()
                     }
                 }
+            )
+        }
+
+        composable(Routes.MINI_GAMES) {
+            MiniGamesScreen(
+                viewModel     = viewModel,
+                onBack        = { navController.popBackStack() },
+                onPuzzle      = { navController.navigate(Routes.PUZZLE) },
+                onEditProfile = { navController.navigate(Routes.playerProfile()) }
+            )
+        }
+
+        composable(Routes.PUZZLE) {
+            PuzzleScreen(
+                viewModel = viewModel,
+                onBack    = { navController.popBackStack() }
             )
         }
     }
