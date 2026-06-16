@@ -550,7 +550,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             val player = _currentPlayer.value ?: return@launch
             val s      = settings.value
-            if (s.geminiApiKey.isBlank() || (player.stars < 100 && player.name != AppConstants.DEV_PLAYER_NAME)) {
+            if (s.geminiApiKey.isBlank() || (player.stars < 100 && !player.name.trim().equals(AppConstants.DEV_PLAYER_NAME, ignoreCase = true))) {
                 _uiState.value = UiState.Error("Not enough stars or API key missing.")
                 return@launch
             }
@@ -737,10 +737,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // ── Stars spending ────────────────────────────────────────────────────────
 
-    /** Deducts [amount] stars from the current player. Returns false if not enough stars. */
+    /** Deducts [amount] stars from the current player. Returns false if not enough stars
+     *  (dev player is exempt and can go negative for testing purposes). */
     fun spendStars(amount: Int): Boolean {
         val player = _currentPlayer.value ?: return false
-        if (player.stars < amount) return false
+        val isDev  = player.name.trim().equals(AppConstants.DEV_PLAYER_NAME, ignoreCase = true)
+        if (!isDev && player.stars < amount) return false
         val updated = player.copy(stars = player.stars - amount)
         _currentPlayer.value = updated
         viewModelScope.launch {

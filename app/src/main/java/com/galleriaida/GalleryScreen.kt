@@ -51,7 +51,7 @@ fun GalleryScreen(
 
     val playerGallery = gallery.filter { it.playerId == player?.id }
     val stars     = player?.stars ?: 0
-    val canAfford = (stars >= 100) || (player?.name == AppConstants.DEV_PLAYER_NAME)
+    val canAfford = (stars >= 100) || (player?.name?.trim()?.equals(AppConstants.DEV_PLAYER_NAME, ignoreCase = true) ?: false)
     val initial   = player?.name?.firstOrNull()?.uppercase() ?: "?"
 
     // Full-screen viewer state — null = closed

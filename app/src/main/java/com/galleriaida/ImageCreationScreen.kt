@@ -140,7 +140,7 @@ fun ImageCreationScreen(
 
     val allSelected = selectedCharIdx != null && selectedActionIdx != null && selectedPlaceIdx != null
     val stars       = player?.stars ?: 0
-    val canAfford   = (stars >= 100) || (player?.name == AppConstants.DEV_PLAYER_NAME)
+    val canAfford   = (stars >= 100) || (player?.name?.trim()?.equals(AppConstants.DEV_PLAYER_NAME, ignoreCase = true) ?: false)
 
     val isLoading    = uiState is UiState.Loading || isFallbackLoading
     val errorMessage = (uiState as? UiState.Error)?.message

@@ -1,5 +1,6 @@
 package com.galleriaida.ui.screens
 
+import androidx.activity.compose.BackHandler
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -31,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
-import com.galleriaida.AppConstants
 import com.galleriaida.data.GalleryItem
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
@@ -59,15 +59,15 @@ fun PuzzleScreen(
 
     // ── State machine ─────────────────────────────────────────────────────────
     // Phase 1: setup  → player picks size and sees a random image preview
-    // Phase 2: playing → the actual puzzle
-    // Phase 3: solved  → celebration overlay
+    // Phase 2: playing → the actual puzzle; on completion a popup appears and
+    //                     closing it exits straight back to the Mini Games hub
 
     var phase by remember { mutableStateOf(PuzzlePhase.SETUP) }
     var selectedSize by remember { mutableStateOf(PuzzleSize.EASY) }
     var currentImageIndex by remember { mutableStateOf((playerImages.indices).randomOrNull() ?: 0) }
     val currentImage = playerImages.getOrNull(currentImageIndex)
 
-    val isDev = player?.name == AppConstants.DEV_PLAYER_NAME
+    val isDev = player?.name?.trim()?.equals(com.galleriaida.AppConstants.DEV_PLAYER_NAME, ignoreCase = true) ?: false
 
     when (phase) {
         PuzzlePhase.SETUP -> {
@@ -84,7 +84,7 @@ fun PuzzleScreen(
                     }
                 },
                 onPlay       = {
-                    val spent = if (isDev) true else viewModel.spendStars(10)
+                    val spent = viewModel.spendStars(10)
                     if (spent) phase = PuzzlePhase.PLAYING
                 },
                 onBack       = onBack
@@ -96,22 +96,15 @@ fun PuzzleScreen(
                     image      = currentImage,
                     size       = selectedSize,
                     uiStrings  = uiStrings,
-                    onSolved   = { phase = PuzzlePhase.SOLVED },
-                    onBack     = { phase = PuzzlePhase.SETUP }
+                    onSolved   = onBack,
+                    onBack     = onBack
                 )
             }
-        }
-        PuzzlePhase.SOLVED -> {
-            PuzzleSolvedScreen(
-                image     = currentImage,
-                uiStrings = uiStrings,
-                onClose   = { phase = PuzzlePhase.SETUP }
-            )
         }
     }
 }
 
-enum class PuzzlePhase { SETUP, PLAYING, SOLVED }
+enum class PuzzlePhase { SETUP, PLAYING }
 
 // ── Setup screen ──────────────────────────────────────────────────────────────
 
@@ -309,7 +302,9 @@ private fun PuzzleGameScreen(
     var dragOffset    by remember { mutableStateOf(Offset.Zero) }
     var boardWidthPx  by remember { mutableStateOf(0) }
     var boardHeightPx by remember { mutableStateOf(0) }
-    var showingImage  by remember { mutableStateOf(false) }
+    var showingImage    by remember { mutableStateOf(false) }
+    var showExitDialog  by remember { mutableStateOf(false) }
+    var showSolvedPopup by remember { mutableStateOf(false) }
     val density = LocalDensity.current
 
     // Load the bitmap once
@@ -323,7 +318,12 @@ private fun PuzzleGameScreen(
     }
 
     val isSolved = remember(tiles.toList()) { tiles.indices.all { tiles[it] == it } }
-    LaunchedEffect(isSolved) { if (isSolved) onSolved() }
+    LaunchedEffect(isSolved) { if (isSolved) showSolvedPopup = true }
+
+    // Intercept Android back gesture/button — ask for confirmation instead of leaving silently
+    BackHandler {
+        if (!showSolvedPopup) showExitDialog = true
+    }
 
     Column(
         modifier = Modifier
@@ -339,7 +339,7 @@ private fun PuzzleGameScreen(
                 .padding(horizontal = 8.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = { showExitDialog = true }) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = DeepPurple)
             }
             Text(
@@ -483,8 +483,7 @@ private fun PuzzleGameScreen(
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.92f))
                 .statusBarsPadding()
-                .navigationBarsPadding()
-                .clickable { showingImage = false },
+                .navigationBarsPadding(),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -507,77 +506,55 @@ private fun PuzzleGameScreen(
                     color     = Color.White,
                     textAlign = TextAlign.Center
                 )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text  = uiStrings.puzzleTapToReturn,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.6f)
-                )
+                Spacer(Modifier.height(24.dp))
+                Button(
+                    onClick  = { showingImage = false },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape    = RoundedCornerShape(16.dp),
+                    colors   = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
+                ) {
+                    Text(uiStrings.puzzleCloseImage, style = MaterialTheme.typography.labelLarge)
+                }
             }
         }
     }
-}
 
-// ── Solved screen ─────────────────────────────────────────────────────────────
-
-@Composable
-private fun PuzzleSolvedScreen(
-    image: GalleryItem?,
-    uiStrings: com.galleriaida.ui.UiStrings,
-    onClose: () -> Unit
-) {
-    val imageModel = remember(image?.imageUrl) {
-        image?.imageUrl?.let { url -> val f = File(url); if (f.exists()) f else url }
+    // Exit confirmation dialog — shown when player tries to leave mid-puzzle
+    if (showExitDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitDialog = false },
+            title = { Text(uiStrings.puzzleExitTitle, fontWeight = FontWeight.Bold) },
+            text  = { Text(uiStrings.puzzleExitBody) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showExitDialog = false
+                    onBack()
+                }) {
+                    Text(uiStrings.puzzleExitConfirm, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitDialog = false }) {
+                    Text(uiStrings.puzzleExitCancel, color = DeepPurple)
+                }
+            }
+        )
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-            .navigationBarsPadding(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(24.dp)
-        ) {
-            Text("🎉", fontSize = 64.sp)
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text  = uiStrings.puzzleSolved,
-                style = MaterialTheme.typography.displayLarge,
-                textAlign = TextAlign.Center,
-                color = DeepPurple
-            )
-            Spacer(Modifier.height(24.dp))
-            if (imageModel != null) {
-                AsyncImage(
-                    model              = imageModel,
-                    contentDescription = image?.titleLocal,
-                    contentScale       = ContentScale.Fit,
-                    modifier           = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 360.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                )
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text  = image?.titleLocal?.ifBlank { image.titleEn } ?: "",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MedText,
-                    textAlign = TextAlign.Center
-                )
+    // Solved popup — shown once the puzzle is completed, player must close it explicitly
+    if (showSolvedPopup) {
+        AlertDialog(
+            onDismissRequest = { /* not dismissible by tapping outside */ },
+            title = { Text(uiStrings.puzzleSolved, fontWeight = FontWeight.Bold, color = DeepPurple) },
+            text  = { Text(uiStrings.puzzleSolvedPopupBody) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSolvedPopup = false
+                    onSolved()
+                }) {
+                    Text(uiStrings.puzzleSolvedPopupClose, color = DeepPurple, fontWeight = FontWeight.Bold)
+                }
             }
-            Spacer(Modifier.height(32.dp))
-            Button(
-                onClick  = onClose,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape    = RoundedCornerShape(16.dp),
-                colors   = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
-            ) {
-                Text(uiStrings.puzzleClose, style = MaterialTheme.typography.labelLarge)
-            }
-        }
+        )
     }
 }

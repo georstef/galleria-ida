@@ -24,7 +24,7 @@ object UiStringsCache {
      * Bump this number whenever an existing English string changes its value.
      * New keys don't require a bump — they're detected automatically via missingKeys().
      */
-    private const val CACHE_VERSION = 2
+    private const val CACHE_VERSION = 3
 
     private fun translationsDir(context: Context) =
         File(context.filesDir, "translations").also { it.mkdirs() }
@@ -210,7 +210,13 @@ object UiStringsCache {
             puzzleSolved                = s("puzzleSolved",                defaults.puzzleSolved),
             puzzleClose                 = s("puzzleClose",                 defaults.puzzleClose),
             puzzleShowImage             = s("puzzleShowImage",             defaults.puzzleShowImage),
-            puzzleTapToReturn           = s("puzzleTapToReturn",           defaults.puzzleTapToReturn),
+            puzzleCloseImage            = s("puzzleCloseImage",            defaults.puzzleCloseImage),
+            puzzleSolvedPopupBody       = s("puzzleSolvedPopupBody",       defaults.puzzleSolvedPopupBody),
+            puzzleSolvedPopupClose      = s("puzzleSolvedPopupClose",      defaults.puzzleSolvedPopupClose),
+            puzzleExitTitle             = s("puzzleExitTitle",             defaults.puzzleExitTitle),
+            puzzleExitBody              = s("puzzleExitBody",              defaults.puzzleExitBody),
+            puzzleExitConfirm           = s("puzzleExitConfirm",           defaults.puzzleExitConfirm),
+            puzzleExitCancel            = s("puzzleExitCancel",            defaults.puzzleExitCancel),
         )
     }
 
@@ -333,6 +339,12 @@ object UiStringsCache {
         "puzzleSolved"                to d.puzzleSolved,
         "puzzleClose"                 to d.puzzleClose,
         "puzzleShowImage"             to d.puzzleShowImage,
-        "puzzleTapToReturn"           to d.puzzleTapToReturn,
+        "puzzleCloseImage"            to d.puzzleCloseImage,
+        "puzzleSolvedPopupBody"       to d.puzzleSolvedPopupBody,
+        "puzzleSolvedPopupClose"      to d.puzzleSolvedPopupClose,
+        "puzzleExitTitle"             to d.puzzleExitTitle,
+        "puzzleExitBody"              to d.puzzleExitBody,
+        "puzzleExitConfirm"           to d.puzzleExitConfirm,
+        "puzzleExitCancel"            to d.puzzleExitCancel,
     )
 }

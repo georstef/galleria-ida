@@ -124,5 +124,11 @@ data class UiStrings(
     val puzzleSolved: String = "Puzzle solved! 🎉",
     val puzzleClose: String = "Back",
     val puzzleShowImage: String = "👁 Show Image",
-    val puzzleTapToReturn: String = "Tap to return to puzzle",
+    val puzzleCloseImage: String = "Close",
+    val puzzleSolvedPopupBody: String = "You completed the picture!",
+    val puzzleSolvedPopupClose: String = "Close puzzle",
+    val puzzleExitTitle: String = "Leave the puzzle?",
+    val puzzleExitBody: String = "Your 10 ⭐ have already been spent and won't be refunded if you leave now. Are you sure you want to exit?",
+    val puzzleExitConfirm: String = "Yes, exit",
+    val puzzleExitCancel: String = "Keep playing",
 )
