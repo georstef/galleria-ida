@@ -23,24 +23,27 @@ import androidx.compose.ui.unit.sp
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
 
-private const val PUZZLE_UNLOCK_THRESHOLD = 1
+private const val PUZZLE_UNLOCK_THRESHOLD     = 1
+private const val FILL_BLANK_UNLOCK_THRESHOLD = 6
 
 @Composable
 fun MiniGamesScreen(
     viewModel: AppViewModel,
     onBack: () -> Unit,
     onPuzzle: () -> Unit,
+    onFillTheBlank: () -> Unit,
     onEditProfile: () -> Unit
 ) {
     val player    by viewModel.currentPlayer.collectAsState()
     val gallery   by viewModel.gallery.collectAsState()
     val uiStrings by viewModel.uiStrings.collectAsState()
 
-    val stars         = player?.stars ?: 0
-    val initial       = player?.name?.firstOrNull()?.uppercase() ?: "?"
-    val playerImages  = gallery.filter { it.playerId == player?.id }
-    val imageCount    = playerImages.size
-    val puzzleLocked  = imageCount < PUZZLE_UNLOCK_THRESHOLD
+    val stars           = player?.stars ?: 0
+    val initial         = player?.name?.firstOrNull()?.uppercase() ?: "?"
+    val playerImages    = gallery.filter { it.playerId == player?.id }
+    val imageCount      = playerImages.size
+    val puzzleLocked    = imageCount < PUZZLE_UNLOCK_THRESHOLD
+    val fillBlankLocked = imageCount < FILL_BLANK_UNLOCK_THRESHOLD
 
     Box(
         modifier = Modifier
@@ -123,6 +126,17 @@ fun MiniGamesScreen(
                     costHint    = uiStrings.miniGamesCostHint,
                     color       = ButtonPrimary,
                     onClick     = { if (!puzzleLocked) onPuzzle() }
+                )
+
+                MiniGameCard(
+                    emoji       = "🔡",
+                    name        = uiStrings.miniGamesFillBlankName,
+                    description = uiStrings.miniGamesFillBlankDesc,
+                    locked      = fillBlankLocked,
+                    lockedHint  = uiStrings.miniGamesLockedHint.format(FILL_BLANK_UNLOCK_THRESHOLD),
+                    costHint    = uiStrings.miniGamesCostHint,
+                    color       = ButtonSecondary,
+                    onClick     = { if (!fillBlankLocked) onFillTheBlank() }
                 )
             }
         }

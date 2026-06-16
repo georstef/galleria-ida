@@ -111,6 +111,8 @@ data class UiStrings(
     val miniGamesCostHint: String = "10 ⭐ to play",
     val miniGamesPuzzleName: String = "🧩 Puzzle",
     val miniGamesPuzzleDesc: String = "Reassemble a picture from your gallery",
+    val miniGamesFillBlankName: String = "🔡 Fill the Blank",
+    val miniGamesFillBlankDesc: String = "Guess the title to reveal hidden pictures",
 
     // ── PuzzleScreen ──────────────────────────────────────────────────────────
     val puzzleTitle: String = "Puzzle 🧩",
@@ -131,4 +133,26 @@ data class UiStrings(
     val puzzleExitBody: String = "Your 10 ⭐ have already been spent and won't be refunded if you leave now. Are you sure you want to exit?",
     val puzzleExitConfirm: String = "Yes, exit",
     val puzzleExitCancel: String = "Keep playing",
+
+    // ── FillTheBlankScreen ──────────────────────────────────────────────────
+    val fillBlankTitle: String = "Fill the Blank 🔡",
+    val fillBlankSelectDifficulty: String = "Choose difficulty",
+    val fillBlankEasy: String = "Easy",
+    val fillBlankMedium: String = "Medium",
+    val fillBlankHard: String = "Hard",
+    val fillBlankPlay: String = "Play!  (10 ⭐)",
+    val fillBlankNotEnoughStars: String = "Not enough stars",
+    val fillBlankNotEnoughImages: String = "Not enough images in your gallery yet",
+    val fillBlankRoundCounter: String = "Round %d / %d",          // current / total
+    val fillBlankCorrect: String = "Correct! 🎉",
+    val fillBlankWrong: String = "Not quite, try again!",
+    val fillBlankNext: String = "Next round →",
+    val fillBlankUndo: String = "⌫ Undo",
+    val fillBlankSummaryTitle: String = "All done! 🎉",
+    val fillBlankSummaryScore: String = "%d / %d revealed",        // correct / total
+    val fillBlankSummaryClose: String = "Close",
+    val fillBlankExitTitle: String = "Leave Fill the Blank?",
+    val fillBlankExitBody: String = "Your 10 ⭐ have already been spent and won't be refunded if you leave now. Are you sure you want to exit?",
+    val fillBlankExitConfirm: String = "Yes, exit",
+    val fillBlankExitCancel: String = "Keep playing",
 )

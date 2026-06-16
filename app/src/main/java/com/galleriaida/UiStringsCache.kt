@@ -217,6 +217,32 @@ object UiStringsCache {
             puzzleExitBody              = s("puzzleExitBody",              defaults.puzzleExitBody),
             puzzleExitConfirm           = s("puzzleExitConfirm",           defaults.puzzleExitConfirm),
             puzzleExitCancel            = s("puzzleExitCancel",            defaults.puzzleExitCancel),
+
+            // ── MiniGamesScreen extras ──────────────────────────────────────────
+            miniGamesFillBlankName      = s("miniGamesFillBlankName",      defaults.miniGamesFillBlankName),
+            miniGamesFillBlankDesc      = s("miniGamesFillBlankDesc",      defaults.miniGamesFillBlankDesc),
+
+            // ── FillTheBlankScreen ───────────────────────────────────────────────
+            fillBlankTitle              = s("fillBlankTitle",              defaults.fillBlankTitle),
+            fillBlankSelectDifficulty   = s("fillBlankSelectDifficulty",   defaults.fillBlankSelectDifficulty),
+            fillBlankEasy               = s("fillBlankEasy",               defaults.fillBlankEasy),
+            fillBlankMedium             = s("fillBlankMedium",             defaults.fillBlankMedium),
+            fillBlankHard               = s("fillBlankHard",               defaults.fillBlankHard),
+            fillBlankPlay               = s("fillBlankPlay",               defaults.fillBlankPlay),
+            fillBlankNotEnoughStars     = s("fillBlankNotEnoughStars",     defaults.fillBlankNotEnoughStars),
+            fillBlankNotEnoughImages    = s("fillBlankNotEnoughImages",    defaults.fillBlankNotEnoughImages),
+            fillBlankRoundCounter       = s("fillBlankRoundCounter",       defaults.fillBlankRoundCounter),
+            fillBlankCorrect            = s("fillBlankCorrect",            defaults.fillBlankCorrect),
+            fillBlankWrong              = s("fillBlankWrong",              defaults.fillBlankWrong),
+            fillBlankNext               = s("fillBlankNext",               defaults.fillBlankNext),
+            fillBlankUndo               = s("fillBlankUndo",               defaults.fillBlankUndo),
+            fillBlankSummaryTitle       = s("fillBlankSummaryTitle",       defaults.fillBlankSummaryTitle),
+            fillBlankSummaryScore       = s("fillBlankSummaryScore",       defaults.fillBlankSummaryScore),
+            fillBlankSummaryClose       = s("fillBlankSummaryClose",       defaults.fillBlankSummaryClose),
+            fillBlankExitTitle          = s("fillBlankExitTitle",          defaults.fillBlankExitTitle),
+            fillBlankExitBody           = s("fillBlankExitBody",           defaults.fillBlankExitBody),
+            fillBlankExitConfirm        = s("fillBlankExitConfirm",        defaults.fillBlankExitConfirm),
+            fillBlankExitCancel         = s("fillBlankExitCancel",         defaults.fillBlankExitCancel),
         )
     }
 
@@ -346,5 +372,31 @@ object UiStringsCache {
         "puzzleExitBody"              to d.puzzleExitBody,
         "puzzleExitConfirm"           to d.puzzleExitConfirm,
         "puzzleExitCancel"            to d.puzzleExitCancel,
+
+        // ── MiniGamesScreen extras ──────────────────────────────────────────────
+        "miniGamesFillBlankName"      to d.miniGamesFillBlankName,
+        "miniGamesFillBlankDesc"      to d.miniGamesFillBlankDesc,
+
+        // ── FillTheBlankScreen ────────────────────────────────────────────────
+        "fillBlankTitle"              to d.fillBlankTitle,
+        "fillBlankSelectDifficulty"   to d.fillBlankSelectDifficulty,
+        "fillBlankEasy"               to d.fillBlankEasy,
+        "fillBlankMedium"             to d.fillBlankMedium,
+        "fillBlankHard"               to d.fillBlankHard,
+        "fillBlankPlay"               to d.fillBlankPlay,
+        "fillBlankNotEnoughStars"     to d.fillBlankNotEnoughStars,
+        "fillBlankNotEnoughImages"    to d.fillBlankNotEnoughImages,
+        "fillBlankRoundCounter"       to d.fillBlankRoundCounter,
+        "fillBlankCorrect"            to d.fillBlankCorrect,
+        "fillBlankWrong"              to d.fillBlankWrong,
+        "fillBlankNext"               to d.fillBlankNext,
+        "fillBlankUndo"               to d.fillBlankUndo,
+        "fillBlankSummaryTitle"       to d.fillBlankSummaryTitle,
+        "fillBlankSummaryScore"       to d.fillBlankSummaryScore,
+        "fillBlankSummaryClose"       to d.fillBlankSummaryClose,
+        "fillBlankExitTitle"          to d.fillBlankExitTitle,
+        "fillBlankExitBody"           to d.fillBlankExitBody,
+        "fillBlankExitConfirm"        to d.fillBlankExitConfirm,
+        "fillBlankExitCancel"         to d.fillBlankExitCancel,
     )
 }
