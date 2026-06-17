@@ -244,6 +244,33 @@ object UiStringsCache {
             fillBlankExitBody           = s("fillBlankExitBody",           defaults.fillBlankExitBody),
             fillBlankExitConfirm        = s("fillBlankExitConfirm",        defaults.fillBlankExitConfirm),
             fillBlankExitCancel         = s("fillBlankExitCancel",         defaults.fillBlankExitCancel),
+
+            // ── MiniGamesScreen extras (One Piece) ───────────────────────────────
+            miniGamesOnePieceName       = s("miniGamesOnePieceName",       defaults.miniGamesOnePieceName),
+            miniGamesOnePieceDesc       = s("miniGamesOnePieceDesc",       defaults.miniGamesOnePieceDesc),
+
+            // ── OnePieceScreen ───────────────────────────────────────────────────
+            onePieceTitle               = s("onePieceTitle",               defaults.onePieceTitle),
+            onePieceSelectDifficulty    = s("onePieceSelectDifficulty",    defaults.onePieceSelectDifficulty),
+            onePieceEasy                = s("onePieceEasy",                defaults.onePieceEasy),
+            onePieceMedium              = s("onePieceMedium",              defaults.onePieceMedium),
+            onePieceHard                = s("onePieceHard",                defaults.onePieceHard),
+            onePiecePlay                = s("onePiecePlay",                defaults.onePiecePlay),
+            onePieceNotEnoughStars      = s("onePieceNotEnoughStars",      defaults.onePieceNotEnoughStars),
+            onePieceNotEnoughImages     = s("onePieceNotEnoughImages",     defaults.onePieceNotEnoughImages),
+            onePieceExplainer           = s("onePieceExplainer",           defaults.onePieceExplainer),
+            onePieceRoundCounter        = s("onePieceRoundCounter",        defaults.onePieceRoundCounter),
+            onePieceQuestion            = s("onePieceQuestion",            defaults.onePieceQuestion),
+            onePieceCorrect             = s("onePieceCorrect",             defaults.onePieceCorrect),
+            onePieceWrong               = s("onePieceWrong",               defaults.onePieceWrong),
+            onePieceNext                = s("onePieceNext",                defaults.onePieceNext),
+            onePieceSummaryTitle        = s("onePieceSummaryTitle",        defaults.onePieceSummaryTitle),
+            onePieceSummaryScore        = s("onePieceSummaryScore",        defaults.onePieceSummaryScore),
+            onePieceSummaryClose        = s("onePieceSummaryClose",        defaults.onePieceSummaryClose),
+            onePieceExitTitle           = s("onePieceExitTitle",           defaults.onePieceExitTitle),
+            onePieceExitBody            = s("onePieceExitBody",            defaults.onePieceExitBody),
+            onePieceExitConfirm         = s("onePieceExitConfirm",         defaults.onePieceExitConfirm),
+            onePieceExitCancel          = s("onePieceExitCancel",          defaults.onePieceExitCancel),
         )
     }
 
@@ -400,5 +427,32 @@ object UiStringsCache {
         "fillBlankExitBody"           to d.fillBlankExitBody,
         "fillBlankExitConfirm"        to d.fillBlankExitConfirm,
         "fillBlankExitCancel"         to d.fillBlankExitCancel,
+
+        // ── MiniGamesScreen extras (One Piece) ───────────────────────────────────
+        "miniGamesOnePieceName"       to d.miniGamesOnePieceName,
+        "miniGamesOnePieceDesc"       to d.miniGamesOnePieceDesc,
+
+        // ── OnePieceScreen ────────────────────────────────────────────────────
+        "onePieceTitle"               to d.onePieceTitle,
+        "onePieceSelectDifficulty"    to d.onePieceSelectDifficulty,
+        "onePieceEasy"                to d.onePieceEasy,
+        "onePieceMedium"              to d.onePieceMedium,
+        "onePieceHard"                to d.onePieceHard,
+        "onePiecePlay"                to d.onePiecePlay,
+        "onePieceNotEnoughStars"      to d.onePieceNotEnoughStars,
+        "onePieceNotEnoughImages"     to d.onePieceNotEnoughImages,
+        "onePieceExplainer"           to d.onePieceExplainer,
+        "onePieceRoundCounter"        to d.onePieceRoundCounter,
+        "onePieceQuestion"            to d.onePieceQuestion,
+        "onePieceCorrect"             to d.onePieceCorrect,
+        "onePieceWrong"               to d.onePieceWrong,
+        "onePieceNext"                to d.onePieceNext,
+        "onePieceSummaryTitle"        to d.onePieceSummaryTitle,
+        "onePieceSummaryScore"        to d.onePieceSummaryScore,
+        "onePieceSummaryClose"        to d.onePieceSummaryClose,
+        "onePieceExitTitle"           to d.onePieceExitTitle,
+        "onePieceExitBody"            to d.onePieceExitBody,
+        "onePieceExitConfirm"         to d.onePieceExitConfirm,
+        "onePieceExitCancel"          to d.onePieceExitCancel,
     )
 }

@@ -20,11 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
 
 private const val PUZZLE_UNLOCK_THRESHOLD     = 1
 private const val FILL_BLANK_UNLOCK_THRESHOLD = 6
+private const val ONE_PIECE_UNLOCK_THRESHOLD  = 8
 
 @Composable
 fun MiniGamesScreen(
@@ -32,6 +34,7 @@ fun MiniGamesScreen(
     onBack: () -> Unit,
     onPuzzle: () -> Unit,
     onFillTheBlank: () -> Unit,
+    onOnePiece: () -> Unit,
     onEditProfile: () -> Unit
 ) {
     val player    by viewModel.currentPlayer.collectAsState()
@@ -44,6 +47,7 @@ fun MiniGamesScreen(
     val imageCount      = playerImages.size
     val puzzleLocked    = imageCount < PUZZLE_UNLOCK_THRESHOLD
     val fillBlankLocked = imageCount < FILL_BLANK_UNLOCK_THRESHOLD
+    val onePieceLocked  = imageCount < ONE_PIECE_UNLOCK_THRESHOLD
 
     Box(
         modifier = Modifier
@@ -135,6 +139,16 @@ fun MiniGamesScreen(
                     costHint    = uiStrings.miniGamesCostHint,
                     color       = ButtonSecondary,
                     onClick     = { if (!fillBlankLocked) onFillTheBlank() }
+                )
+
+                MiniGameCard(
+                    emoji       = "🔲",
+                    name        = uiStrings.miniGamesOnePieceName,
+                    locked      = onePieceLocked,
+                    lockedHint  = uiStrings.miniGamesLockedHint.format(ONE_PIECE_UNLOCK_THRESHOLD),
+                    costHint    = uiStrings.miniGamesCostHint,
+                    color       = Color(0xFFFF6F00),
+                    onClick     = { if (!onePieceLocked) onOnePiece() }
                 )
             }
         }

@@ -113,6 +113,8 @@ data class UiStrings(
     val miniGamesPuzzleDesc: String = "Reassemble a picture from your gallery",
     val miniGamesFillBlankName: String = "🔡 Fill the Blank",
     val miniGamesFillBlankDesc: String = "Guess the title to reveal hidden pictures",
+    val miniGamesOnePieceName: String = "🔲 One Piece",
+    val miniGamesOnePieceDesc: String = "Guess the full picture from a tiny piece",
 
     // ── PuzzleScreen ──────────────────────────────────────────────────────────
     val puzzleTitle: String = "Puzzle 🧩",
@@ -156,4 +158,27 @@ data class UiStrings(
     val fillBlankExitBody: String = "Your 10 ⭐ have already been spent and won't be refunded if you leave now. Are you sure you want to exit?",
     val fillBlankExitConfirm: String = "Yes, exit",
     val fillBlankExitCancel: String = "Keep playing",
+
+    // ── OnePieceScreen ──────────────────────────────────────────────────────
+    val onePieceTitle: String = "One Piece 🔲",
+    val onePieceSelectDifficulty: String = "Choose difficulty",
+    val onePieceEasy: String = "Easy",
+    val onePieceMedium: String = "Medium",
+    val onePieceHard: String = "Hard",
+    val onePiecePlay: String = "Play!  (10 ⭐)",
+    val onePieceNotEnoughStars: String = "Not enough stars",
+    val onePieceNotEnoughImages: String = "Not enough images in your gallery yet",
+    val onePieceExplainer: String = "%d rounds — guess the picture from one tiny piece!",  // %d = total rounds
+    val onePieceRoundCounter: String = "Round %d / %d",            // current / total
+    val onePieceQuestion: String = "Which picture is this from?",
+    val onePieceCorrect: String = "Correct! 🎉",
+    val onePieceWrong: String = "Not quite!",
+    val onePieceNext: String = "Next round →",
+    val onePieceSummaryTitle: String = "All done! 🎉",
+    val onePieceSummaryScore: String = "%d / %d correct",          // correct / total
+    val onePieceSummaryClose: String = "Close",
+    val onePieceExitTitle: String = "Leave One Piece?",
+    val onePieceExitBody: String = "Your 10 ⭐ have already been spent and won't be refunded if you leave now. Are you sure you want to exit?",
+    val onePieceExitConfirm: String = "Yes, exit",
+    val onePieceExitCancel: String = "Keep playing",
 )

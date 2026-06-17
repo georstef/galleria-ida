@@ -21,6 +21,7 @@ import com.galleriaida.ui.screens.SettingsScreen
 import com.galleriaida.ui.screens.MiniGamesScreen
 import com.galleriaida.ui.screens.PuzzleScreen
 import com.galleriaida.ui.screens.FillTheBlankScreen
+import com.galleriaida.ui.screens.OnePieceScreen
 import com.galleriaida.viewmodel.AppViewModel
 
 object Routes {
@@ -40,6 +41,7 @@ object Routes {
     const val MINI_GAMES         = "mini_games"
     const val PUZZLE             = "puzzle"
     const val FILL_THE_BLANK     = "fill_the_blank"
+    const val ONE_PIECE          = "one_piece"
 
     fun quizSummary(fromHistory: Boolean) = "quiz_summary/$fromHistory"
     fun playerProfile(isNewPlayer: Boolean = false) = "player_profile/$isNewPlayer"
@@ -219,6 +221,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
                 onBack         = { navController.popBackStack() },
                 onPuzzle       = { navController.navigate(Routes.PUZZLE) },
                 onFillTheBlank = { navController.navigate(Routes.FILL_THE_BLANK) },
+                onOnePiece     = { navController.navigate(Routes.ONE_PIECE) },
                 onEditProfile  = { navController.navigate(Routes.playerProfile()) }
             )
         }
@@ -232,6 +235,13 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
 
         composable(Routes.FILL_THE_BLANK) {
             FillTheBlankScreen(
+                viewModel = viewModel,
+                onBack    = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.ONE_PIECE) {
+            OnePieceScreen(
                 viewModel = viewModel,
                 onBack    = { navController.popBackStack() }
             )
