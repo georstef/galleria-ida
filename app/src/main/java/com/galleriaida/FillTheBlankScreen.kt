@@ -178,23 +178,23 @@ private fun FillBlankSetupScreen(
             Spacer(Modifier.width(8.dp))
         }
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(24.dp))
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
         ) {
-            Text("🔡", fontSize = 64.sp)
+            Text("🔡", fontSize = 56.sp)
             Spacer(Modifier.height(16.dp))
             Text(
-                text  = "${TOTAL_ROUNDS} rounds — guess the title to reveal each hidden picture!",
+                text  = uiStrings.fillBlankExplainer.format(TOTAL_ROUNDS),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MedText,
                 textAlign = TextAlign.Center
             )
         }
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(28.dp))
 
         Text(
             text       = uiStrings.fillBlankSelectDifficulty,
@@ -403,36 +403,75 @@ private fun FillBlankGameScreen(
             }
             Spacer(Modifier.height(24.dp))
         } else {
-            // Title slots
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                round!!.slots.forEach { slot ->
+            // Title slots — wrapped word-by-word so long titles never overflow the screen
+            val words = remember(round) {
+                val list = mutableListOf<List<Int>>()  // each entry = list of slot indices for one word
+                var current = mutableListOf<Int>()
+                round!!.slots.forEachIndexed { i, slot ->
                     if (slot.char == ' ') {
-                        Spacer(Modifier.width(8.dp))
+                        if (current.isNotEmpty()) { list.add(current); current = mutableListOf() }
                     } else {
-                        val displayChar = if (slot.isBlank) (slot.filledWith?.toString() ?: "_") else slot.char.toString()
-                        Box(
-                            modifier = Modifier
-                                .size(width = 28.dp, height = 36.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(
-                                    if (slot.isBlank) {
-                                        if (wrongFlash) MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
-                                        else SoftPurple
-                                    } else Color.Transparent
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text  = displayChar,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = DeepPurple,
-                                fontWeight = FontWeight.Bold
-                            )
+                        current.add(i)
+                    }
+                }
+                if (current.isNotEmpty()) list.add(current)
+                list
+            }
+            val maxCharsPerLine = 11
+            val lines = remember(words) {
+                val result = mutableListOf<MutableList<List<Int>>>()
+                var lineLen = 0
+                var line = mutableListOf<List<Int>>()
+                words.forEach { word ->
+                    val wordLen = word.size
+                    if (lineLen + wordLen > maxCharsPerLine && line.isNotEmpty()) {
+                        result.add(line)
+                        line = mutableListOf()
+                        lineLen = 0
+                    }
+                    line.add(word)
+                    lineLen += wordLen + 1
+                }
+                if (line.isNotEmpty()) result.add(line)
+                result
+            }
+
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                lines.forEach { line ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment     = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 3.dp)
+                    ) {
+                        line.forEach { word ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                                word.forEach { slotIndex ->
+                                    val slot = round!!.slots[slotIndex]
+                                    val displayChar = if (slot.isBlank) (slot.filledWith?.toString() ?: "_") else slot.char.toString()
+                                    Box(
+                                        modifier = Modifier
+                                            .size(width = 26.dp, height = 34.dp)
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(
+                                                if (slot.isBlank) {
+                                                    if (wrongFlash) MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
+                                                    else SoftPurple
+                                                } else Color.Transparent
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text  = displayChar,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = DeepPurple,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -451,18 +490,23 @@ private fun FillBlankGameScreen(
 
             Spacer(Modifier.height(28.dp))
 
-            // Letter tray
-            Row(
+            // Letter tray — wraps onto multiple lines so it never overflows the screen
+            val trayColumns = 7
+            LazyVerticalGrid(
+                columns  = GridCells.Fixed(trayColumns),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
+                    .padding(horizontal = 24.dp)
+                    .heightIn(max = 220.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement   = Arrangement.spacedBy(8.dp)
             ) {
-                round!!.letterTray.forEachIndexed { i, letter ->
+                items(round!!.letterTray.size) { i ->
+                    val letter = round!!.letterTray[i]
                     val used = trayUsed.getOrElse(i) { false }
                     Box(
                         modifier = Modifier
-                            .size(44.dp)
+                            .aspectRatio(1f)
                             .clip(RoundedCornerShape(10.dp))
                             .background(if (used) DisabledGray.copy(alpha = 0.3f) else ButtonSecondary)
                             .clickable(enabled = !used && nextBlankCursor < blankPositions.size) {

@@ -144,6 +144,7 @@ data class UiStrings(
     val fillBlankNotEnoughStars: String = "Not enough stars",
     val fillBlankNotEnoughImages: String = "Not enough images in your gallery yet",
     val fillBlankRoundCounter: String = "Round %d / %d",          // current / total
+    val fillBlankExplainer: String = "%d rounds — guess the title to reveal each hidden picture!",  // %d = total rounds
     val fillBlankCorrect: String = "Correct! 🎉",
     val fillBlankWrong: String = "Not quite, try again!",
     val fillBlankNext: String = "Next round →",

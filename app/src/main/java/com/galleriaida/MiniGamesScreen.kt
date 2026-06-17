@@ -120,7 +120,6 @@ fun MiniGamesScreen(
                 MiniGameCard(
                     emoji       = "🧩",
                     name        = uiStrings.miniGamesPuzzleName,
-                    description = uiStrings.miniGamesPuzzleDesc,
                     locked      = puzzleLocked,
                     lockedHint  = uiStrings.miniGamesLockedHint.format(PUZZLE_UNLOCK_THRESHOLD),
                     costHint    = uiStrings.miniGamesCostHint,
@@ -131,7 +130,6 @@ fun MiniGamesScreen(
                 MiniGameCard(
                     emoji       = "🔡",
                     name        = uiStrings.miniGamesFillBlankName,
-                    description = uiStrings.miniGamesFillBlankDesc,
                     locked      = fillBlankLocked,
                     lockedHint  = uiStrings.miniGamesLockedHint.format(FILL_BLANK_UNLOCK_THRESHOLD),
                     costHint    = uiStrings.miniGamesCostHint,
@@ -147,7 +145,6 @@ fun MiniGamesScreen(
 private fun MiniGameCard(
     emoji: String,
     name: String,
-    description: String,
     locked: Boolean,
     lockedHint: String,
     costHint: String,
@@ -185,12 +182,6 @@ private fun MiniGameCard(
                     style      = MaterialTheme.typography.titleMedium,
                     color      = if (locked) MedText else DeepPurple,
                     fontWeight = FontWeight.Bold
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text  = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MedText
                 )
                 Spacer(Modifier.height(8.dp))
                 if (locked) {
