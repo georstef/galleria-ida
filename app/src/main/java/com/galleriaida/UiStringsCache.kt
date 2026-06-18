@@ -195,6 +195,7 @@ object UiStringsCache {
             miniGamesTitle              = s("miniGamesTitle",              defaults.miniGamesTitle),
             miniGamesLockedHint         = s("miniGamesLockedHint",         defaults.miniGamesLockedHint),
             miniGamesCostHint           = s("miniGamesCostHint",           defaults.miniGamesCostHint),
+            miniGamesCostHint5          = s("miniGamesCostHint5",          defaults.miniGamesCostHint5),
             miniGamesPuzzleName         = s("miniGamesPuzzleName",         defaults.miniGamesPuzzleName),
             miniGamesPuzzleDesc         = s("miniGamesPuzzleDesc",         defaults.miniGamesPuzzleDesc),
 
@@ -236,6 +237,7 @@ object UiStringsCache {
             fillBlankCorrect            = s("fillBlankCorrect",            defaults.fillBlankCorrect),
             fillBlankWrong              = s("fillBlankWrong",              defaults.fillBlankWrong),
             fillBlankNext               = s("fillBlankNext",               defaults.fillBlankNext),
+            fillBlankSeeResults         = s("fillBlankSeeResults",         defaults.fillBlankSeeResults),
             fillBlankUndo               = s("fillBlankUndo",               defaults.fillBlankUndo),
             fillBlankSummaryTitle       = s("fillBlankSummaryTitle",       defaults.fillBlankSummaryTitle),
             fillBlankSummaryScore       = s("fillBlankSummaryScore",       defaults.fillBlankSummaryScore),
@@ -398,6 +400,7 @@ object UiStringsCache {
         "miniGamesTitle"              to d.miniGamesTitle,
         "miniGamesLockedHint"         to d.miniGamesLockedHint,
         "miniGamesCostHint"           to d.miniGamesCostHint,
+        "miniGamesCostHint5"          to d.miniGamesCostHint5,
         "miniGamesPuzzleName"         to d.miniGamesPuzzleName,
         "miniGamesPuzzleDesc"         to d.miniGamesPuzzleDesc,
 
@@ -439,6 +442,7 @@ object UiStringsCache {
         "fillBlankCorrect"            to d.fillBlankCorrect,
         "fillBlankWrong"              to d.fillBlankWrong,
         "fillBlankNext"               to d.fillBlankNext,
+        "fillBlankSeeResults"         to d.fillBlankSeeResults,
         "fillBlankUndo"               to d.fillBlankUndo,
         "fillBlankSummaryTitle"       to d.fillBlankSummaryTitle,
         "fillBlankSummaryScore"       to d.fillBlankSummaryScore,

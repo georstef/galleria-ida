@@ -149,7 +149,7 @@ fun MiniGamesScreen(
                     name        = uiStrings.miniGamesOnePieceName,
                     locked      = onePieceLocked,
                     lockedHint  = uiStrings.miniGamesLockedHint.format(ONE_PIECE_UNLOCK_THRESHOLD),
-                    costHint    = uiStrings.miniGamesCostHint,
+                    costHint    = uiStrings.miniGamesCostHint5,
                     color       = Color(0xFFFF6F00),
                     onClick     = { if (!onePieceLocked) onOnePiece() }
                 )

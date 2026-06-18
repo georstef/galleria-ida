@@ -109,6 +109,7 @@ data class UiStrings(
     val miniGamesTitle: String = "🎮 Mini Games",
     val miniGamesLockedHint: String = "Unlocks after %d images",
     val miniGamesCostHint: String = "10 ⭐ to play",
+    val miniGamesCostHint5: String = "5 ⭐ to play",
     val miniGamesPuzzleName: String = "🧩 Puzzle",
     val miniGamesPuzzleDesc: String = "Reassemble a picture from your gallery",
     val miniGamesFillBlankName: String = "🔡 Fill the Blank",
@@ -150,6 +151,7 @@ data class UiStrings(
     val fillBlankCorrect: String = "Correct! 🎉",
     val fillBlankWrong: String = "Not quite, try again!",
     val fillBlankNext: String = "Next round →",
+    val fillBlankSeeResults: String = "See Results 🎉",
     val fillBlankUndo: String = "⌫ Undo",
     val fillBlankSummaryTitle: String = "All done! 🎉",
     val fillBlankSummaryScore: String = "%d / %d revealed",        // correct / total
@@ -183,7 +185,7 @@ data class UiStrings(
     val onePieceEasy: String = "Easy",
     val onePieceMedium: String = "Medium",
     val onePieceHard: String = "Hard",
-    val onePiecePlay: String = "Play!  (10 ⭐)",
+    val onePiecePlay: String = "Play!  (5 ⭐)",
     val onePieceNotEnoughStars: String = "Not enough stars",
     val onePieceNotEnoughImages: String = "Not enough images in your gallery yet",
     val onePieceExplainer: String = "%d rounds — guess the picture from one tiny piece!",  // %d = total rounds

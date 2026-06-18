@@ -399,7 +399,11 @@ private fun FillBlankGameScreen(
                 shape    = RoundedCornerShape(16.dp),
                 colors   = ButtonDefaults.buttonColors(containerColor = ButtonSecondary)
             ) {
-                Text(uiStrings.fillBlankNext, style = MaterialTheme.typography.labelLarge)
+                Text(
+                    if (roundIndex + 1 >= images.size) uiStrings.fillBlankSeeResults
+                    else uiStrings.fillBlankNext,
+                    style = MaterialTheme.typography.labelLarge
+                )
             }
             Spacer(Modifier.height(24.dp))
         } else {

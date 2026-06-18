@@ -36,7 +36,7 @@ import kotlin.math.roundToInt
 import kotlin.random.Random
 
 private const val TOTAL_ROUNDS = 5
-private const val PLAY_COST    = 10
+private const val PLAY_COST    = 5
 private const val LINEUP_SIZE  = 4
 
 private val VividGreen = Color(0xFF00C853)
@@ -352,21 +352,12 @@ private fun OnePieceGameScreen(
             Spacer(Modifier.width(48.dp))
         }
 
-        // Piece preview — shown inside a fixed-size stage. The piece is scaled so
-        // that its size *relative to the stage* reflects how small a fraction of
-        // the full image it represents — Easy fills much of the stage, Hard is a
-        // small dot in the middle. This makes the difficulty difference obvious,
-        // rather than relying on tiny absolute pixel differences that are hard
-        // to perceive at a glance. Aspect ratio of the actual crop is preserved.
+        // Piece preview — the piece is displayed at a size proportional to
+        // the fraction of the image it represents (1/gridSize of the stage width).
+        // This makes Easy/Medium/Hard feel meaningfully different and keeps the
+        // game challenging across all difficulties.
         val stageSize = 220.dp
-        // Explicit designed display scale per difficulty (independent of the exact
-        // grid math) so the size difference on screen is dramatic and immediately
-        // obvious to the player, rather than a subtle pixel-level difference.
-        val displayScalePercent = when (difficulty) {
-            OnePieceDifficulty.EASY   -> 0.85f
-            OnePieceDifficulty.MEDIUM -> 0.45f
-            OnePieceDifficulty.HARD   -> 0.18f
-        }
+        val displayScalePercent = 1f / difficulty.gridSize
         val maxDisplaySize = stageSize * displayScalePercent
 
         val pieceAspect = round.pieceBitmap.width.toFloat() / round.pieceBitmap.height.toFloat()
