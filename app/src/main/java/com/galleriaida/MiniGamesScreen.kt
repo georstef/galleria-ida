@@ -24,9 +24,10 @@ import androidx.compose.ui.graphics.Color
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
 
-private const val PUZZLE_UNLOCK_THRESHOLD     = 1
-private const val FILL_BLANK_UNLOCK_THRESHOLD = 6
-private const val ONE_PIECE_UNLOCK_THRESHOLD  = 8
+private const val PUZZLE_UNLOCK_THRESHOLD      = 1
+private const val FILL_BLANK_UNLOCK_THRESHOLD  = 6
+private const val MEMORY_MATCH_UNLOCK_THRESHOLD = 10
+private const val ONE_PIECE_UNLOCK_THRESHOLD   = 8
 
 @Composable
 fun MiniGamesScreen(
@@ -34,6 +35,7 @@ fun MiniGamesScreen(
     onBack: () -> Unit,
     onPuzzle: () -> Unit,
     onFillTheBlank: () -> Unit,
+    onMemoryMatch: () -> Unit,
     onOnePiece: () -> Unit,
     onEditProfile: () -> Unit
 ) {
@@ -47,6 +49,7 @@ fun MiniGamesScreen(
     val imageCount      = playerImages.size
     val puzzleLocked    = imageCount < PUZZLE_UNLOCK_THRESHOLD
     val fillBlankLocked = imageCount < FILL_BLANK_UNLOCK_THRESHOLD
+    val memoryMatchLocked = imageCount < MEMORY_MATCH_UNLOCK_THRESHOLD
     val onePieceLocked  = imageCount < ONE_PIECE_UNLOCK_THRESHOLD
 
     Box(
@@ -149,6 +152,16 @@ fun MiniGamesScreen(
                     costHint    = uiStrings.miniGamesCostHint,
                     color       = Color(0xFFFF6F00),
                     onClick     = { if (!onePieceLocked) onOnePiece() }
+                )
+
+                MiniGameCard(
+                    emoji       = "🧠",
+                    name        = uiStrings.memoryMatchName,
+                    locked      = memoryMatchLocked,
+                    lockedHint  = uiStrings.miniGamesLockedHint.format(MEMORY_MATCH_UNLOCK_THRESHOLD),
+                    costHint    = uiStrings.miniGamesCostHint,
+                    color       = Color(0xFFE57373),
+                    onClick     = { if (!memoryMatchLocked) onMemoryMatch() }
                 )
             }
         }

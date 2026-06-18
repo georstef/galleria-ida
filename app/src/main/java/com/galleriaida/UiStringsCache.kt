@@ -245,6 +245,26 @@ object UiStringsCache {
             fillBlankExitConfirm        = s("fillBlankExitConfirm",        defaults.fillBlankExitConfirm),
             fillBlankExitCancel         = s("fillBlankExitCancel",         defaults.fillBlankExitCancel),
 
+            // ── MiniGamesScreen extras (Memory Match) ────────────────────────────
+            memoryMatchName             = s("memoryMatchName",             defaults.memoryMatchName),
+            memoryMatchDesc             = s("memoryMatchDesc",             defaults.memoryMatchDesc),
+
+            // ── MemoryMatchScreen ─────────────────────────────────────────────
+            memoryMatchTitle            = s("memoryMatchTitle",            defaults.memoryMatchTitle),
+            memoryMatchSelectDifficulty = s("memoryMatchSelectDifficulty", defaults.memoryMatchSelectDifficulty),
+            memoryMatchEasy             = s("memoryMatchEasy",             defaults.memoryMatchEasy),
+            memoryMatchMedium           = s("memoryMatchMedium",           defaults.memoryMatchMedium),
+            memoryMatchHard             = s("memoryMatchHard",             defaults.memoryMatchHard),
+            memoryMatchPlay             = s("memoryMatchPlay",             defaults.memoryMatchPlay),
+            memoryMatchNotEnoughStars   = s("memoryMatchNotEnoughStars",   defaults.memoryMatchNotEnoughStars),
+            memoryMatchWonTitle         = s("memoryMatchWonTitle",         defaults.memoryMatchWonTitle),
+            memoryMatchWonBody          = s("memoryMatchWonBody",          defaults.memoryMatchWonBody),
+            memoryMatchWonClose         = s("memoryMatchWonClose",         defaults.memoryMatchWonClose),
+            memoryMatchExitTitle        = s("memoryMatchExitTitle",        defaults.memoryMatchExitTitle),
+            memoryMatchExitBody         = s("memoryMatchExitBody",         defaults.memoryMatchExitBody),
+            memoryMatchExitConfirm      = s("memoryMatchExitConfirm",      defaults.memoryMatchExitConfirm),
+            memoryMatchExitCancel       = s("memoryMatchExitCancel",       defaults.memoryMatchExitCancel),
+
             // ── MiniGamesScreen extras (One Piece) ───────────────────────────────
             miniGamesOnePieceName       = s("miniGamesOnePieceName",       defaults.miniGamesOnePieceName),
             miniGamesOnePieceDesc       = s("miniGamesOnePieceDesc",       defaults.miniGamesOnePieceDesc),
@@ -427,6 +447,26 @@ object UiStringsCache {
         "fillBlankExitBody"           to d.fillBlankExitBody,
         "fillBlankExitConfirm"        to d.fillBlankExitConfirm,
         "fillBlankExitCancel"         to d.fillBlankExitCancel,
+
+        // ── MiniGamesScreen extras (Memory Match) ────────────────────────────────
+        "memoryMatchName"             to d.memoryMatchName,
+        "memoryMatchDesc"             to d.memoryMatchDesc,
+
+        // ── MemoryMatchScreen ─────────────────────────────────────────────────────
+        "memoryMatchTitle"            to d.memoryMatchTitle,
+        "memoryMatchSelectDifficulty" to d.memoryMatchSelectDifficulty,
+        "memoryMatchEasy"             to d.memoryMatchEasy,
+        "memoryMatchMedium"           to d.memoryMatchMedium,
+        "memoryMatchHard"             to d.memoryMatchHard,
+        "memoryMatchPlay"             to d.memoryMatchPlay,
+        "memoryMatchNotEnoughStars"   to d.memoryMatchNotEnoughStars,
+        "memoryMatchWonTitle"         to d.memoryMatchWonTitle,
+        "memoryMatchWonBody"          to d.memoryMatchWonBody,
+        "memoryMatchWonClose"         to d.memoryMatchWonClose,
+        "memoryMatchExitTitle"        to d.memoryMatchExitTitle,
+        "memoryMatchExitBody"         to d.memoryMatchExitBody,
+        "memoryMatchExitConfirm"      to d.memoryMatchExitConfirm,
+        "memoryMatchExitCancel"       to d.memoryMatchExitCancel,
 
         // ── MiniGamesScreen extras (One Piece) ───────────────────────────────────
         "miniGamesOnePieceName"       to d.miniGamesOnePieceName,

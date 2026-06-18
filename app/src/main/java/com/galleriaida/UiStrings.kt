@@ -159,6 +159,24 @@ data class UiStrings(
     val fillBlankExitConfirm: String = "Yes, exit",
     val fillBlankExitCancel: String = "Keep playing",
 
+    // ── MemoryMatchScreen ────────────────────────────────────────────────────
+    val memoryMatchName: String = "🧠 Memory Match",
+    val memoryMatchDesc: String = "Find all matching pairs in your gallery",
+    val memoryMatchTitle: String = "Memory Match 🧠",
+    val memoryMatchSelectDifficulty: String = "Choose difficulty",
+    val memoryMatchEasy: String = "Easy",
+    val memoryMatchMedium: String = "Medium",
+    val memoryMatchHard: String = "Hard",
+    val memoryMatchPlay: String = "Play!  (10 ⭐)",
+    val memoryMatchNotEnoughStars: String = "Not enough stars",
+    val memoryMatchWonTitle: String = "Well done! 🎉",
+    val memoryMatchWonBody: String = "You matched all the pairs!",
+    val memoryMatchWonClose: String = "Back to Mini Games",
+    val memoryMatchExitTitle: String = "Leave Memory Match?",
+    val memoryMatchExitBody: String = "Your 10 ⭐ have already been spent and won't be refunded if you leave now. Are you sure you want to exit?",
+    val memoryMatchExitConfirm: String = "Yes, exit",
+    val memoryMatchExitCancel: String = "Keep playing",
+
     // ── OnePieceScreen ──────────────────────────────────────────────────────
     val onePieceTitle: String = "One Piece 🔲",
     val onePieceSelectDifficulty: String = "Choose difficulty",
