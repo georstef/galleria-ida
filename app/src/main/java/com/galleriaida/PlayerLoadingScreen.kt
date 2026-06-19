@@ -36,9 +36,9 @@ fun PlayerLoadingScreen(
             verticalArrangement = Arrangement.Center
         ) {
             AsyncImage(
-                model = R.mipmap.galleria_ida_logo,
+                model = R.drawable.logo,
                 contentDescription = "Logo",
-                modifier = Modifier.size(120.dp)
+                modifier           = Modifier.size(120.dp)
             )
             Spacer(Modifier.height(40.dp))
             CircularProgressIndicator(color = ButtonPrimary, strokeWidth = 4.dp)
