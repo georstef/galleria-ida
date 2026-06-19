@@ -22,6 +22,7 @@ import com.galleriaida.ui.screens.MiniGamesScreen
 import com.galleriaida.ui.screens.PuzzleScreen
 import com.galleriaida.ui.screens.FillTheBlankScreen
 import com.galleriaida.ui.screens.MemoryMatchScreen
+import com.galleriaida.ui.screens.ImageTournamentScreen
 import com.galleriaida.ui.screens.OnePieceScreen
 import com.galleriaida.viewmodel.AppViewModel
 
@@ -44,6 +45,7 @@ object Routes {
     const val FILL_THE_BLANK     = "fill_the_blank"
     const val MEMORY_MATCH       = "memory_match"
     const val ONE_PIECE          = "one_piece"
+    const val TOURNAMENT         = "tournament"
 
     fun quizSummary(fromHistory: Boolean) = "quiz_summary/$fromHistory"
     fun playerProfile(isNewPlayer: Boolean = false) = "player_profile/$isNewPlayer"
@@ -225,6 +227,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
                 onFillTheBlank = { navController.navigate(Routes.FILL_THE_BLANK) },
                 onMemoryMatch  = { navController.navigate(Routes.MEMORY_MATCH) },
                 onOnePiece     = { navController.navigate(Routes.ONE_PIECE) },
+                onTournament   = { navController.navigate(Routes.TOURNAMENT) },
                 onEditProfile  = { navController.navigate(Routes.playerProfile()) }
             )
         }
@@ -245,6 +248,13 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
 
         composable(Routes.MEMORY_MATCH) {
             MemoryMatchScreen(
+                viewModel = viewModel,
+                onBack    = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.TOURNAMENT) {
+            ImageTournamentScreen(
                 viewModel = viewModel,
                 onBack    = { navController.popBackStack() }
             )

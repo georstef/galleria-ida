@@ -28,6 +28,7 @@ private const val PUZZLE_UNLOCK_THRESHOLD      = 1
 private const val FILL_BLANK_UNLOCK_THRESHOLD  = 6
 private const val MEMORY_MATCH_UNLOCK_THRESHOLD = 10
 private const val ONE_PIECE_UNLOCK_THRESHOLD   = 8
+private const val TOURNAMENT_UNLOCK_THRESHOLD  = 16
 
 @Composable
 fun MiniGamesScreen(
@@ -37,6 +38,7 @@ fun MiniGamesScreen(
     onFillTheBlank: () -> Unit,
     onMemoryMatch: () -> Unit,
     onOnePiece: () -> Unit,
+    onTournament: () -> Unit,
     onEditProfile: () -> Unit
 ) {
     val player    by viewModel.currentPlayer.collectAsState()
@@ -51,6 +53,7 @@ fun MiniGamesScreen(
     val fillBlankLocked = imageCount < FILL_BLANK_UNLOCK_THRESHOLD
     val memoryMatchLocked = imageCount < MEMORY_MATCH_UNLOCK_THRESHOLD
     val onePieceLocked  = imageCount < ONE_PIECE_UNLOCK_THRESHOLD
+    val tournamentLocked = imageCount < TOURNAMENT_UNLOCK_THRESHOLD
 
     Box(
         modifier = Modifier
@@ -162,6 +165,16 @@ fun MiniGamesScreen(
                     costHint    = uiStrings.miniGamesCostHint,
                     color       = Color(0xFFE57373),
                     onClick     = { if (!memoryMatchLocked) onMemoryMatch() }
+                )
+
+                MiniGameCard(
+                    emoji       = "🏆",
+                    name        = uiStrings.tournamentName,
+                    locked      = tournamentLocked,
+                    lockedHint  = uiStrings.miniGamesLockedHint.format(TOURNAMENT_UNLOCK_THRESHOLD),
+                    costHint    = uiStrings.miniGamesFreeHint,
+                    color       = TournamentAccent,
+                    onClick     = { if (!tournamentLocked) onTournament() }
                 )
             }
         }

@@ -24,7 +24,7 @@ object UiStringsCache {
      * Bump this number whenever an existing English string changes its value.
      * New keys don't require a bump — they're detected automatically via missingKeys().
      */
-    private const val CACHE_VERSION = 3
+    private const val CACHE_VERSION = 4
 
     private fun translationsDir(context: Context) =
         File(context.filesDir, "translations").also { it.mkdirs() }
@@ -196,6 +196,7 @@ object UiStringsCache {
             miniGamesLockedHint         = s("miniGamesLockedHint",         defaults.miniGamesLockedHint),
             miniGamesCostHint           = s("miniGamesCostHint",           defaults.miniGamesCostHint),
             miniGamesCostHint5          = s("miniGamesCostHint5",          defaults.miniGamesCostHint5),
+            miniGamesFreeHint           = s("miniGamesFreeHint",           defaults.miniGamesFreeHint),
             miniGamesPuzzleName         = s("miniGamesPuzzleName",         defaults.miniGamesPuzzleName),
             miniGamesPuzzleDesc         = s("miniGamesPuzzleDesc",         defaults.miniGamesPuzzleDesc),
 
@@ -266,6 +267,30 @@ object UiStringsCache {
             memoryMatchExitBody         = s("memoryMatchExitBody",         defaults.memoryMatchExitBody),
             memoryMatchExitConfirm      = s("memoryMatchExitConfirm",      defaults.memoryMatchExitConfirm),
             memoryMatchExitCancel       = s("memoryMatchExitCancel",       defaults.memoryMatchExitCancel),
+
+            // ── ImageTournamentScreen ─────────────────────────────────────────
+            tournamentName          = s("tournamentName",          defaults.tournamentName),
+            tournamentDesc          = s("tournamentDesc",          defaults.tournamentDesc),
+            tournamentTitle         = s("tournamentTitle",         defaults.tournamentTitle),
+            tournamentRound         = s("tournamentRound",         defaults.tournamentRound),
+            tournamentRoundComplete = s("tournamentRoundComplete", defaults.tournamentRoundComplete),
+            tournamentStart         = s("tournamentStart",         defaults.tournamentStart),
+            tournamentContinue      = s("tournamentContinue",      defaults.tournamentContinue),
+            tournamentR16           = s("tournamentR16",           defaults.tournamentR16),
+            tournamentQF            = s("tournamentQF",            defaults.tournamentQF),
+            tournamentSF            = s("tournamentSF",            defaults.tournamentSF),
+            tournamentFinal         = s("tournamentFinal",         defaults.tournamentFinal),
+            tournamentChampion      = s("tournamentChampion",      defaults.tournamentChampion),
+            tournamentVs            = s("tournamentVs",            defaults.tournamentVs),
+            tournamentVote          = s("tournamentVote",          defaults.tournamentVote),
+            tournamentMatchProgress = s("tournamentMatchProgress", defaults.tournamentMatchProgress),
+            tournamentWonTitle      = s("tournamentWonTitle",      defaults.tournamentWonTitle),
+            tournamentWonBody       = s("tournamentWonBody",       defaults.tournamentWonBody),
+            tournamentWonClose      = s("tournamentWonClose",      defaults.tournamentWonClose),
+            tournamentExitTitle     = s("tournamentExitTitle",     defaults.tournamentExitTitle),
+            tournamentExitBody      = s("tournamentExitBody",      defaults.tournamentExitBody),
+            tournamentExitConfirm   = s("tournamentExitConfirm",   defaults.tournamentExitConfirm),
+            tournamentExitCancel    = s("tournamentExitCancel",    defaults.tournamentExitCancel),
 
             // ── MiniGamesScreen extras (One Piece) ───────────────────────────────
             miniGamesOnePieceName       = s("miniGamesOnePieceName",       defaults.miniGamesOnePieceName),
@@ -401,6 +426,7 @@ object UiStringsCache {
         "miniGamesLockedHint"         to d.miniGamesLockedHint,
         "miniGamesCostHint"           to d.miniGamesCostHint,
         "miniGamesCostHint5"          to d.miniGamesCostHint5,
+        "miniGamesFreeHint"           to d.miniGamesFreeHint,
         "miniGamesPuzzleName"         to d.miniGamesPuzzleName,
         "miniGamesPuzzleDesc"         to d.miniGamesPuzzleDesc,
 
@@ -471,6 +497,30 @@ object UiStringsCache {
         "memoryMatchExitBody"         to d.memoryMatchExitBody,
         "memoryMatchExitConfirm"      to d.memoryMatchExitConfirm,
         "memoryMatchExitCancel"       to d.memoryMatchExitCancel,
+
+        // ── ImageTournamentScreen ──────────────────────────────────────────────────
+        "tournamentName"          to d.tournamentName,
+        "tournamentDesc"          to d.tournamentDesc,
+        "tournamentTitle"         to d.tournamentTitle,
+        "tournamentRound"         to d.tournamentRound,
+        "tournamentRoundComplete" to d.tournamentRoundComplete,
+        "tournamentStart"         to d.tournamentStart,
+        "tournamentContinue"      to d.tournamentContinue,
+        "tournamentR16"           to d.tournamentR16,
+        "tournamentQF"            to d.tournamentQF,
+        "tournamentSF"            to d.tournamentSF,
+        "tournamentFinal"         to d.tournamentFinal,
+        "tournamentChampion"      to d.tournamentChampion,
+        "tournamentVs"            to d.tournamentVs,
+        "tournamentVote"          to d.tournamentVote,
+        "tournamentMatchProgress" to d.tournamentMatchProgress,
+        "tournamentWonTitle"      to d.tournamentWonTitle,
+        "tournamentWonBody"       to d.tournamentWonBody,
+        "tournamentWonClose"      to d.tournamentWonClose,
+        "tournamentExitTitle"     to d.tournamentExitTitle,
+        "tournamentExitBody"      to d.tournamentExitBody,
+        "tournamentExitConfirm"   to d.tournamentExitConfirm,
+        "tournamentExitCancel"    to d.tournamentExitCancel,
 
         // ── MiniGamesScreen extras (One Piece) ───────────────────────────────────
         "miniGamesOnePieceName"       to d.miniGamesOnePieceName,

@@ -25,6 +25,7 @@ val CardBg = Color(0xFFF3E5F5)
 val ButtonPrimary = Color(0xFF7B1FA2)
 val ButtonSecondary = Color(0xFF00897B)
 val DisabledGray = Color(0xFFBDBDBD)
+val TournamentAccent = Color(0xFFFB8C00)  // warm orange — distinct from other game accents
 
 private val KidsColorScheme = lightColorScheme(
     primary = ButtonPrimary,

@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.galleriaida.R
 import com.galleriaida.ui.theme.*
@@ -79,10 +80,25 @@ fun ImageCreationScreen(
     // Load full English word pool once
     val wordPool = remember { loadWordPool(context) }
 
-    // Fixed random subset indices (stable across recompositions)
-    val charIndices  = remember { wordPool.characters.indices.shuffled().take(4) }
-    val actionIndices = remember { wordPool.actions.indices.shuffled().take(4) }
-    val placeIndices  = remember { wordPool.places.indices.shuffled().take(4) }
+    // Selection state — declared early so reroll can reset them
+    var selectedCharIdx   by remember { mutableStateOf<Int?>(null) }
+    var selectedActionIdx by remember { mutableStateOf<Int?>(null) }
+    var selectedPlaceIdx  by remember { mutableStateOf<Int?>(null) }
+
+    // Roll a fresh random subset every time the screen is entered.
+    // Also exposed as a lambda so the player can re-roll manually with a button.
+    var charIndices   by remember { mutableStateOf(wordPool.characters.indices.shuffled().take(4)) }
+    var actionIndices by remember { mutableStateOf(wordPool.actions.indices.shuffled().take(4)) }
+    var placeIndices  by remember { mutableStateOf(wordPool.places.indices.shuffled().take(4)) }
+
+    val reroll: () -> Unit = {
+        charIndices   = wordPool.characters.indices.shuffled().take(4)
+        actionIndices = wordPool.actions.indices.shuffled().take(4)
+        placeIndices  = wordPool.places.indices.shuffled().take(4)
+        selectedCharIdx   = null
+        selectedActionIdx = null
+        selectedPlaceIdx  = null
+    }
 
     // Trigger translation on first entry
     LaunchedEffect(Unit) {
@@ -134,9 +150,6 @@ fun ImageCreationScreen(
     val shownPlacesEn     = placeIndices.map   { wordPool.places[it] }
 
     // Selection state — track index so we can look up both EN and Local
-    var selectedCharIdx by remember { mutableStateOf<Int?>(null) }
-    var selectedActionIdx by remember { mutableStateOf<Int?>(null) }
-    var selectedPlaceIdx  by remember { mutableStateOf<Int?>(null) }
 
     val allSelected = selectedCharIdx != null && selectedActionIdx != null && selectedPlaceIdx != null
     val stars       = player?.stars ?: 0
@@ -163,6 +176,10 @@ fun ImageCreationScreen(
             ) {
                 IconButton(onClick = onBack, enabled = !isLoading) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = DeepPurple)
+                }
+                // Shuffle button — re-rolls all word options and clears selection
+                IconButton(onClick = { if (!isLoading) reroll() }) {
+                    Text("🔀", fontSize = 20.sp)
                 }
                 Row(
                     modifier = Modifier

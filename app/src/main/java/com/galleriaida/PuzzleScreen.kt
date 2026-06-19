@@ -64,7 +64,7 @@ fun PuzzleScreen(
 
     var phase by remember { mutableStateOf(PuzzlePhase.SETUP) }
     var selectedSize by remember { mutableStateOf(PuzzleSize.EASY) }
-    var currentImageIndex by remember { mutableStateOf((playerImages.indices).randomOrNull() ?: 0) }
+    var currentImageIndex by remember(playerImages) { mutableStateOf((playerImages.indices).randomOrNull() ?: 0) }
     val currentImage = playerImages.getOrNull(currentImageIndex)
 
     val isDev = player?.name?.trim()?.equals(com.galleriaida.AppConstants.DEV_PLAYER_NAME, ignoreCase = true) ?: false
@@ -291,7 +291,7 @@ private fun PuzzleGameScreen(
     val rows  = size.rows
     val total = cols * rows
 
-    val tiles = remember {
+    val tiles = remember(image.imageUrl, total) {
         mutableStateListOf<Int>().also { list ->
             val shuffled = (0 until total).toMutableList().also { it.shuffle() }
             list.addAll(shuffled)
