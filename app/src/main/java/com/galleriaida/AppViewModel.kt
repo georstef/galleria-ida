@@ -408,22 +408,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val answers = questions.map { q ->
                 val rawPlayerAnswer = playerAnswers[q.id] ?: ""
 
-                // For true_false the AI may return the answer in English OR in the player's
-                // language — it is inconsistent. Normalize both sides to English canonical
-                // values before comparing so the language of either side doesn't matter.
-                fun normalizeTrueFalse(value: String): String = when {
-                    value.trim().equals("true",        ignoreCase = true) -> "True"
-                    value.trim().equals("false",       ignoreCase = true) -> "False"
-                    value.trim().equals(uiStr.gameTrue,  ignoreCase = true) -> "True"
-                    value.trim().equals(uiStr.gameFalse, ignoreCase = true) -> "False"
-                    else -> value
-                }
-
-                val wasCorrect = if (q.type == "true_false") {
-                    normalizeTrueFalse(rawPlayerAnswer) == normalizeTrueFalse(q.answer)
-                } else {
-                    rawPlayerAnswer.trim().equals(q.answer.trim(), ignoreCase = true)
-                }
+                // The prompt instructs the AI to set "answer" to exactly one of the "options"
+                // strings, so a plain equality check works for all question types.
+                val wasCorrect = rawPlayerAnswer.trim().equals(q.answer.trim(), ignoreCase = true)
 
                 val playerAnswer = rawPlayerAnswer   // store original (localized) answer for display
                 QuizAnswer(
@@ -613,7 +600,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             Log.d("GALLERIA_AI", "=== Pollinations fallback models=$m1/$m2/$m3 ===")
 
             _isFallbackLoading.value    = true
-            _fallbackModelMessage.value = _uiStrings.value.imageBackupEngine.format(m1)
+            _fallbackModelMessage.value = "Trying backup engine ($m1)…"
 
             val result = PollinationsService.generateImageWithFallbacks(
                 context       = getApplication(),
@@ -623,7 +610,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 model3        = m3,
                 apiKey        = s.pollinationsApiKey,
                 onModelSwitch = { next ->
-                    _fallbackModelMessage.value = _uiStrings.value.imageBackupEngine.format(next)
+                    _fallbackModelMessage.value = "Trying backup engine ($next)…"
                 }
             )
 

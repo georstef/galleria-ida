@@ -470,7 +470,8 @@ fun QuestionPage(
             }
 
             "true_false" -> {
-                val options = listOf(uiStrings.gameTrue, uiStrings.gameFalse)
+                val options = question.options?.takeIf { it.size == 2 }
+                    ?: listOf(uiStrings.gameTrue, uiStrings.gameFalse)
                 Row(
                     modifier              = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)

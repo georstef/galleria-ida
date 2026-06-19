@@ -72,7 +72,7 @@ QUESTION STRUCTURE:
 * type
 * instruction
 * question
-* options (only for multiple_choice)
+* options (exactly 4 strings for multiple_choice; exactly 2 strings for true_false; omitted for text)
 * answer
 
 SCENARIO DIVERSITY RULES:
@@ -116,6 +116,12 @@ ANTI-REPETITION RULES:
 * Prefer uncommon but age-appropriate contexts drawn from everyday life.
 * When multiple valid questions are possible, choose the one that is least likely to appear in a standard worksheet or AI-generated question bank.
 
+TRUE/FALSE OPTIONS RULE (VERY IMPORTANT):
+* For every true_false question, the "options" array MUST contain exactly 2 strings: the localized word for "true" followed by the localized word for "false", in {{player_language}}.
+* The "answer" field MUST be exactly one of those two strings — copied character by character, with identical spelling and capitalisation.
+* It is forbidden to use a different synonym or spelling in "answer" than the one used in "options".
+* Example for English: "options": ["True", "False"], "answer": "True"
+
 VERIFICATION STEPS:
 Before generating the final JSON, internally perform the following checks for every question:
 1. Solve the question yourself and ensure that the value in the "answer" field is 100% mathematically and logically correct.
@@ -130,6 +136,7 @@ Before generating the final JSON, internally perform the following checks for ev
 10. Textbook example check: reject and regenerate any question using overused elementary-school examples such as flowers needing water, birds flying, fish swimming, apples, balls, or similar canonical educational examples.
 11. True/False quality check: ensure the statement is not a universally obvious fact and requires at least a small amount of reasoning.
 12. Diversity check: ensure that the generated question set contains a wide variety of contexts and activities.
+13. True/False answer check: confirm that the "answer" field is character-for-character identical to one of the two strings in "options". Any synonym, alternative spelling, or capitalisation difference is a failure — regenerate the question.
 
 Question ordering requirement:
 1. When assembling the final question set, first generate questions for all categories, then shuffle them before output. Ensure no more than two consecutive questions belong to the same subject area unless unavoidable.
