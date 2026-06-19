@@ -195,7 +195,7 @@ private fun PuzzleSetupScreen(
                     )
                 }
             } else {
-                Text("No images yet", color = MedText, style = MaterialTheme.typography.bodyLarge)
+                Text(uiStrings.puzzleNoImages, color = MedText, style = MaterialTheme.typography.bodyLarge)
             }
         }
 

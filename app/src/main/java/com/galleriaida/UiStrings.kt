@@ -40,6 +40,8 @@ data class UiStrings(
     val galleryEmpty: String = "No images yet!\nEarn 100 ⭐ to create your first image.",
     val galleryNeedStars: String = "Need 100 ⭐ to create an image (you have %d)",  // %d = stars
     val galleryCreateButton: String = "Create Image 🎨 (100 ⭐)",
+    val galleryImageMetadata: String = "Image Metadata",
+    val galleryFullscreenClose: String = "Close",
 
     // ── GameScreen ────────────────────────────────────────────────────────────
     val gameQuestionCounter: String = "Question %d / %d",      // current / total
@@ -96,6 +98,8 @@ data class UiStrings(
     // ── ImageCreationScreen ───────────────────────────────────────────────────
     val imageTitle: String = "Create your image!",
     val imageSubtitle: String = "Pick one from each group",
+    val imagePreparingWords: String = "Preparing words…",
+    val imageBackupEngine: String = "Creating image with %s…",    // %s = model name
     val imageCreatingMsg: String = "Creating your image... 🎨\nThis may take a moment",
     val imageCategoryCharacter: String = "🦸 Character",
     val imageCategoryAction: String = "⚡ Action",
@@ -125,6 +129,7 @@ data class UiStrings(
     val puzzleMedium: String = "Medium  4×5",
     val puzzleHard: String = "Hard  4×8",
     val puzzleReroll: String = "Try another image 🔀",
+    val puzzleNoImages: String = "No images yet",
     val puzzlePlay: String = "Play!  (10 ⭐)",
     val puzzleNotEnoughStars: String = "Not enough stars",
     val puzzleSolved: String = "Puzzle solved! 🎉",

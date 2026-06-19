@@ -32,6 +32,7 @@ import coil.compose.AsyncImage
 import com.galleriaida.AppConstants
 import com.galleriaida.data.GalleryItem
 import com.galleriaida.ui.theme.*
+import com.galleriaida.ui.UiStrings
 import com.galleriaida.viewmodel.AppViewModel
 import com.galleriaida.viewmodel.UiState
 import java.io.File
@@ -69,8 +70,9 @@ fun GalleryScreen(
     // Full-screen viewer takes over the whole screen
     fullscreenItem?.let { item ->
         ImageFullscreenScreen(
-            item    = item,
-            onClose = { fullscreenItem = null }
+            item       = item,
+            uiStrings  = uiStrings,
+            onClose    = { fullscreenItem = null }
         )
         return
     }
@@ -248,7 +250,7 @@ fun GalleryCard(item: GalleryItem, onClick: () -> Unit) {
 // ── Full-screen image viewer ──────────────────────────────────────────────────
 
 @Composable
-fun ImageFullscreenScreen(item: GalleryItem, onClose: () -> Unit) {
+fun ImageFullscreenScreen(item: GalleryItem, uiStrings: UiStrings, onClose: () -> Unit) {
     val imageModel = remember(item.imageUrl) {
         val file = File(item.imageUrl)
         if (file.exists()) file else item.imageUrl
@@ -279,7 +281,7 @@ fun ImageFullscreenScreen(item: GalleryItem, onClose: () -> Unit) {
     if (showMetadata) {
         AlertDialog(
             onDismissRequest = { showMetadata = false },
-            title = { Text("Image Metadata", style = MaterialTheme.typography.titleMedium) },
+            title = { Text(uiStrings.galleryImageMetadata, style = MaterialTheme.typography.titleMedium) },
             text  = {
                 Box(
                     modifier = Modifier
@@ -299,7 +301,7 @@ fun ImageFullscreenScreen(item: GalleryItem, onClose: () -> Unit) {
             },
             confirmButton = {
                 TextButton(onClick = { showMetadata = false }) {
-                    Text("Close", style = MaterialTheme.typography.bodyLarge)
+                    Text(uiStrings.galleryFullscreenClose, style = MaterialTheme.typography.bodyLarge)
                 }
             }
         )
@@ -357,7 +359,7 @@ fun ImageFullscreenScreen(item: GalleryItem, onClose: () -> Unit) {
             ) {
                 Icon(Icons.Default.Close, contentDescription = null, tint = Color.White)
                 Spacer(Modifier.width(8.dp))
-                Text("Close", style = MaterialTheme.typography.labelLarge, color = Color.White)
+                Text(uiStrings.galleryFullscreenClose, style = MaterialTheme.typography.labelLarge, color = Color.White)
             }
 
             Spacer(Modifier.height(24.dp))

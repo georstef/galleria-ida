@@ -80,25 +80,15 @@ fun ImageCreationScreen(
     // Load full English word pool once
     val wordPool = remember { loadWordPool(context) }
 
-    // Selection state — declared early so reroll can reset them
+    // Selection state
     var selectedCharIdx   by remember { mutableStateOf<Int?>(null) }
     var selectedActionIdx by remember { mutableStateOf<Int?>(null) }
     var selectedPlaceIdx  by remember { mutableStateOf<Int?>(null) }
 
     // Roll a fresh random subset every time the screen is entered.
-    // Also exposed as a lambda so the player can re-roll manually with a button.
     var charIndices   by remember { mutableStateOf(wordPool.characters.indices.shuffled().take(4)) }
     var actionIndices by remember { mutableStateOf(wordPool.actions.indices.shuffled().take(4)) }
     var placeIndices  by remember { mutableStateOf(wordPool.places.indices.shuffled().take(4)) }
-
-    val reroll: () -> Unit = {
-        charIndices   = wordPool.characters.indices.shuffled().take(4)
-        actionIndices = wordPool.actions.indices.shuffled().take(4)
-        placeIndices  = wordPool.places.indices.shuffled().take(4)
-        selectedCharIdx   = null
-        selectedActionIdx = null
-        selectedPlaceIdx  = null
-    }
 
     // Trigger translation on first entry
     LaunchedEffect(Unit) {
@@ -177,10 +167,6 @@ fun ImageCreationScreen(
                 IconButton(onClick = onBack, enabled = !isLoading) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = DeepPurple)
                 }
-                // Shuffle button — re-rolls all word options and clears selection
-                IconButton(onClick = { if (!isLoading) reroll() }) {
-                    Text("🔀", fontSize = 20.sp)
-                }
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(40.dp))
@@ -188,9 +174,7 @@ fun ImageCreationScreen(
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("⭐", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.width(6.dp))
-                    Text("$stars", style = MaterialTheme.typography.titleMedium, color = DeepPurple)
+                    Text("⭐ $stars", style = MaterialTheme.typography.titleMedium, color = DeepPurple)
                 }
                 Spacer(Modifier.width(48.dp))
             }

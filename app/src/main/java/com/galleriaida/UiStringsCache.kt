@@ -24,7 +24,7 @@ object UiStringsCache {
      * Bump this number whenever an existing English string changes its value.
      * New keys don't require a bump — they're detected automatically via missingKeys().
      */
-    private const val CACHE_VERSION = 4
+    private const val CACHE_VERSION = 5
 
     private fun translationsDir(context: Context) =
         File(context.filesDir, "translations").also { it.mkdirs() }
@@ -132,6 +132,8 @@ object UiStringsCache {
             galleryEmpty                = s("galleryEmpty",                defaults.galleryEmpty),
             galleryNeedStars            = s("galleryNeedStars",            defaults.galleryNeedStars),
             galleryCreateButton         = s("galleryCreateButton",         defaults.galleryCreateButton),
+            galleryImageMetadata        = s("galleryImageMetadata",        defaults.galleryImageMetadata),
+            galleryFullscreenClose      = s("galleryFullscreenClose",      defaults.galleryFullscreenClose),
 
             // ── GameScreen ────────────────────────────────────────────────────
             gameQuestionCounter         = s("gameQuestionCounter",         defaults.gameQuestionCounter),
@@ -182,6 +184,8 @@ object UiStringsCache {
             // ── ImageCreationScreen ───────────────────────────────────────────
             imageTitle                  = s("imageTitle",                  defaults.imageTitle),
             imageSubtitle               = s("imageSubtitle",               defaults.imageSubtitle),
+            imagePreparingWords         = s("imagePreparingWords",         defaults.imagePreparingWords),
+            imageBackupEngine           = s("imageBackupEngine",           defaults.imageBackupEngine),
             imageCreatingMsg            = s("imageCreatingMsg",            defaults.imageCreatingMsg),
             imageCategoryCharacter      = s("imageCategoryCharacter",      defaults.imageCategoryCharacter),
             imageCategoryAction         = s("imageCategoryAction",         defaults.imageCategoryAction),
@@ -207,6 +211,7 @@ object UiStringsCache {
             puzzleMedium                = s("puzzleMedium",                defaults.puzzleMedium),
             puzzleHard                  = s("puzzleHard",                  defaults.puzzleHard),
             puzzleReroll                = s("puzzleReroll",                defaults.puzzleReroll),
+            puzzleNoImages              = s("puzzleNoImages",              defaults.puzzleNoImages),
             puzzlePlay                  = s("puzzlePlay",                  defaults.puzzlePlay),
             puzzleNotEnoughStars        = s("puzzleNotEnoughStars",        defaults.puzzleNotEnoughStars),
             puzzleSolved                = s("puzzleSolved",                defaults.puzzleSolved),
@@ -362,6 +367,8 @@ object UiStringsCache {
         "galleryEmpty"                to d.galleryEmpty,
         "galleryNeedStars"            to d.galleryNeedStars,
         "galleryCreateButton"         to d.galleryCreateButton,
+        "galleryImageMetadata"        to d.galleryImageMetadata,
+        "galleryFullscreenClose"      to d.galleryFullscreenClose,
 
         // ── GameScreen ────────────────────────────────────────────────────────
         "gameQuestionCounter"         to d.gameQuestionCounter,
@@ -412,6 +419,8 @@ object UiStringsCache {
         // ── ImageCreationScreen ───────────────────────────────────────────────
         "imageTitle"                  to d.imageTitle,
         "imageSubtitle"               to d.imageSubtitle,
+        "imagePreparingWords"         to d.imagePreparingWords,
+        "imageBackupEngine"           to d.imageBackupEngine,
         "imageCreatingMsg"            to d.imageCreatingMsg,
         "imageCategoryCharacter"      to d.imageCategoryCharacter,
         "imageCategoryAction"         to d.imageCategoryAction,
@@ -437,6 +446,7 @@ object UiStringsCache {
         "puzzleMedium"                to d.puzzleMedium,
         "puzzleHard"                  to d.puzzleHard,
         "puzzleReroll"                to d.puzzleReroll,
+        "puzzleNoImages"              to d.puzzleNoImages,
         "puzzlePlay"                  to d.puzzlePlay,
         "puzzleNotEnoughStars"        to d.puzzleNotEnoughStars,
         "puzzleSolved"                to d.puzzleSolved,

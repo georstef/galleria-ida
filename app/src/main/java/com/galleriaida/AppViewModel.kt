@@ -613,7 +613,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             Log.d("GALLERIA_AI", "=== Pollinations fallback models=$m1/$m2/$m3 ===")
 
             _isFallbackLoading.value    = true
-            _fallbackModelMessage.value = "Trying backup engine ($m1)…"
+            _fallbackModelMessage.value = _uiStrings.value.imageBackupEngine.format(m1)
 
             val result = PollinationsService.generateImageWithFallbacks(
                 context       = getApplication(),
@@ -623,7 +623,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 model3        = m3,
                 apiKey        = s.pollinationsApiKey,
                 onModelSwitch = { next ->
-                    _fallbackModelMessage.value = "Trying backup engine ($next)…"
+                    _fallbackModelMessage.value = _uiStrings.value.imageBackupEngine.format(next)
                 }
             )
 
