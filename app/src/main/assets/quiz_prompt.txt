@@ -7,7 +7,10 @@ RULES:
 * Use simple wording without theoretical explanations.
 * Questions should not be only calculations; include short reasoning and problem-solving tasks.
 * Questions of type "text" must require answers using words that belong exclusively to the everyday vocabulary of a child in that grade.
-* Do not always return the same questions. Include some form of randomization so that identical questions are never repeated.
+* Do not rely on randomization alone. Before generating questions, internally create a unique scenario seed for each question and generate the questions from those seeds.
+* Identical questions are forbidden.
+* Reusing the same scenario, object, setting, activity, or character within the same output is forbidden.
+* Avoid common educational examples such as flowers needing water, birds flying, fish swimming, apples, balls, cats, dogs, trees, the sun, and the moon.
 * Avoid canonical examples that frequently appear in educational materials.
 * Avoid repeating common entities, names, numbers, and scenarios.
 * Prefer novel settings, realistic but uncommon situations, and unique combinations of concepts.
@@ -48,7 +51,7 @@ QUESTIONS DISTRIBUTION:
 1. STRICT SUBJECT DISTRIBUTION MANDATE:
 a. Mathematics (at least 40%)
 b. Language (at least 30%)
-c. Other subjects (e.g. Environmental Studies, Physics, English as Foreign Language (applies only if {{player_language}} does not equal to english), etc., depending on the grade level) (max 30%)
+c. Other subjects (e.g. Environmental Studies, History, Physics, English as Foreign Language (applies only if {{player_language}} does not equal to english), etc., depending on the elementary school grade) (max 30%)
 
 2. STRICT LEVEL DISTRIBUTION MANDATE:
 a. IF "1-beginning of the school year": You MUST generate 8 out of every 10 questions at Level 1, and 2 out of every 10 questions at Level 2.
@@ -72,6 +75,47 @@ QUESTION STRUCTURE:
 * options (only for multiple_choice)
 * answer
 
+SCENARIO DIVERSITY RULES:
+Distribute questions across different contexts whenever possible.
+Examples of contexts include:
+* playgrounds
+* bicycles
+* buses
+* trains
+* camping
+* museums
+* libraries
+* recycling
+* cooking
+* baking
+* gardening
+* weather
+* sports
+* music
+* pets
+* insects
+* beaches
+* parks
+* markets
+* school events
+
+No single context should dominate the question set.
+
+TRUE/FALSE QUALITY RULES:
+* The proportion of TRUE answers must be between 40% and 60%.
+* Do not generate statements that are universally obvious facts.
+* Avoid questions whose answer can be guessed immediately from common knowledge without thinking.
+* Prefer statements involving comparison, classification, observation, quantity, sequence, location, or simple reasoning.
+* Statements such as "plants need water", "birds have wings", "fish live in water", and similar textbook facts are forbidden.
+
+ANTI-REPETITION RULES:
+* Before generating any questions, internally create a unique scenario seed for each question.
+* Each question must use a different scenario seed.
+* It is forbidden to reuse the same scenario, object, setting, activity, or character within the same output.
+* Avoid common textbook entities and examples such as: flower, bird, fish, dog, cat, tree, apple, ball, sun, moon, pencil, book, rabbit, farm animals, and similar overused educational examples.
+* Prefer uncommon but age-appropriate contexts drawn from everyday life.
+* When multiple valid questions are possible, choose the one that is least likely to appear in a standard worksheet or AI-generated question bank.
+
 VERIFICATION STEPS:
 Before generating the final JSON, internally perform the following checks for every question:
 1. Solve the question yourself and ensure that the value in the "answer" field is 100% mathematically and logically correct.
@@ -82,6 +126,10 @@ Before generating the final JSON, internally perform the following checks for ev
 6. In multiple-choice questions, all 4 options must be unique. The correct answer must not appear more than once.
 7. If the instruction says "find the letter", the options must be letters. If the options are syllables or words, the instruction must say "find the letters" or "find the word".
 8. In mathematics questions that are of type text the solution must always be numeric (eg. 10 and not "ten")
+9. Repetition check: confirm that the question's scenario seed has not been used by any other question in the same output.
+10. Textbook example check: reject and regenerate any question using overused elementary-school examples such as flowers needing water, birds flying, fish swimming, apples, balls, or similar canonical educational examples.
+11. True/False quality check: ensure the statement is not a universally obvious fact and requires at least a small amount of reasoning.
+12. Diversity check: ensure that the generated question set contains a wide variety of contexts and activities.
 
 Question ordering requirement:
 1. When assembling the final question set, first generate questions for all categories, then shuffle them before output. Ensure no more than two consecutive questions belong to the same subject area unless unavoidable.
