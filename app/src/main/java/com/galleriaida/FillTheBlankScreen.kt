@@ -411,6 +411,14 @@ private fun FillBlankGameScreen(
                 textAlign  = TextAlign.Center,
                 modifier   = Modifier.fillMaxWidth()
             )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text       = round!!.title,
+                style      = MaterialTheme.typography.bodyLarge,
+                color      = MedText,
+                textAlign  = TextAlign.Center,
+                modifier   = Modifier.fillMaxWidth()
+            )
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = {
@@ -662,15 +670,35 @@ private fun FillBlankSummaryScreen(
                 val imageModel = remember(img.imageUrl) {
                     val f = File(img.imageUrl); if (f.exists()) f else img.imageUrl
                 }
-                AsyncImage(
-                    model              = imageModel,
-                    contentDescription = img.titleLocal,
-                    contentScale       = ContentScale.Crop,
-                    modifier           = Modifier
+                Box(
+                    modifier = Modifier
                         .fillMaxWidth()
                         .height(140.dp)
                         .clip(RoundedCornerShape(16.dp))
-                )
+                ) {
+                    AsyncImage(
+                        model              = imageModel,
+                        contentDescription = img.titleLocal,
+                        contentScale       = ContentScale.Crop,
+                        modifier           = Modifier.fillMaxSize()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                            .background(Color.Black.copy(alpha = 0.45f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text      = img.titleLocal,
+                            style     = MaterialTheme.typography.labelSmall,
+                            color     = Color.White,
+                            textAlign = TextAlign.Center,
+                            maxLines  = 2,
+                            modifier  = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
         }
 
