@@ -210,14 +210,3 @@ Tap **+ New Player** on the selection screen. Each player needs:
 - School class (e.g. "Class 3B")
 - School-year position (Beginning / Middle / End — influences quiz difficulty)
 
----
-
-## Developer mode
-
-A special player name defined in `AppConstants.DEV_PLAYER_NAME` (default: `"George S."`) bypasses all star-cost checks. This player can create images and play all games without spending stars, which is useful during development and demoing. To change the name, edit `AppConstants.kt`:
-
-```kotlin
-object AppConstants {
-    const val DEV_PLAYER_NAME = "George S."
-}
-```
