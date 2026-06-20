@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -379,7 +380,23 @@ private fun FillBlankGameScreen(
                     modifier           = Modifier.fillMaxSize().clip(RoundedCornerShape(20.dp))
                 )
             } else {
-                Text("🖼️", fontSize = 72.sp, modifier = Modifier.alpha(0.3f))
+                val imageModel = remember(currentImage.imageUrl) {
+                    val f = File(currentImage.imageUrl); if (f.exists()) f else currentImage.imageUrl
+                }
+                AsyncImage(
+                    model              = imageModel,
+                    contentDescription = null,
+                    contentScale       = ContentScale.Fit,
+                    modifier           = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(20.dp))
+                        .then(
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S)
+                                Modifier.blur(20.dp)
+                            else
+                                Modifier.alpha(0.15f)
+                        )
+                )
             }
         }
 
@@ -458,7 +475,7 @@ private fun FillBlankGameScreen(
             ) {
                 lines.forEach { line ->
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(18.dp),
                         verticalAlignment     = Alignment.CenterVertically,
                         modifier = Modifier.padding(vertical = 3.dp)
                     ) {
@@ -524,7 +541,7 @@ private fun FillBlankGameScreen(
                         modifier = Modifier
                             .aspectRatio(1f)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (used) DisabledGray.copy(alpha = 0.3f) else ButtonSecondary)
+                            .background(if (used) DisabledGray.copy(alpha = 0.7f) else ButtonSecondary)
                             .clickable(enabled = !used && nextBlankCursor < blankPositions.size) {
                                 val targetSlotIndex = blankPositions[nextBlankCursor]
                                 val updatedSlots = round!!.slots.toMutableList()
@@ -539,7 +556,7 @@ private fun FillBlankGameScreen(
                         Text(
                             text  = letter.toString(),
                             style = MaterialTheme.typography.titleMedium,
-                            color = if (used) MedText else Color.White,
+                            color = if (used) Color.White.copy(alpha = 0.35f) else Color.White,
                             fontWeight = FontWeight.Bold
                         )
                     }
