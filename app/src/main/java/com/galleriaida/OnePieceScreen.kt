@@ -352,19 +352,20 @@ private fun OnePieceGameScreen(
             Spacer(Modifier.width(48.dp))
         }
 
-        // Piece preview — the piece is displayed at a size proportional to
-        // the fraction of the image it represents (1/gridSize of the stage width).
-        // This makes Easy/Medium/Hard feel meaningfully different and keeps the
-        // game challenging across all difficulties.
+        // Piece preview — displayed at a fixed size per difficulty, preserving aspect ratio.
+        // Easy = large piece, Hard = small piece, making difficulty visually clear.
         val stageSize = 220.dp
-        val displayScalePercent = 1f / difficulty.gridSize
-        val maxDisplaySize = stageSize * displayScalePercent
+        val pieceDisplaySize = when (difficulty) {
+            OnePieceDifficulty.EASY   -> 120.dp
+            OnePieceDifficulty.MEDIUM -> 80.dp
+            OnePieceDifficulty.HARD   -> 48.dp
+        }
 
         val pieceAspect = round.pieceBitmap.width.toFloat() / round.pieceBitmap.height.toFloat()
         val (pieceDisplayW, pieceDisplayH) = if (pieceAspect >= 1f) {
-            maxDisplaySize to (maxDisplaySize / pieceAspect)
+            pieceDisplaySize to (pieceDisplaySize / pieceAspect)
         } else {
-            (maxDisplaySize * pieceAspect) to maxDisplaySize
+            (pieceDisplaySize * pieceAspect) to pieceDisplaySize
         }
 
         Box(
