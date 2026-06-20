@@ -24,7 +24,7 @@ object UiStringsCache {
      * Bump this number whenever an existing English string changes its value.
      * New keys don't require a bump — they're detected automatically via missingKeys().
      */
-    private const val CACHE_VERSION = 5
+    private const val CACHE_VERSION = 7
 
     private fun translationsDir(context: Context) =
         File(context.filesDir, "translations").also { it.mkdirs() }
@@ -235,6 +235,9 @@ object UiStringsCache {
             fillBlankEasy               = s("fillBlankEasy",               defaults.fillBlankEasy),
             fillBlankMedium             = s("fillBlankMedium",             defaults.fillBlankMedium),
             fillBlankHard               = s("fillBlankHard",               defaults.fillBlankHard),
+            fillBlankEasyHint           = s("fillBlankEasyHint",           defaults.fillBlankEasyHint),
+            fillBlankMediumHint         = s("fillBlankMediumHint",         defaults.fillBlankMediumHint),
+            fillBlankHardHint           = s("fillBlankHardHint",           defaults.fillBlankHardHint),
             fillBlankPlay               = s("fillBlankPlay",               defaults.fillBlankPlay),
             fillBlankNotEnoughStars     = s("fillBlankNotEnoughStars",     defaults.fillBlankNotEnoughStars),
             fillBlankNotEnoughImages    = s("fillBlankNotEnoughImages",    defaults.fillBlankNotEnoughImages),
@@ -470,6 +473,9 @@ object UiStringsCache {
         "fillBlankEasy"               to d.fillBlankEasy,
         "fillBlankMedium"             to d.fillBlankMedium,
         "fillBlankHard"               to d.fillBlankHard,
+        "fillBlankEasyHint"           to d.fillBlankEasyHint,
+        "fillBlankMediumHint"         to d.fillBlankMediumHint,
+        "fillBlankHardHint"           to d.fillBlankHardHint,
         "fillBlankPlay"               to d.fillBlankPlay,
         "fillBlankNotEnoughStars"     to d.fillBlankNotEnoughStars,
         "fillBlankNotEnoughImages"    to d.fillBlankNotEnoughImages,

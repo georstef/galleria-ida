@@ -5,7 +5,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,68 +24,98 @@ import com.galleriaida.viewmodel.AppViewModel
 fun PlayerSelectionScreen(
     viewModel: AppViewModel,
     onPlayerSelected: () -> Unit,
-    onNewPlayer: () -> Unit
+    onNewPlayer: () -> Unit,
+    onSettings: () -> Unit
 ) {
     val players by viewModel.players.collectAsState()
-
-    // First launch — no players yet, go straight to setup
     val playersLoaded by viewModel.playersLoaded.collectAsState()
 
     LaunchedEffect(playersLoaded) {
         if (playersLoaded && players.isEmpty()) onNewPlayer()
     }
-    Column(
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(48.dp))
-
-        Text(
-            text = "Who is playing? 👋",
-            style = MaterialTheme.typography.titleLarge,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        Text(
-            text = "Tap your name to start",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MedText,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(Modifier.height(32.dp))
-
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            items(players) { player ->
-                PlayerCard(player = player, onClick = {
-                    viewModel.selectPlayer(player)
-                    onPlayerSelected()
-                })
-            }
-        }
-
-        Spacer(Modifier.height(24.dp))
-
-        Button(
-            onClick = onNewPlayer,
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp),
-            shape = RoundedCornerShape(20.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = ButtonSecondary)
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("+ Add New Player", style = MaterialTheme.typography.labelLarge)
+            Spacer(Modifier.height(48.dp))
+
+            Text(
+                text = "Who is playing? 👋",
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = "Tap your name to start",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MedText,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(Modifier.height(32.dp))
+
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                items(players) { player ->
+                    PlayerCard(player = player, onClick = {
+                        viewModel.selectPlayer(player)
+                        onPlayerSelected()
+                    })
+                }
+
+                // "Add New Player" as the last item in the list
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(SoftPurple.copy(alpha = 0.5f))
+                            .clickable { onNewPlayer() }
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "+ Add New Player",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = DeepPurple
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(80.dp)) // room for the FAB
         }
 
-        Spacer(Modifier.height(16.dp))
+        // Settings cog — bottom right, floating (same as all other screens)
+        IconButton(
+            onClick = onSettings,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(20.dp)
+                .size(52.dp)
+                .clip(CircleShape)
+                .background(SoftPurple)
+        ) {
+            Icon(
+                Icons.Default.Settings,
+                contentDescription = "Settings",
+                tint = DeepPurple,
+                modifier = Modifier.size(28.dp)
+            )
+        }
     }
 }
 

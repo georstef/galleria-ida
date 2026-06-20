@@ -195,7 +195,7 @@ private fun PuzzleSetupScreen(
                     )
                 }
             } else {
-                Text(uiStrings.puzzleNoImages, color = MedText, style = MaterialTheme.typography.bodyLarge)
+                Text("No images yet", color = MedText, style = MaterialTheme.typography.bodyLarge)
             }
         }
 
@@ -240,13 +240,21 @@ private fun PuzzleSetupScreen(
                         .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text  = label,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (selected) Color.White else DeepPurple,
-                        fontWeight = FontWeight.Bold,
-                        textAlign  = TextAlign.Center
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text       = label,
+                            style      = MaterialTheme.typography.bodySmall,
+                            color      = if (selected) Color.White else DeepPurple,
+                            fontWeight = FontWeight.Bold,
+                            textAlign  = TextAlign.Center
+                        )
+                        Text(
+                            text      = "${size.cols}×${size.rows}",
+                            style     = MaterialTheme.typography.labelSmall,
+                            color     = if (selected) Color.White.copy(alpha = 0.8f) else MedText,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }

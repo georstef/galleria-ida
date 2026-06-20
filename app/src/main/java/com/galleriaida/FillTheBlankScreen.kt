@@ -215,6 +215,11 @@ private fun FillBlankSetupScreen(
                     FillBlankDifficulty.MEDIUM -> uiStrings.fillBlankMedium
                     FillBlankDifficulty.HARD   -> uiStrings.fillBlankHard
                 }
+                val hint = when (d) {
+                    FillBlankDifficulty.EASY   -> uiStrings.fillBlankEasyHint
+                    FillBlankDifficulty.MEDIUM -> uiStrings.fillBlankMediumHint
+                    FillBlankDifficulty.HARD   -> uiStrings.fillBlankHardHint
+                }
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -224,12 +229,19 @@ private fun FillBlankSetupScreen(
                         .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text  = label,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (selected) Color.White else DeepPurple,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text       = label,
+                            style      = MaterialTheme.typography.bodySmall,
+                            color      = if (selected) Color.White else DeepPurple,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text  = hint,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (selected) Color.White.copy(alpha = 0.8f) else MedText
+                        )
+                    }
                 }
             }
         }

@@ -235,14 +235,21 @@ private fun MemoryMatchSetupScreen(
                         .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Label + grid size on one line e.g. "Easy  3×4"
-                    Text(
-                        text       = "$label  ${diff.gridLabel}",
-                        style      = MaterialTheme.typography.bodySmall,
-                        color      = if (selected) Color.White else DeepPurple,
-                        fontWeight = FontWeight.Bold,
-                        textAlign  = TextAlign.Center
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text       = label,
+                            style      = MaterialTheme.typography.bodySmall,
+                            color      = if (selected) Color.White else DeepPurple,
+                            fontWeight = FontWeight.Bold,
+                            textAlign  = TextAlign.Center
+                        )
+                        Text(
+                            text      = diff.gridLabel,
+                            style     = MaterialTheme.typography.labelSmall,
+                            color     = if (selected) Color.White.copy(alpha = 0.8f) else MedText,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }

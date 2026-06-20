@@ -59,7 +59,8 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
             PlayerSelectionScreen(
                 viewModel        = viewModel,
                 onPlayerSelected = { navController.navigate(Routes.PLAYER_LOADING) },
-                onNewPlayer      = { navController.navigate(Routes.PLAYER_BASIC_SETUP) }
+                onNewPlayer      = { navController.navigate(Routes.PLAYER_BASIC_SETUP) },
+                onSettings       = { navController.navigate(Routes.SETTINGS) }
             )
         }
 
