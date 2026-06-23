@@ -1,55 +1,35 @@
 # How to get a Pollinations API key
 
-GalleriaIDA uses [Pollinations](https://pollinations.ai) as a fallback image generation service. Using it without an API key works fine on the free public tier, but an API key gives you higher limits and priority access.
-
-> **This step is optional.** You can leave the Pollinations API key field blank in Settings and the app will still generate images using Pollinations' free public tier.
+GalleriaIDA uses [Pollinations](https://pollinations.ai) as a fallback image generation service.
 
 ---
 
-## Free tier (no key needed)
-
-Pollinations offers free, unlimited image generation without an account. The free tier is shared across all users, so during busy periods image generation may be slower or occasionally fail — in which case GalleriaIDA automatically tries the next fallback model.
-
----
-
-## Getting an API key (optional)
+## Getting an API key
 
 ### 1. Go to Pollinations
 
-Open your browser and go to **[pollinations.ai](https://pollinations.ai)**.
-
-<!-- SCREENSHOT: Pollinations homepage showing the "Get API access" or sign-up section -->
-
----
-
-### 2. Request API access
-
 As of 2025, Pollinations API access is granted on request rather than via instant self-serve signup.
+https://enter.pollinations.ai/sign-in
+1. Go to **[pollinations.ai/sign-in](https://enter.pollinations.ai/sign-in)** or look for the **"For developers"** / **"API access"** link on the homepage
+2. Opt to **Sign in with GitHub** when creating your Pollinations account. If you don't have a GitHub account, go to [github.com](https://github.com) and create one using **Sign up with Google** — that way you don't need to create separate accounts and everything stays linked to your Google account.
+4. Go to **[enter.pollinations.ai/#keys](https://enter.pollinations.ai/#keys)**
+<img src="images/Pollinations-Keys.jpg" width="850" alt="Pollinations Keys">
 
-1. Go to **[pollinations.ai/join](https://pollinations.ai/join)** or look for the **"For developers"** / **"API access"** link on the homepage
-2. Fill in the request form with your name, use case, and expected usage
-3. You will receive your API key by email once approved
+5. Click **Add Key**
+6. Fill-out the **Name** but leave the **Budget** and **Expiry** empty
+<img src="images/Pollinations-Create-API-Key-Form.jpg" width="500" alt="Create API Key Form">
 
-Alternatively, join the [Pollinations Discord server](https://discord.gg/pollinations) where API keys are often distributed directly to community members.
+The limits per model can be found [here](https://enter.pollinations.ai/#models).
 
 ---
 
 ### 3. Enter the key in GalleriaIDA
 
-1. Open GalleriaIDA and tap the **⚙️** icon (top-right of the player selection screen)
+1. Open GalleriaIDA and tap the **⚙️** icon (bottom-right on most screens)
 2. Paste your key in the **Pollinations API Key** field
-3. Tap **Save**
+3. Tap **Test & Save**
 
----
-
-## What the API key changes
-
-| | Without key | With key |
-|---|---|---|
-| Image generation | ✅ Works | ✅ Works |
-| Speed | Standard (shared) | Faster (priority) |
-| Rate limits | Shared public limits | Higher personal limits |
-| Cost | Free | Free |
+> ⚠️ Depending on server load, image creation may take **up to 4 minutes**. Please be patient and keep the app open until the image appears.
 
 ---
 
