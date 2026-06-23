@@ -26,6 +26,7 @@
 
 4. Correct answers earn **stars**. Accumulate 100 ⭐ to create an AI-generated image.
 5. When creating an image the player picks one word from three vocabulary groups (character, action, place). The app turns those words into a unique image.
+> ⚠️ Depending on server load, image creation may take up to 4 minutes. Please be patient and keep the app open until the image appears.
 
 <img src="docs/images/image-creation1.png" width="250" alt="Image creation"> <img src="docs/images/image-created1.png" width="250" alt="Created image">
 
