@@ -12,8 +12,6 @@ Open your browser and go to **[aistudio.google.com](https://aistudio.google.com)
 
 You will need a Google account (Gmail). If you don't have one, create it for free at [accounts.google.com](https://accounts.google.com).
 
-<!-- SCREENSHOT: Google AI Studio homepage showing the "Get API key" button in the left sidebar -->
-
 ---
 
 ### 2. Sign in
@@ -24,11 +22,12 @@ Click **Sign in** and log in with your Google account.
 
 ### 3. Create an API key
 
-1. In the left sidebar, click **Get API key**
-2. Click **Create API key**
-3. Choose **Create API key in new project** (recommended) or select an existing project if you have one
+1. In the left sidebar, click **Dashboard**   
+3. In the top right of the Dashboard page click **Create API key**
+4. Write a Name for your key (eg. Galleria Ida API Key)
+5. Choose **+ Create Project** (recommended) or select an existing project if you have one
 
-<!-- SCREENSHOT: The "Create API key" dialog in Google AI Studio -->
+<img src="images/Gemini-Create-API-Key-Form.jpg" width="400" alt="Gemini Create API Form">
 
 4. Your API key will be displayed — it looks like this:
    ```
@@ -42,7 +41,7 @@ Click **Sign in** and log in with your Google account.
 
 ### 4. Enter the key in GalleriaIDA
 
-1. Open GalleriaIDA and tap the **⚙️** icon (top-right of the player selection screen)
+1. Open GalleriaIDA and tap the **⚙️** icon (bottom-right on most screens)
 2. Paste your key in the **Gemini API Key** field
 3. Tap **Test & Save**
 4. If the key is valid, the model selectors will populate automatically
@@ -51,16 +50,15 @@ Click **Sign in** and log in with your Google account.
 
 ## Free tier limits
 
-The free tier of Gemini is sufficient for normal classroom use. Limits as of 2025:
+- The free tier of Gemini is sufficient for normal use.
+- Limits can be seen in Google AI Studio **Rate Limit** section.
 
-| Model | Requests per minute | Requests per day |
-|---|---|---|
-| Gemini 2.0 Flash | 15 | 1,500 |
-| Gemini 1.5 Flash | 15 | 1,500 |
+<img src="images/Gemini-API-Rate-Limits.jpg" width="950" alt="Gemini Create API Rate Limits">
 
-If the app shows a "server is busy" message, you have hit the per-minute limit — wait a moment and try again.
-
-For higher limits, Google offers paid plans via [Google Cloud](https://cloud.google.com/vertex-ai).
+- If the app shows a "server is busy" message, you have hit the per-minute limit — wait a moment and try again.
+- For higher limits, Google offers paid plans via [Google Cloud](https://cloud.google.com/vertex-ai).
+ 
+> ⚠️ Gemini currently **does not** offer an image generation model (such as Imagen) in their free tier. If you are using the free Gemini API key, the Image Generation slot will not work. This is why the app includes Pollinations as a fallback — Pollinations generates images for free. Make sure to configure at least one Pollinations model in Settings so image creation works out of the box.
 
 ---
 
