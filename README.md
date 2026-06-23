@@ -133,8 +133,12 @@ A single-elimination bracket tournament where the player votes for their favouri
    - **Translation** — translates the app UI into the player's language
    - **Image Prompt** — builds the image description from the player's word choices
    - **Image Generation** — creates the actual image (e.g. `imagen-3.0-generate-002`)
-4. Optionally enter a **Pollinations API key**. Leave blank to use the free public tier.
+4. Optionally enter a **Pollinations API key**.
 5. Tap the back arrow to return to the player selection screen.
+
+
+> ⚠️ Gemini currently does not offer an image generation model (such as Imagen) in their free tier. If you are using the free Gemini API key, the Image Generation slot will not work. This is why the app includes Pollinations as a fallback — Pollinations generates images for free and requires no API key. Make sure to configure at least one Pollinations model in Settings so image creation works out of the box.
+
 
 ### Adding players
 
