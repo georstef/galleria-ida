@@ -30,7 +30,8 @@ object Routes {
     const val PLAYER_SELECTION   = "player_selection"
     const val PLAYER_BASIC_SETUP = "player_basic_setup"
     const val PLAYER_PROFILE     = "player_profile/{isNewPlayer}"
-    const val PLAYER_LOADING     = "player_loading"
+    const val PLAYER_LOADING = "player_loading/{isNewPlayer}"
+    fun playerLoading(isNewPlayer: Boolean) = "player_loading/$isNewPlayer"
     const val PLAYER_HOME        = "player_home"
     const val QUIZZES            = "quizzes"
     const val GAME               = "game"
@@ -58,7 +59,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
         composable(Routes.PLAYER_SELECTION) {
             PlayerSelectionScreen(
                 viewModel        = viewModel,
-                onPlayerSelected = { navController.navigate(Routes.PLAYER_LOADING) },
+                onPlayerSelected = { navController.navigate(Routes.playerLoading(true)) },
                 onNewPlayer      = { navController.navigate(Routes.PLAYER_BASIC_SETUP) },
                 onSettings       = { navController.navigate(Routes.SETTINGS) }
             )
@@ -83,10 +84,10 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
             val isNewPlayer = backStackEntry.arguments?.getBoolean("isNewPlayer") ?: false
             PlayerProfileScreen(
                 viewModel  = viewModel,
-                onDone     = {
-                    if (isNewPlayer) {
-                        navController.navigate(Routes.PLAYER_LOADING) {
-                            popUpTo(Routes.PLAYER_SELECTION)
+                onDone     = { updatedLanguage ->
+                    if (isNewPlayer || viewModel.needsTranslation(updatedLanguage)) {
+                        navController.navigate(Routes.playerLoading(isNewPlayer)) {
+                            if (isNewPlayer) popUpTo(Routes.PLAYER_SELECTION)
                         }
                     } else {
                         navController.popBackStack()
@@ -97,12 +98,22 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
             )
         }
 
-        composable(Routes.PLAYER_LOADING) {
+        composable(
+            route = Routes.PLAYER_LOADING,
+            arguments = listOf(navArgument("isNewPlayer") { type = NavType.BoolType; defaultValue = true })
+        ) { backStackEntry ->
+            val fromNewPlayer = backStackEntry.arguments?.getBoolean("isNewPlayer") ?: true
             PlayerLoadingScreen(
                 viewModel = viewModel,
                 onReady   = {
-                    navController.navigate(Routes.PLAYER_HOME) {
-                        popUpTo(Routes.PLAYER_LOADING) { inclusive = true }
+                    if (fromNewPlayer) {
+                        navController.navigate(Routes.PLAYER_HOME) {
+                            popUpTo(Routes.PLAYER_LOADING) { inclusive = true }
+                        }
+                    } else {
+                        // Pop PlayerLoading, then PlayerProfile — back to original screen
+                        navController.popBackStack()
+                        navController.popBackStack()
                     }
                 }
             )

@@ -26,7 +26,7 @@ import com.galleriaida.viewmodel.AppViewModel
 @Composable
 fun PlayerProfileScreen(
     viewModel: AppViewModel,
-    onDone: () -> Unit,
+    onDone: (language: String) -> Unit,
     onBack: () -> Unit,
     onSettings: () -> Unit = {}
 ) {
@@ -288,7 +288,7 @@ fun PlayerProfileScreen(
                                             )
                                         )
                                     }
-                                    onDone()
+                                    onDone(selectedLanguage.code)
                                 }
                             }
                         },

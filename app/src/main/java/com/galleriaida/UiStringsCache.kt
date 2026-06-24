@@ -50,6 +50,15 @@ object UiStringsCache {
         }
     }
 
+    /** Delete the cached translation for a specific language, forcing a fresh fetch on next load. */
+    fun invalidate(context: Context, language: String) {
+        val file = cacheFile(context, language)
+        if (file.exists()) {
+            file.delete()
+            Log.d("UiStringsCache", "Cache invalidated for language: $language")
+        }
+    }
+
     private fun cacheFile(context: Context, language: String): File {
         return File(translationsDir(context), "translations_${language.lowercase().replace(" ", "_")}.json")
     }

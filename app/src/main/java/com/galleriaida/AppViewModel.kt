@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import com.galleriaida.AppConstants
 import org.json.JSONObject
 import java.io.File
@@ -140,25 +141,38 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val defaults = com.galleriaida.ui.UiStrings()
             val context  = getApplication<android.app.Application>()
-            val cached   = com.galleriaida.ui.UiStringsCache.buildUiStrings(context, language, defaults)
-            _uiStrings.value = cached
 
+            // 1. Load whatever is cached and apply immediately (may be partial or empty)
+            _uiStrings.value = com.galleriaida.ui.UiStringsCache.buildUiStrings(context, language, defaults)
+
+            // 2. Check if translation is complete
             val missing = com.galleriaida.ui.UiStringsCache.missingKeys(context, language, defaults)
             if (missing.isEmpty()) return@launch
 
-            val s     = settings.first { it.geminiApiKey.isNotBlank() }
-            val model = s.modelTranslation.ifBlank { s.modelQuestions.ifBlank { "models/gemini-2.0-flash" } }
+            // 3. Translation incomplete — try to fetch from Gemini
             _translating.value = true
-            gemini.translateKeys(s.geminiApiKey, model, language, missing)
-                .onSuccess { newTranslations ->
-                    com.galleriaida.ui.UiStringsCache.save(context, language, newTranslations)
-                    _uiStrings.value = com.galleriaida.ui.UiStringsCache.buildUiStrings(context, language, defaults)
+            try {
+                val s = withTimeoutOrNull(5_000) {
+                    settings.first { it.geminiApiKey.isNotBlank() }
                 }
-                .onFailure { Log.e("AppViewModel", "UI translation failed: ${it.message}") }
-            _translating.value = false
+                if (s != null) {
+                    val model = s.modelTranslation.ifBlank { s.modelQuestions.ifBlank { "models/gemini-2.0-flash" } }
+                    gemini.translateKeys(s.geminiApiKey, model, language, missing)
+                        .onSuccess { newTranslations ->
+                            com.galleriaida.ui.UiStringsCache.save(context, language, newTranslations)
+                            _uiStrings.value = com.galleriaida.ui.UiStringsCache.buildUiStrings(context, language, defaults)
+                        }
+                        .onFailure {
+                            // Network failed — keep whatever was cached, fallback to English defaults for missing keys
+                            Log.w("AppViewModel", "Translation failed: ${it.message}")
+                            _uiStrings.value = com.galleriaida.ui.UiStringsCache.buildUiStrings(context, language, defaults)
+                        }
+                }
+            } finally {
+                _translating.value = false
+            }
         }
     }
-
     // ── Word translation ─────────────────────────────────────────────────────
 
     fun ensureWordTranslations(
@@ -226,7 +240,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // ── Players ──────────────────────────────────────────────────────────────
 
-    fun selectPlayer(player: Player) { _currentPlayer.value = player }
+    fun selectPlayer(player: Player) {
+        _currentPlayer.value = null
+        _currentPlayer.value = player
+    }
 
     fun createPlayer(name: String, schoolClass: String, language: String) {
         viewModelScope.launch {
@@ -242,6 +259,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             prefs.savePlayers(players.value + p)
             _currentPlayer.value = p
         }
+    }
+
+    fun needsTranslation(language: String): Boolean {
+        if (language.equals("English", ignoreCase = true) ||
+            language.equals("en", ignoreCase = true)) return false
+        val context = getApplication<android.app.Application>()
+        return com.galleriaida.ui.UiStringsCache.missingKeys(context, language, com.galleriaida.ui.UiStrings()).isNotEmpty()
     }
 
     fun updatePlayer(player: Player) {
@@ -600,7 +624,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             Log.d("GALLERIA_AI", "=== Pollinations fallback models=$m1/$m2/$m3 ===")
 
             _isFallbackLoading.value    = true
-            _fallbackModelMessage.value = "Trying backup engine ($m1)…"
+            _fallbackModelMessage.value = _uiStrings.value.imageBackupEngine.format(m1)
 
             val result = PollinationsService.generateImageWithFallbacks(
                 context       = getApplication(),
@@ -610,7 +634,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 model3        = m3,
                 apiKey        = s.pollinationsApiKey,
                 onModelSwitch = { next ->
-                    _fallbackModelMessage.value = "Trying backup engine ($next)…"
+                    _fallbackModelMessage.value = _uiStrings.value.imageBackupEngine.format(next)
                 }
             )
 
