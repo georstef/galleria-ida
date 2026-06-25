@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galleriaida.data.POLLINATIONS_MODELS
+import com.galleriaida.BuildConfig
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
 import org.json.JSONObject
@@ -82,12 +83,20 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                     .padding(24.dp)
             ) {
                 // ── Title ────────────────────────────────────────────────────
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = DeepPurple)
                     }
                     Spacer(Modifier.width(8.dp))
-                    Text("Settings ⚙️", style = MaterialTheme.typography.titleLarge)
+                    Text("Settings ⚙️", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                    Text(
+                        text  = "v${BuildConfig.VERSION_NAME}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MedText
+                    )
                 }
 
                 Spacer(Modifier.height(32.dp))
@@ -175,7 +184,7 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                 Spacer(Modifier.height(8.dp))
                 Text(
                     "Used as a fallback when Gemini image generation is unavailable. " +
-                    "If you leave the key blank, the free tier will be used.",
+                            "If you leave the key blank, the free tier will be used.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MedText
                 )

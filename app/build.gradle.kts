@@ -17,6 +17,11 @@ android {
     namespace = "com.galleriaida"
     compileSdk = 35
 
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.galleriaida"
         minSdk = 26
