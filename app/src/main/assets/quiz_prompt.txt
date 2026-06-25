@@ -23,6 +23,7 @@ STRICT OUTPUT RULES:
 * Do NOT use markdown code blocks (such as ```json).
 * Your response must start EXACTLY with the character [ and end EXACTLY with the character ].
 * If you add even a single word, comment, or explanation outside the JSON, the response is invalid.
+* Before outputting, scan every multiple_choice question and verify that its 4 options are all distinct. If any duplicates exist, regenerate that question. A question with duplicate options is invalid and must never appear in the output.
 
 OUTPUT FORMAT:
 Always return a JSON array containing exactly {{selection}} questions.
@@ -129,7 +130,7 @@ Before generating the final JSON, internally perform the following checks for ev
 3. Option validation: For "multiple_choice" questions, confirm that ONLY ONE option is correct and the other three are clearly incorrect.
 4. It is strictly forbidden for the correct answer or its root word to appear in the question text.
 5. In multiple-choice questions, options must not contain formatting cues (such as capitalization, punctuation, or word endings) that reveal the correct answer.
-6. In multiple-choice questions, all 4 options must be unique. The correct answer must not appear more than once.
+6.  In multiple-choice questions, all 4 options MUST be unique — identical or near-identical options are strictly forbidden. If any two options are the same or could be confused as the same, discard the question entirely and generate a new one.
 7. If the instruction says "find the letter", the options must be letters. If the options are syllables or words, the instruction must say "find the letters" or "find the word".
 8. In mathematics questions that are of type text the solution must always be numeric (eg. 10 and not "ten")
 9. Repetition check: confirm that the question's scenario seed has not been used by any other question in the same output.
