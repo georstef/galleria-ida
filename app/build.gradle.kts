@@ -45,6 +45,15 @@ android {
         compose = true
         buildConfig = true
     }
+
+    applicationVariants.all {
+        val variant = this
+        variant.outputs
+            .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
+            .forEach { output ->
+                output.outputFileName = "GalleriaIDA_v${variant.versionName}.apk"
+            }
+    }
 }
 
 dependencies {
