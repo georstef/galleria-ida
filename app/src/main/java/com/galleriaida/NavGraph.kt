@@ -1,4 +1,4 @@
-package com.galleriaida.navigation
+package com.galleriaida
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -84,8 +84,8 @@ fun AppNavGraph(navController: NavHostController, viewModel: AppViewModel) {
             val isNewPlayer = backStackEntry.arguments?.getBoolean("isNewPlayer") ?: false
             PlayerProfileScreen(
                 viewModel  = viewModel,
-                onDone     = { updatedLanguage ->
-                    if (isNewPlayer || viewModel.needsTranslation(updatedLanguage)) {
+                onDone     = { _, needsTranslation ->
+                    if (isNewPlayer || needsTranslation) {
                         navController.navigate(Routes.playerLoading(isNewPlayer)) {
                             if (isNewPlayer) popUpTo(Routes.PLAYER_SELECTION)
                         }

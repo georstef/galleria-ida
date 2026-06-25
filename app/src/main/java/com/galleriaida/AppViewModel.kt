@@ -263,20 +263,24 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun needsTranslation(language: String): Boolean {
         if (language.equals("English", ignoreCase = true) ||
-            language.equals("en", ignoreCase = true)) return false
-        val context = getApplication<android.app.Application>()
-        return com.galleriaida.ui.UiStringsCache.missingKeys(context, language, com.galleriaida.ui.UiStrings()).isNotEmpty()
+            language.equals("en", ignoreCase = true)) {
+            _uiStrings.value = com.galleriaida.ui.UiStrings()
+            return false
+        }
+        val context  = getApplication<android.app.Application>()
+        val defaults = com.galleriaida.ui.UiStrings()
+        val missing  = com.galleriaida.ui.UiStringsCache.missingKeys(context, language, defaults)
+        if (missing.isEmpty()) {
+            // Cache is complete — load it immediately so UI updates before navigation
+            _uiStrings.value = com.galleriaida.ui.UiStringsCache.buildUiStrings(context, language, defaults)
+        }
+        return missing.isNotEmpty()
     }
 
     fun updatePlayer(player: Player) {
         viewModelScope.launch {
-            val prevLang = _currentPlayer.value?.language
             _currentPlayer.value = player
             prefs.savePlayers(players.value.map { if (it.id == player.id) player else it })
-            if (player.language != prevLang) {
-                _wordTranslations.value = null
-                translateUiForPlayer(player.language)
-            }
         }
     }
 

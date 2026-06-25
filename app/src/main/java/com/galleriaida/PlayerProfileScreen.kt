@@ -26,7 +26,7 @@ import com.galleriaida.viewmodel.AppViewModel
 @Composable
 fun PlayerProfileScreen(
     viewModel: AppViewModel,
-    onDone: (language: String) -> Unit,
+    onDone: (language: String, needsTranslation: Boolean) -> Unit,
     onBack: () -> Unit,
     onSettings: () -> Unit = {}
 ) {
@@ -278,6 +278,7 @@ fun PlayerProfileScreen(
                                     nameError = uiStrings.profileErrorNameTaken
                                 }
                                 else -> {
+                                    val needsTranslation = viewModel.needsTranslation(selectedLanguage.code)
                                     player?.let {
                                         viewModel.updatePlayer(
                                             it.copy(
@@ -288,7 +289,7 @@ fun PlayerProfileScreen(
                                             )
                                         )
                                     }
-                                    onDone(selectedLanguage.code)
+                                    onDone(selectedLanguage.code, needsTranslation)
                                 }
                             }
                         },

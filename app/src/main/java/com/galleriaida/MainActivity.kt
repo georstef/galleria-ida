@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-import com.galleriaida.navigation.AppNavGraph
+import com.galleriaida.AppNavGraph
 import com.galleriaida.ui.theme.KidsAppTheme
 import com.galleriaida.viewmodel.AppViewModel
 
