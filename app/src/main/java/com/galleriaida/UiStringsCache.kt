@@ -47,6 +47,7 @@ object UiStringsCache {
                 ?.filter { it.name.startsWith("translations_") && it.name.endsWith(".json") }
                 ?.forEach { it.delete() }
             vFile.writeText(CACHE_VERSION.toString())
+            clearMemCache()
         }
     }
 
@@ -55,6 +56,7 @@ object UiStringsCache {
         val file = cacheFile(context, language)
         if (file.exists()) {
             file.delete()
+            clearMemCache()
             Log.d("UiStringsCache", "Cache invalidated for language: $language")
         }
     }
@@ -63,15 +65,33 @@ object UiStringsCache {
         return File(translationsDir(context), "translations_${language.lowercase().replace(" ", "_")}.json")
     }
 
+    // In-memory cache of the last-loaded language JSON, to avoid re-reading and
+    // re-parsing the same file multiple times per player selection.
+    private var memCacheLang: String? = null
+    private var memCacheJson: JSONObject? = null
+
     /** Load the cached JSON for [language]. Returns empty JSONObject if none exists. */
     fun load(context: Context, language: String): JSONObject {
+        // Serve from memory if it's the same language we last loaded
+        if (memCacheLang == language && memCacheJson != null) {
+            return memCacheJson!!
+        }
         return try {
             val file = cacheFile(context, language)
-            if (file.exists()) JSONObject(file.readText()) else JSONObject()
+            val json = if (file.exists()) JSONObject(file.readText()) else JSONObject()
+            memCacheLang = language
+            memCacheJson = json
+            json
         } catch (e: Exception) {
             Log.e("UiStringsCache", "load error: ${e.message}")
             JSONObject()
         }
+    }
+
+    /** Invalidate the in-memory cache (call after writing to disk). */
+    private fun clearMemCache() {
+        memCacheLang = null
+        memCacheJson = null
     }
 
     /** Merge [newEntries] into the existing cache for [language] and save. */
@@ -80,6 +100,7 @@ object UiStringsCache {
             val existing = load(context, language)
             newEntries.forEach { (k, v) -> existing.put(k, v) }
             cacheFile(context, language).writeText(existing.toString())
+            clearMemCache()
             Log.d("UiStringsCache", "Saved ${newEntries.size} entries for $language")
         } catch (e: Exception) {
             Log.e("UiStringsCache", "save error: ${e.message}")
@@ -97,9 +118,11 @@ object UiStringsCache {
     ): Map<String, String> {
         val cache  = load(context, language)
         val allKeys = defaultsMap(defaults)
-        return allKeys.filter { (key, englishValue) ->
-            !cache.has(key) || cache.getString(key) == englishValue
-        }
+        // A key is "missing" only if it is absent from the cache entirely.
+        // A cached value that happens to equal the English text is still a valid
+        // translation (many short words/emojis translate to themselves) and must
+        // NOT be re-fetched — otherwise the app re-translates on every launch.
+        return allKeys.filter { (key, _) -> !cache.has(key) }
     }
 
     /**

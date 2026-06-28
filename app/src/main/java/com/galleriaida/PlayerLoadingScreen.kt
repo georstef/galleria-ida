@@ -54,16 +54,31 @@ fun PlayerLoadingScreen(
         }
     }
 
+    val shownAt = remember { System.currentTimeMillis() }
+    val minDisplayMs = 600L
+
+    suspend fun finish() {
+        val elapsed = System.currentTimeMillis() - shownAt
+        if (elapsed < minDisplayMs) delay(minDisplayMs - elapsed)
+        onReady()
+    }
+
     LaunchedEffect(translating) {
         if (translating) {
             translatingStarted = true
         } else if (translatingStarted) {
             // Translation was in progress and just finished
-            onReady()
+            finish()
         } else {
-            // translating is false on arrival — give it a short window to start
-            delay(500)
-            if (!translating) onReady()
+            // translating is false on arrival. Translation starts almost immediately if
+            // needed, so poll briefly. If it hasn't started within ~150ms, the cache was
+            // complete and we can proceed (after the minimum display time).
+            var waited = 0
+            while (waited < 150 && !translating) {
+                delay(30)
+                waited += 30
+            }
+            if (!translating) finish()
         }
     }
 

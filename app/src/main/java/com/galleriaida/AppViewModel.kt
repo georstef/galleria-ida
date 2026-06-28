@@ -17,6 +17,7 @@ import com.galleriaida.data.QuizQuestion
 import com.galleriaida.network.PollinationsService
 import com.galleriaida.storage.PreferencesManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -142,11 +143,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val defaults = com.galleriaida.ui.UiStrings()
             val context  = getApplication<android.app.Application>()
 
-            // 1. Load whatever is cached and apply immediately (may be partial or empty)
-            _uiStrings.value = com.galleriaida.ui.UiStringsCache.buildUiStrings(context, language, defaults)
+            // 1. Load cache off the main thread, then apply immediately
+            val cached = withContext(Dispatchers.IO) {
+                com.galleriaida.ui.UiStringsCache.buildUiStrings(context, language, defaults)
+            }
+            _uiStrings.value = cached
 
-            // 2. Check if translation is complete
-            val missing = com.galleriaida.ui.UiStringsCache.missingKeys(context, language, defaults)
+            // 2. Check if translation is complete (off main thread)
+            val missing = withContext(Dispatchers.IO) {
+                com.galleriaida.ui.UiStringsCache.missingKeys(context, language, defaults)
+            }
             if (missing.isEmpty()) return@launch
 
             // 3. Translation incomplete — try to fetch from Gemini
