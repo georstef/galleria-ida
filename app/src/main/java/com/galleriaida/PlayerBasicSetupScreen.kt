@@ -227,7 +227,7 @@ fun PlayerBasicSetupScreen(
                             name.isBlank() -> { nameError = true }
                             viewModel.isNameTaken(name.trim()) -> { nameError = true }
                             else -> {
-                                viewModel.createPlayerBasic(name, selectedLanguage.code)
+                                viewModel.createPlayerBasic(name, selectedLanguage.displayName)
                                 onContinue()
                             }
                         }

@@ -42,6 +42,11 @@ data class UiStrings(
     val galleryCreateButton: String = "Create Image 🎨 (100 ⭐)",
     val galleryImageMetadata: String = "Image Metadata",
     val galleryFullscreenClose: String = "Close",
+    val gallerySell: String = "Sell 💰",
+    val gallerySellConfirmTitle: String = "Sell this image?",
+    val gallerySellConfirmMessage: String = "You'll get back %d ⭐.\n\nThis permanently deletes the image and cannot be undone.",  // %d = refund
+    val gallerySellConfirmYes: String = "Sell",
+    val gallerySellConfirmNo: String = "Cancel",
 
     // ── GameScreen ────────────────────────────────────────────────────────────
     val gameQuestionCounter: String = "Question %d / %d",      // current / total

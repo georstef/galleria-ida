@@ -22,8 +22,8 @@ android {
         applicationId = "com.galleriaida"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10001
-        versionName = "1.0.1"
+        versionCode = 10002
+        versionName = "1.0.2"
     }
 
     buildTypes {

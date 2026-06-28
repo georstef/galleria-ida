@@ -30,7 +30,7 @@
 
 <img src="docs/images/image-creation1.png" width="250" alt="Image creation"> <img src="docs/images/image-created1.png" width="250" alt="Created image">
 
-6. The image lands in the player's **Gallery**.
+6. The image lands in the player's **Gallery**. Tapping an image opens it full-screen, where it can also be **sold** for half its cost (50 ⭐) — this permanently deletes the image and cannot be undone.
 7. Once a player has enough gallery images, **Mini-Games** unlock one by one.
 
 The entire player-facing UI is displayed in the player's chosen language automatically — no manual setup required.
@@ -45,6 +45,7 @@ The entire player-facing UI is displayed in the player's chosen language automat
 | All questions correct (perfect score bonus) | +10 ⭐ |
 | One question wrong (near-perfect bonus) | +3 ⭐ |
 | Create an image | −100 ⭐ |
+| Sell an image (half refund) | +50 ⭐ |
 | Play Puzzle | −10 ⭐ |
 | Play Fill the Blank | −10 ⭐ |
 | Play Memory Match | −10 ⭐ |

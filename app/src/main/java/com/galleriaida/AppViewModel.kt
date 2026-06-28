@@ -706,6 +706,36 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Sells a gallery image: permanently deletes the DB record AND the image file on disk,
+     * and refunds half the image's original cost to the current player.
+     * This action is irreversible.
+     */
+    fun sellImage(item: GalleryItem) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val player = _currentPlayer.value ?: return@launch
+            val refund = item.cost / 2
+
+            // 1. Delete the image file from disk
+            try {
+                val file = File(item.imageUrl)
+                if (file.exists()) file.delete()
+            } catch (e: Exception) {
+                Log.e("AppViewModel", "Failed to delete image file: ${e.message}")
+            }
+
+            // 2. Remove the item from the gallery DB
+            prefs.saveGallery(gallery.value.filter { it.id != item.id })
+
+            // 3. Refund half the cost to the player
+            val updatedPlayer = player.copy(stars = player.stars + refund)
+            _currentPlayer.value = updatedPlayer
+            prefs.savePlayers(players.value.map { if (it.id == player.id) updatedPlayer else it })
+
+            Log.d("AppViewModel", "Sold image ${item.id} for $refund stars")
+        }
+    }
+
     private suspend fun saveGalleryItem(
         player: Player,
         imageUrl: String,

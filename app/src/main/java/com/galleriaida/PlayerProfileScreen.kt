@@ -56,7 +56,9 @@ fun PlayerProfileScreen(
 
         var selectedLanguage by remember {
             mutableStateOf(
-                selectableOptions.firstOrNull { it.code == player?.language }
+                selectableOptions.firstOrNull {
+                    it.code == player?.language || it.displayName.equals(player?.language, ignoreCase = true)
+                }
                     ?: selectableOptions.firstOrNull()
                     ?: LanguageOption("English", "en", true)
             )
@@ -278,18 +280,18 @@ fun PlayerProfileScreen(
                                     nameError = uiStrings.profileErrorNameTaken
                                 }
                                 else -> {
-                                    val needsTranslation = viewModel.needsTranslation(selectedLanguage.code)
+                                    val needsTranslation = viewModel.needsTranslation(selectedLanguage.displayName)
                                     player?.let {
                                         viewModel.updatePlayer(
                                             it.copy(
                                                 name = name.trim(),
-                                                language = selectedLanguage.code,
+                                                language = selectedLanguage.displayName,
                                                 schoolClass = schoolClass.ifBlank { "—" },
                                                 schoolYearPosition = schoolYearPosition.ifBlank { "beginning" }
                                             )
                                         )
                                     }
-                                    onDone(selectedLanguage.code, needsTranslation)
+                                    onDone(selectedLanguage.displayName, needsTranslation)
                                 }
                             }
                         },

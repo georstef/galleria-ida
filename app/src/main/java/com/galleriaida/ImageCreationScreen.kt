@@ -90,9 +90,15 @@ fun ImageCreationScreen(
     var actionIndices by remember { mutableStateOf(wordPool.actions.indices.shuffled().take(4)) }
     var placeIndices  by remember { mutableStateOf(wordPool.places.indices.shuffled().take(4)) }
 
-    // Trigger translation on first entry
+    // Trigger translation on first entry, and re-roll the displayed words each time
     LaunchedEffect(Unit) {
         viewModel.clearUiState()
+        charIndices   = wordPool.characters.indices.shuffled().take(4)
+        actionIndices = wordPool.actions.indices.shuffled().take(4)
+        placeIndices  = wordPool.places.indices.shuffled().take(4)
+        selectedCharIdx   = null
+        selectedActionIdx = null
+        selectedPlaceIdx  = null
         viewModel.ensureWordTranslations(
             characters = wordPool.characters,
             actions    = wordPool.actions,

@@ -212,7 +212,7 @@ class GeminiService {
 
                 questions.add(
                     QuizQuestion(
-                        id          = obj.optString("id", i.toString()),
+                        id          = java.util.UUID.randomUUID().toString(),
                         subject     = obj.optString("subject", ""),
                         category    = obj.optString("category", ""),
                         level       = obj.optInt("level", 1),

@@ -72,7 +72,11 @@ fun GalleryScreen(
         ImageFullscreenScreen(
             item       = item,
             uiStrings  = uiStrings,
-            onClose    = { fullscreenItem = null }
+            onClose    = { fullscreenItem = null },
+            onSell     = {
+                viewModel.sellImage(item)
+                fullscreenItem = null
+            }
         )
         return
     }
@@ -250,13 +254,20 @@ fun GalleryCard(item: GalleryItem, onClick: () -> Unit) {
 // ── Full-screen image viewer ──────────────────────────────────────────────────
 
 @Composable
-fun ImageFullscreenScreen(item: GalleryItem, uiStrings: UiStrings, onClose: () -> Unit) {
+fun ImageFullscreenScreen(
+    item: GalleryItem,
+    uiStrings: UiStrings,
+    onClose: () -> Unit,
+    onSell: () -> Unit
+) {
     val imageModel = remember(item.imageUrl) {
         val file = File(item.imageUrl)
         if (file.exists()) file else item.imageUrl
     }
 
     var showMetadata by remember { mutableStateOf(false) }
+    var showSellConfirm by remember { mutableStateOf(false) }
+    val refund = item.cost / 2
 
     // Long-press detection via pointer input
     val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
@@ -307,6 +318,32 @@ fun ImageFullscreenScreen(item: GalleryItem, uiStrings: UiStrings, onClose: () -
         )
     }
 
+    if (showSellConfirm) {
+        AlertDialog(
+            onDismissRequest = { showSellConfirm = false },
+            title = { Text(uiStrings.gallerySellConfirmTitle, style = MaterialTheme.typography.titleMedium) },
+            text  = {
+                Text(
+                    uiStrings.gallerySellConfirmMessage.format(refund),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSellConfirm = false
+                    onSell()
+                }) {
+                    Text(uiStrings.gallerySellConfirmYes, style = MaterialTheme.typography.bodyLarge, color = ErrorRed)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSellConfirm = false }) {
+                    Text(uiStrings.gallerySellConfirmNo, style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -346,6 +383,26 @@ fun ImageFullscreenScreen(item: GalleryItem, uiStrings: UiStrings, onClose: () -
             )
 
             Spacer(Modifier.height(20.dp))
+
+            // Sell button — irreversible, refunds half the cost
+            OutlinedButton(
+                onClick  = { showSellConfirm = true },
+                modifier = Modifier
+                    .padding(horizontal = 48.dp)
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape  = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                border = androidx.compose.foundation.BorderStroke(1.5.dp, ErrorRed)
+            ) {
+                Text(
+                    "${uiStrings.gallerySell}  (+$refund ⭐)",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.White
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
 
             // Close button
             Button(

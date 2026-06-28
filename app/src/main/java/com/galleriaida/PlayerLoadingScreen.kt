@@ -1,5 +1,6 @@
 package com.galleriaida.ui.screens
 
+import android.app.Activity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,7 +10,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
@@ -23,6 +27,32 @@ fun PlayerLoadingScreen(
 ) {
     val translating by viewModel.translating.collectAsState()
     var translatingStarted by remember { mutableStateOf(false) }
+
+    // Paint the system bars black while this screen is shown, and restore on exit,
+    // so the whole screen (including status/navigation bar areas) matches the splash.
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        DisposableEffect(Unit) {
+            val window = (view.context as Activity).window
+            val previousStatus = window.statusBarColor
+            val previousNav    = window.navigationBarColor
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            val previousLightStatus = insetsController.isAppearanceLightStatusBars
+            val previousLightNav    = insetsController.isAppearanceLightNavigationBars
+
+            window.statusBarColor     = Color.Black.toArgb()
+            window.navigationBarColor = Color.Black.toArgb()
+            insetsController.isAppearanceLightStatusBars     = false
+            insetsController.isAppearanceLightNavigationBars = false
+
+            onDispose {
+                window.statusBarColor     = previousStatus
+                window.navigationBarColor = previousNav
+                insetsController.isAppearanceLightStatusBars     = previousLightStatus
+                insetsController.isAppearanceLightNavigationBars = previousLightNav
+            }
+        }
+    }
 
     LaunchedEffect(translating) {
         if (translating) {

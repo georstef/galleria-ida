@@ -24,7 +24,7 @@ object UiStringsCache {
      * Bump this number whenever an existing English string changes its value.
      * New keys don't require a bump — they're detected automatically via missingKeys().
      */
-    private const val CACHE_VERSION = 7
+    private const val CACHE_VERSION = 8
 
     private fun translationsDir(context: Context) =
         File(context.filesDir, "translations").also { it.mkdirs() }
@@ -143,6 +143,11 @@ object UiStringsCache {
             galleryCreateButton         = s("galleryCreateButton",         defaults.galleryCreateButton),
             galleryImageMetadata        = s("galleryImageMetadata",        defaults.galleryImageMetadata),
             galleryFullscreenClose      = s("galleryFullscreenClose",      defaults.galleryFullscreenClose),
+            gallerySell                 = s("gallerySell",                 defaults.gallerySell),
+            gallerySellConfirmTitle     = s("gallerySellConfirmTitle",     defaults.gallerySellConfirmTitle),
+            gallerySellConfirmMessage   = s("gallerySellConfirmMessage",   defaults.gallerySellConfirmMessage),
+            gallerySellConfirmYes       = s("gallerySellConfirmYes",       defaults.gallerySellConfirmYes),
+            gallerySellConfirmNo        = s("gallerySellConfirmNo",        defaults.gallerySellConfirmNo),
 
             // ── GameScreen ────────────────────────────────────────────────────
             gameQuestionCounter         = s("gameQuestionCounter",         defaults.gameQuestionCounter),
@@ -381,6 +386,11 @@ object UiStringsCache {
         "galleryCreateButton"         to d.galleryCreateButton,
         "galleryImageMetadata"        to d.galleryImageMetadata,
         "galleryFullscreenClose"      to d.galleryFullscreenClose,
+        "gallerySell"                 to d.gallerySell,
+        "gallerySellConfirmTitle"     to d.gallerySellConfirmTitle,
+        "gallerySellConfirmMessage"   to d.gallerySellConfirmMessage,
+        "gallerySellConfirmYes"       to d.gallerySellConfirmYes,
+        "gallerySellConfirmNo"        to d.gallerySellConfirmNo,
 
         // ── GameScreen ────────────────────────────────────────────────────────
         "gameQuestionCounter"         to d.gameQuestionCounter,
