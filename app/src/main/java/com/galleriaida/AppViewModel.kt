@@ -3,6 +3,7 @@ package com.galleriaida.viewmodel
 import android.app.Application
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.galleriaida.data.AppSettings
@@ -64,6 +65,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _questions = MutableStateFlow<List<QuizQuestion>>(emptyList())
     val questions: StateFlow<List<QuizQuestion>> = _questions.asStateFlow()
+
+    // In-progress quiz answers (questionId → answer). Lives in the ViewModel so it
+    // survives configuration changes (e.g. screen rotation) — a plain remember{}
+    // in GameScreen would be wiped when the Activity is recreated.
+    val quizAnswers = mutableStateMapOf<String, String>()
 
     // Timestamp recorded when GameScreen is first composed and questions are loaded
     private val _quizStartedAt = MutableStateFlow(0L)
@@ -217,7 +223,15 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             Log.d("AppViewModel", "Translating word lists for $language via API…")
-            val s     = settings.first { it.geminiApiKey.isNotBlank() }
+            val s = withTimeoutOrNull(5_000) {
+                settings.first { it.geminiApiKey.isNotBlank() }
+            }
+            if (s == null) {
+                // No API key available or offline — fall back to original English words
+                Log.w("AppViewModel", "No API key / offline — using original words for $language")
+                _wordTranslations.value = WordTranslations(language, characters, actions, places)
+                return@launch
+            }
             val model = s.modelTranslation.ifBlank { s.modelQuestions.ifBlank { "models/gemini-2.0-flash" } }
 
             gemini.translateWordLists(s.geminiApiKey, model, language, characters, actions, places)
@@ -407,6 +421,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
             // Clear any previous completed quiz so the summary screen doesn't flash stale data
             _lastCompletedQuiz.value = null
+            quizAnswers.clear()
 
             gemini.generateQuizQuestions(
                 context   = getApplication(),
@@ -438,7 +453,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val questions = _questions.value
             val now       = System.currentTimeMillis()
 
-            val uiStr   = _uiStrings.value
             val answers = questions.map { q ->
                 val rawPlayerAnswer = playerAnswers[q.id] ?: ""
 
@@ -499,6 +513,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             // Clear active quiz state
             _questions.value     = emptyList()
             _quizStartedAt.value = 0L
+            quizAnswers.clear()
 
             _uiState.value = UiState.Idle
         }
@@ -512,6 +527,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         _questions.value     = emptyList()
         _quizStartedAt.value = 0L
         _uiState.value       = UiState.Idle
+        quizAnswers.clear()
     }
 
     /**

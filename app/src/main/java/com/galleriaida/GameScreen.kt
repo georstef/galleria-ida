@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,11 +46,12 @@ fun GameScreen(
     val player    by viewModel.currentPlayer.collectAsState()
     val initial   = player?.name?.firstOrNull()?.uppercase() ?: "?"
 
-    // Map of questionId → player's current answer
-    val playerAnswers = remember { mutableStateMapOf<String, String>() }
+    // Map of questionId → player's current answer.
+    // Lives in the ViewModel so answers survive orientation changes.
+    val playerAnswers = viewModel.quizAnswers
 
-    // Current page index
-    var currentIndex by remember { mutableIntStateOf(0) }
+    // Current page index — rememberSaveable so it survives orientation changes
+    var currentIndex by rememberSaveable { mutableIntStateOf(0) }
 
     // Direction of slide animation: 1 = forward, -1 = backward
     var slideDirection by remember { mutableIntStateOf(1) }
@@ -64,7 +66,11 @@ fun GameScreen(
     // Load questions when the screen first appears — but not if we already have a quiz in progress
     LaunchedEffect(Unit) {
         if (questions.isEmpty()) {
+            currentIndex = 0
             viewModel.loadQuestions()
+        } else if (currentIndex >= questions.size) {
+            // Safety: restored index points past the loaded quiz
+            currentIndex = 0
         }
     }
 
