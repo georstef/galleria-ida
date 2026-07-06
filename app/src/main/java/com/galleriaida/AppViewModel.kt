@@ -599,6 +599,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
             // Step 1 — generate creative phrases using English words
             val phrasesResult = gemini.generatePhrase(
+                context   = getApplication(),
                 apiKey    = s.geminiApiKey,
                 model     = promptModel,
                 character = characterEn,

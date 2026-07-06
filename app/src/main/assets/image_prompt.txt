@@ -1,0 +1,7 @@
+Write a short, imaginative, child-friendly descriptive paragraph that naturally incorporates the words {{character}}, {{action}}, and {{place}}. The paragraph should be suitable as an image-generation prompt for children aged 7–12 and contain only wholesome, age-appropriate content. The prompt must force the ai that will create the image to use vibrant and ultra vivid colors. From that paragraph create a short title for the image. Return the title and the paragraph, in english and the same two values in {{player_language}} in valid JSON using the following format:
+{
+  "title_en": "",
+  "phrase_en": "",
+  "title_local": "",
+  "phrase_local": ""
+}

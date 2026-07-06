@@ -242,7 +242,12 @@ class GeminiService {
         val titlePlayer: String
     )
 
+    /**
+     * Loads image_prompt.txt from assets, substitutes all placeholders,
+     * sends to Gemini, and parses the returned JSON into [GeminiPhrases].
+     */
     suspend fun generatePhrase(
+        context: Context,
         apiKey: String,
         model: String,
         character: String,
@@ -251,18 +256,21 @@ class GeminiService {
         language: String
     ): Result<GeminiPhrases> = withContext(Dispatchers.IO) {
         try {
-            val prompt = """
-Write a short, imaginative, child-friendly descriptive paragraph that naturally incorporates the words $character, $action, and $place. The paragraph should be suitable as an image-generation prompt for children aged 7–12 and contain only wholesome, age-appropriate content. The prompt must force the ai that will create the image to use vibrant and ultra vivid colors. From that paragraph create a short title for the image. Return the title and the paragraph, in english and the same two values in $language in valid JSON using the following format:
-{
-  "title_en": "",
-  "phrase_en": "",
-  "title_local": "",
-  "phrase_local": ""
-}
-            """.trimIndent()
+            // Load prompt template from assets
+            val template = context.assets.open("image_prompt.txt")
+                .bufferedReader()
+                .use { it.readText() }
+
+            // Substitute all placeholders
+            val prompt = template
+                .replace("{{character}}",       character)
+                .replace("{{action}}",          action)
+                .replace("{{place}}",           place)
+                .replace("{{player_language}}", language)
 
             Log.d("GALLERIA_AI", "=== PHRASE REQUEST ===")
             Log.d("GALLERIA_AI", "Model: $model  Language: $language")
+            Log.d("GALLERIA_AI", "Resolved image prompt:\n$prompt")
 
             val response = postGenerateContent(apiKey, model, prompt)
             val text     = extractText(response)
