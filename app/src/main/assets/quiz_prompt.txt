@@ -16,6 +16,8 @@ RULES:
 * Prefer novel settings, realistic but uncommon situations, and unique combinations of concepts.
 * Generate questions that test the target skill through different contexts rather than rephrasing standard examples.
 * If multiple valid questions are possible, select the one that is least likely to have appeared in a typical AI-generated question bank
+* Questions of type "text" for grammar tasks must provide an explicit base word (e.g., a verb in parentheses) and ask for a specific grammatical transformation (such as a change in tense, person, or number) that yields exactly one possible correct word form.
+* It is strictly forbidden for a "text" type answer to be an adjective describing a preference, color, size, or material where multiple alternative words could logically fit.
 
 STRICT OUTPUT RULES:
 * Do NOT write any introduction.
@@ -62,7 +64,7 @@ c. IF "3-end of the school year": You MUST generate 8 out of every 10 questions 
 
 QUESTION TYPES:
 * multiple_choice (4 options)
-* text
+* text: For math questions, the expected answer must be strictly numeric (e.g., "10", not "ten"). For language/grammar questions, the expected answer MUST be completely unambiguous and leave no room for synonyms, colors, sizes, or open descriptions. You must NEVER design a question to accept a partial word, suffix, or fragment (e.g., expecting "ει" for "πλέν.."). Instead, provide a base word or context and instruct the student to write the WHOLE, fully formed correct word (e.g., "πλένει").
 * true_false
 
 QUESTION STRUCTURE:
@@ -138,6 +140,8 @@ Before generating the final JSON, internally perform the following checks for ev
 11. True/False quality check: ensure the statement is not a universally obvious fact and requires at least a small amount of reasoning.
 12. Diversity check: ensure that the generated question set contains a wide variety of contexts and activities.
 13. True/False answer check: confirm that the "answer" field is character-for-character identical to one of the two strings in "options". Any synonym, alternative spelling, or capitalisation difference is a failure — regenerate the question.
+14. Text Ambiguity Check: If the question type is "text", read your own question and try to think of alternative valid words a child could write. If a color, size, or synonym makes perfect sense in the blank, discard the question entirely and rewrite it to be strictly restrictive, or convert it to a "multiple_choice" type.
+15. Full Word Answer Check: For any language question of type "text", check the "answer" field. Confirm that it contains a complete, grammatically correct word. If the answer is a suffix, prefix, or word fragment (like "ει", "ουμε", "ις"), regenerate the question so that the target answer is the whole word.
 
 Question ordering requirement:
 1. When assembling the final question set, first generate questions for all categories, then shuffle them before output. Ensure no more than two consecutive questions belong to the same subject area unless unavoidable.
