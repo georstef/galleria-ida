@@ -122,6 +122,7 @@ A single-elimination bracket tournament where the player votes for their favouri
 - An Android device running Android 9 or higher
 - A Gemini API key (free) — [How to get a Gemini API key](docs/gemini-api-key.md)
 - A Pollinations API key (optional, free) — [How to get a Pollinations API key](docs/pollinations-api-key.md)
+- A ModelScope token (optional, free) — [How to get a ModelScope token](docs/modelscope-api-key.md)
 
 ### First-time setup
 
@@ -135,11 +136,13 @@ A single-elimination bracket tournament where the player votes for their favouri
    - **Translation** — translates the app UI into the player's language
    - **Image Prompt** — builds the image description from the player's word choices
    - **Image Generation** — creates the actual image (e.g. `imagen-3.0-generate-002`)
-4. Optionally enter a **Pollinations API key**.
+4. Optionally enter a **Pollinations API key**, and/or a **ModelScope token** for an additional image provider.
 5. Tap the back arrow to return to the player selection screen.
 
 
 > ⚠️ Gemini currently does not offer an image generation model (such as Imagen) in their free tier. If you are using the free Gemini API key, the Image Generation slot will not work. This is why the app includes Pollinations as a fallback — Pollinations generates images for free and requires no API key. Make sure to configure at least one Pollinations model in Settings so image creation works out of the box.
+
+> 💡 Image providers are tried in order — Gemini → Pollinations → ModelScope — and each model has its own on/off checkbox in Settings. You can disable any of them; for example, skip Pollinations entirely and use ModelScope directly. ModelScope works asynchronously and may take up to 4 minutes to return an image.
 
 
 ### Adding players
@@ -150,6 +153,7 @@ Tap **+ Add New Player** and fill in:
 - **Language** — their native language (the app UI and quizzes will use this)
 - **School class** — 1 to 6 (elementary school grade)
 - **School-year position** — Beginning, Middle, or End (adjusts quiz difficulty)
+- **Image style** — the visual style used for the player's generated images (Cartoon, Adventure, or Epic)
 
 ---
 
