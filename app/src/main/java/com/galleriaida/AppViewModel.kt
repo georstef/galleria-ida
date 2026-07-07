@@ -605,7 +605,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 character = characterEn,
                 action    = actionEn,
                 place     = placeEn,
-                language  = player.language
+                language  = player.language,
+                style     = player.imageStyle
             )
             if (phrasesResult.isFailure) {
                 _uiState.value = UiState.Error("Could not generate phrase. Try again.")

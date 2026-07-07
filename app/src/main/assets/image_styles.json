@@ -1,0 +1,16 @@
+{
+  "cartoon": "Render the scene in a bold, stylized cartoon style with clean outlines and flat,
+vibrant colors — clearly illustrated and non-realistic. Characters should be
+cheerful and expressive. Keep the composition clear and uncluttered, with a warm,
+playful atmosphere and a light sense of fun and adventure.",
+  "adventure": "Render the scene in a rich storybook illustration style with detailed textures
+and a sense of adventure. Characters should be expressive and full of energy.
+Use a warm, deep color palette with interesting lighting. The mood should feel
+exciting and full of wonder, like a page from a beloved illustrated adventure
+book.",
+  "epic": "Render the scene in a cinematic animated-film style, like a still frame from a
+modern animated movie. Use dynamic camera angles, detailed environments, and
+dramatic lighting with strong contrast and atmosphere. Characters should look
+adventurous, confident, and cool — not cute or babyish. The mood should feel
+epic and immersive."
+}

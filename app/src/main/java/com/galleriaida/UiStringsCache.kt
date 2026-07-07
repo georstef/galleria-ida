@@ -24,7 +24,7 @@ object UiStringsCache {
      * Bump this number whenever an existing English string changes its value.
      * New keys don't require a bump — they're detected automatically via missingKeys().
      */
-    private const val CACHE_VERSION = 8
+    private const val CACHE_VERSION = 9
 
     private fun translationsDir(context: Context) =
         File(context.filesDir, "translations").also { it.mkdirs() }
@@ -155,6 +155,10 @@ object UiStringsCache {
             profileYearBeginning        = s("profileYearBeginning",        defaults.profileYearBeginning),
             profileYearMiddle           = s("profileYearMiddle",           defaults.profileYearMiddle),
             profileYearEnd              = s("profileYearEnd",              defaults.profileYearEnd),
+            profileLabelImageStyle      = s("profileLabelImageStyle",      defaults.profileLabelImageStyle),
+            styleCartoon                = s("styleCartoon",                defaults.styleCartoon),
+            styleAdventure              = s("styleAdventure",              defaults.styleAdventure),
+            styleEpic                   = s("styleEpic",                   defaults.styleEpic),
             profileSaveButton           = s("profileSaveButton",           defaults.profileSaveButton),
             profileErrorNameBlank       = s("profileErrorNameBlank",       defaults.profileErrorNameBlank),
             profileErrorNameTaken       = s("profileErrorNameTaken",       defaults.profileErrorNameTaken),
@@ -398,6 +402,10 @@ object UiStringsCache {
         "profileYearBeginning"        to d.profileYearBeginning,
         "profileYearMiddle"           to d.profileYearMiddle,
         "profileYearEnd"              to d.profileYearEnd,
+        "profileLabelImageStyle"      to d.profileLabelImageStyle,
+        "styleCartoon"                to d.styleCartoon,
+        "styleAdventure"              to d.styleAdventure,
+        "styleEpic"                   to d.styleEpic,
         "profileSaveButton"           to d.profileSaveButton,
         "profileErrorNameBlank"       to d.profileErrorNameBlank,
         "profileErrorNameTaken"       to d.profileErrorNameTaken,

@@ -243,6 +243,28 @@ class GeminiService {
     )
 
     /**
+     * Loads the English style-instruction text for [style] from image_styles.json in assets.
+     * Falls back to "cartoon", then to an empty string if nothing is found.
+     */
+    private fun loadStyleInstructions(context: Context, style: String): String {
+        return try {
+            val json = context.assets.open("image_styles.json")
+                .bufferedReader()
+                .use { it.readText() }
+            val obj = JSONObject(json)
+            val key = style.trim().lowercase()
+            when {
+                obj.has(key)        -> obj.getString(key)
+                obj.has("cartoon")  -> obj.getString("cartoon")
+                else                -> ""
+            }
+        } catch (e: Exception) {
+            Log.e("GeminiService", "loadStyleInstructions error: ${e.message}")
+            ""
+        }
+    }
+
+    /**
      * Loads image_prompt.txt from assets, substitutes all placeholders,
      * sends to Gemini, and parses the returned JSON into [GeminiPhrases].
      */
@@ -253,7 +275,8 @@ class GeminiService {
         character: String,
         action: String,
         place: String,
-        language: String
+        language: String,
+        style: String
     ): Result<GeminiPhrases> = withContext(Dispatchers.IO) {
         try {
             // Load prompt template from assets
@@ -261,12 +284,18 @@ class GeminiService {
                 .bufferedReader()
                 .use { it.readText() }
 
+            // Load style instructions from assets, fall back to "cartoon" then empty
+            val styleInstructions = loadStyleInstructions(context, style)
+            Log.d("GALLERIA_AI", "STYLE KEY = '$style'")
+            Log.d("GALLERIA_AI", "STYLE TEXT = $styleInstructions")
+
             // Substitute all placeholders
             val prompt = template
-                .replace("{{character}}",       character)
-                .replace("{{action}}",          action)
-                .replace("{{place}}",           place)
-                .replace("{{player_language}}", language)
+                .replace("{{character}}",          character)
+                .replace("{{action}}",             action)
+                .replace("{{place}}",              place)
+                .replace("{{player_language}}",    language)
+                .replace("{{style_instructions}}", styleInstructions)
 
             Log.d("GALLERIA_AI", "=== PHRASE REQUEST ===")
             Log.d("GALLERIA_AI", "Model: $model  Language: $language")

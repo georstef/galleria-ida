@@ -53,6 +53,8 @@ fun PlayerProfileScreen(
         var yearExpanded by remember { mutableStateOf(false) }
         var langExpanded by remember { mutableStateOf(false) }
         var classExpanded by remember { mutableStateOf(false) }
+        var styleExpanded by remember { mutableStateOf(false) }
+        var selectedStyle by remember { mutableStateOf(player?.imageStyle ?: "cartoon") }
 
         var selectedLanguage by remember {
             mutableStateOf(
@@ -70,6 +72,13 @@ fun PlayerProfileScreen(
             Pair(uiStrings.profileYearEnd, "end")
         )
         val selectedYearLabel = yearOptions.firstOrNull { it.second == schoolYearPosition }?.first ?: ""
+
+        val styleOptions = listOf(
+            Pair(uiStrings.styleCartoon,   "cartoon"),
+            Pair(uiStrings.styleAdventure, "adventure"),
+            Pair(uiStrings.styleEpic,      "epic")
+        )
+        val selectedStyleLabel = styleOptions.firstOrNull { it.second == selectedStyle }?.first ?: uiStrings.styleCartoon
         val classOptions = (1..6).map { it.toString() }
         val initial = player?.name?.firstOrNull()?.uppercase() ?: "?"
 
@@ -268,6 +277,36 @@ fun PlayerProfileScreen(
                         }
                     }
 
+                    Spacer(Modifier.height(20.dp))
+
+                    // Image style
+                    ExposedDropdownMenuBox(
+                        expanded = styleExpanded,
+                        onExpandedChange = { styleExpanded = !styleExpanded }
+                    ) {
+                        OutlinedTextField(
+                            value = selectedStyleLabel,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(uiStrings.profileLabelImageStyle, style = MaterialTheme.typography.bodyLarge) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = styleExpanded) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            shape = RoundedCornerShape(16.dp),
+                            textStyle = MaterialTheme.typography.bodyLarge
+                        )
+                        ExposedDropdownMenu(
+                            expanded = styleExpanded,
+                            onDismissRequest = { styleExpanded = false }
+                        ) {
+                            styleOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option.first, style = MaterialTheme.typography.bodyLarge) },
+                                    onClick = { selectedStyle = option.second; styleExpanded = false }
+                                )
+                            }
+                        }
+                    }
+
                     Spacer(Modifier.height(48.dp))
 
                     Button(
@@ -287,7 +326,8 @@ fun PlayerProfileScreen(
                                                 name = name.trim(),
                                                 language = selectedLanguage.displayName,
                                                 schoolClass = schoolClass.ifBlank { "—" },
-                                                schoolYearPosition = schoolYearPosition.ifBlank { "beginning" }
+                                                schoolYearPosition = schoolYearPosition.ifBlank { "beginning" },
+                                                imageStyle = selectedStyle
                                             )
                                         )
                                     }

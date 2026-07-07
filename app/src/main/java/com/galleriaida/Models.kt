@@ -10,6 +10,7 @@ data class Player(
     val language: String,
     val stars: Int = 0,
     val schoolYearPosition: String = "",
+    val imageStyle: String = "cartoon",
     val createdAt: Long = System.currentTimeMillis()
 )
 

@@ -1,4 +1,23 @@
-Write a short, imaginative, child-friendly descriptive paragraph that naturally incorporates the words {{character}}, {{action}}, and {{place}}. The paragraph should be suitable as an image-generation prompt for children aged 7–12 and contain only wholesome, age-appropriate content. The prompt must force the ai that will create the image to use vibrant and ultra vivid colors. From that paragraph create a short title for the image. Return the title and the paragraph, in english and the same two values in {{player_language}} in valid JSON using the following format:
+Write a short, imaginative, child-friendly descriptive paragraph (2–3 sentences,
+maximum 120 words) that naturally incorporates the words {{character}}, {{action}},
+and {{place}}. All three words must be clearly represented in the scene — if the
+combination seems unusual, embrace it playfully rather than ignoring any of the
+three words.
+
+The paragraph will be used as an image-generation prompt, so describe the scene
+using specific, vivid color words woven naturally into the imagery (e.g. emerald,
+tangerine, sapphire, golden) rather than simply stating "vibrant colors".
+
+Visual style requirements:
+{{style_instructions}}
+
+The content must be wholesome and appropriate for elementary school children.
+
+From that paragraph, create a short title for the image (4–8 words).
+
+Return ONLY a valid JSON object — no explanation, no preamble, no markdown code
+fences — with the title and paragraph in English and the same two values
+translated into {{player_language}}, using exactly this format:
 {
   "title_en": "",
   "phrase_en": "",
