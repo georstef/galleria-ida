@@ -16,6 +16,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
+// Lenient JSON: ignoreUnknownKeys means removing/renaming a field in a data class
+// won't wipe stored data when older JSON (with extra keys) is loaded.
+private val AppJson = Json { ignoreUnknownKeys = true }
+
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "kidsapp_prefs")
 
 class PreferencesManager(private val context: Context) {
@@ -29,12 +33,12 @@ class PreferencesManager(private val context: Context) {
 
     val playersFlow: Flow<List<Player>> = context.dataStore.data.map { prefs ->
         val json = prefs[PLAYERS_KEY] ?: "[]"
-        runCatching { Json.decodeFromString<List<Player>>(json) }.getOrDefault(emptyList())
+        runCatching { AppJson.decodeFromString<List<Player>>(json) }.getOrDefault(emptyList())
     }
 
     suspend fun savePlayers(players: List<Player>) {
         context.dataStore.edit { prefs ->
-            prefs[PLAYERS_KEY] = Json.encodeToString(players)
+            prefs[PLAYERS_KEY] = AppJson.encodeToString(players)
         }
     }
 
@@ -42,12 +46,12 @@ class PreferencesManager(private val context: Context) {
 
     val galleryFlow: Flow<List<GalleryItem>> = context.dataStore.data.map { prefs ->
         val json = prefs[GALLERY_KEY] ?: "[]"
-        runCatching { Json.decodeFromString<List<GalleryItem>>(json) }.getOrDefault(emptyList())
+        runCatching { AppJson.decodeFromString<List<GalleryItem>>(json) }.getOrDefault(emptyList())
     }
 
     suspend fun saveGallery(items: List<GalleryItem>) {
         context.dataStore.edit { prefs ->
-            prefs[GALLERY_KEY] = Json.encodeToString(items)
+            prefs[GALLERY_KEY] = AppJson.encodeToString(items)
         }
     }
 
@@ -55,12 +59,12 @@ class PreferencesManager(private val context: Context) {
 
     val settingsFlow: Flow<AppSettings> = context.dataStore.data.map { prefs ->
         val json = prefs[SETTINGS_KEY] ?: "{}"
-        runCatching { Json.decodeFromString<AppSettings>(json) }.getOrDefault(AppSettings())
+        runCatching { AppJson.decodeFromString<AppSettings>(json) }.getOrDefault(AppSettings())
     }
 
     suspend fun saveSettings(settings: AppSettings) {
         context.dataStore.edit { prefs ->
-            prefs[SETTINGS_KEY] = Json.encodeToString(settings)
+            prefs[SETTINGS_KEY] = AppJson.encodeToString(settings)
         }
     }
 
@@ -68,12 +72,12 @@ class PreferencesManager(private val context: Context) {
 
     val quizzesFlow: Flow<List<Quiz>> = context.dataStore.data.map { prefs ->
         val json = prefs[QUIZZES_KEY] ?: "[]"
-        runCatching { Json.decodeFromString<List<Quiz>>(json) }.getOrDefault(emptyList())
+        runCatching { AppJson.decodeFromString<List<Quiz>>(json) }.getOrDefault(emptyList())
     }
 
     suspend fun saveQuizzes(quizzes: List<Quiz>) {
         context.dataStore.edit { prefs ->
-            prefs[QUIZZES_KEY] = Json.encodeToString(quizzes)
+            prefs[QUIZZES_KEY] = AppJson.encodeToString(quizzes)
         }
     }
 

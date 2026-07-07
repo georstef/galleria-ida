@@ -16,6 +16,7 @@ import com.galleriaida.data.WordTranslations
 import com.galleriaida.network.GeminiService
 import com.galleriaida.data.QuizQuestion
 import com.galleriaida.network.PollinationsService
+import com.galleriaida.network.ModelScopeService
 import com.galleriaida.storage.PreferencesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -90,6 +91,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _pollinationsKeyStatus = MutableStateFlow<String?>(null)
     val pollinationsKeyStatus: StateFlow<String?> = _pollinationsKeyStatus.asStateFlow()
+
+    private val _modelScopeKeyStatus = MutableStateFlow<String?>(null)
+    val modelScopeKeyStatus: StateFlow<String?> = _modelScopeKeyStatus.asStateFlow()
 
     // ── Pollinations fallback state ──────────────────────────────────────────
 
@@ -399,8 +403,44 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val updated = when (slot) {
                 1 -> c.copy(pollinationsModel1 = model)
                 2 -> c.copy(pollinationsModel2 = model)
-                3 -> c.copy(pollinationsModel3 = model)
                 else -> c
+            }
+            prefs.saveSettings(updated)
+        }
+    }
+
+    // ── ModelScope API Key ───────────────────────────────────────────────────
+
+    fun testModelScopeKey(key: String) {
+        viewModelScope.launch {
+            _modelScopeKeyStatus.value = "testing"
+            val (ok, json) = ModelScopeService.validateAndFetchModels(key)
+            prefs.saveSettings(settings.value.copy(
+                modelScopeApiKey     = key,
+                modelScopeKeyValid   = ok,
+                modelScopeModelsJson = if (ok) json else settings.value.modelScopeModelsJson
+            ))
+            _modelScopeKeyStatus.value = if (ok) "valid" else "invalid"
+        }
+    }
+
+    fun updateModelScopeModel(model: String) {
+        viewModelScope.launch {
+            prefs.saveSettings(settings.value.copy(modelScopeModel = model))
+        }
+    }
+
+    // ── Per-image-model enable flags ───────────────────────────────────────────
+
+    fun setImageModelEnabled(which: String, enabled: Boolean) {
+        viewModelScope.launch {
+            val c = settings.value
+            val updated = when (which) {
+                "gemini"        -> c.copy(enableGeminiImage   = enabled)
+                "pollinations1" -> c.copy(enablePollinations1 = enabled)
+                "pollinations2" -> c.copy(enablePollinations2 = enabled)
+                "modelscope"    -> c.copy(enableModelScope    = enabled)
+                else            -> c
             }
             prefs.saveSettings(updated)
         }
@@ -623,69 +663,99 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
             Log.d("GALLERIA_AI", "imagePrompt=$imagePrompt")
 
-            // Step 2 — try Gemini image model
-            val imageResult = gemini.generateImage(s.geminiApiKey, imageModel, imagePrompt)
-            if (imageResult.isSuccess) {
-                val localPath = saveBase64Image(getApplication(), imageResult.getOrThrow(), player.id)
-                saveGalleryItem(
-                    player         = player,
-                    imageUrl       = localPath,
-                    phrases        = phrases,
-                    characterEn    = characterEn,
-                    actionEn       = actionEn,
-                    placeEn        = placeEn,
-                    characterLocal = characterLocal,
-                    actionLocal    = actionLocal,
-                    placeLocal     = placeLocal
-                )
-                _uiState.value = UiState.Idle
-                Log.d("GALLERIA_AI", "Gemini handled image directly.")
-                _navigateToGallery.trySend(Unit)
-                return@launch
-            }
+            // ── Try each ENABLED image model in order ──────────────────────────
+            // Order: Gemini image → Pollinations 1 → 2 → 3 → ModelScope.
+            // Only models whose enable-flag is on are attempted.
 
-            // Step 3 — Gemini failed, try Pollinations fallback
-            Log.w("GALLERIA_AI", "Gemini image failed → trying Pollinations")
-            val m1 = s.pollinationsModel1
-            val m2 = s.pollinationsModel2
-            val m3 = s.pollinationsModel3
-            Log.d("GALLERIA_AI", "=== Pollinations fallback models=$m1/$m2/$m3 ===")
-
-            _isFallbackLoading.value    = true
-            _fallbackModelMessage.value = _uiStrings.value.imageBackupEngine.format(m1)
-
-            val result = PollinationsService.generateImageWithFallbacks(
-                context       = getApplication(),
-                englishPrompt = imagePrompt,
-                model1        = m1,
-                model2        = m2,
-                model3        = m3,
-                apiKey        = s.pollinationsApiKey,
-                onModelSwitch = { next ->
-                    _fallbackModelMessage.value = _uiStrings.value.imageBackupEngine.format(next)
+            // Step A — Gemini image model (if enabled)
+            if (s.enableGeminiImage) {
+                Log.d("GALLERIA_AI", "Trying Gemini image model…")
+                val imageResult = gemini.generateImage(s.geminiApiKey, imageModel, imagePrompt)
+                if (imageResult.isSuccess) {
+                    val localPath = saveBase64Image(getApplication(), imageResult.getOrThrow(), player.id)
+                    saveGalleryItem(
+                        player = player, imageUrl = localPath, phrases = phrases,
+                        characterEn = characterEn, actionEn = actionEn, placeEn = placeEn,
+                        characterLocal = characterLocal, actionLocal = actionLocal, placeLocal = placeLocal
+                    )
+                    _uiState.value = UiState.Idle
+                    Log.d("GALLERIA_AI", "Gemini handled image directly.")
+                    _navigateToGallery.trySend(Unit)
+                    return@launch
                 }
-            )
-
-            _isFallbackLoading.value = false
-
-            if (result != null) {
-                val (file, usedModel) = result
-                Log.d("GALLERIA_AI", "Pollinations success via model=$usedModel")
-                registerFallbackImage(
-                    downloadedFile = file,
-                    phrases        = phrases,
-                    characterEn    = characterEn,
-                    actionEn       = actionEn,
-                    placeEn        = placeEn,
-                    characterLocal = characterLocal,
-                    actionLocal    = actionLocal,
-                    placeLocal     = placeLocal
-                )
-                _navigateToGallery.trySend(Unit)
+                Log.w("GALLERIA_AI", "Gemini image failed → trying next enabled model")
             } else {
-                Log.e("GALLERIA_AI", "All Pollinations models failed.")
-                _uiState.value = UiState.Error("Image generation failed. Please try again.")
+                Log.d("GALLERIA_AI", "Gemini image model skipped (disabled)")
             }
+
+            // Step B — Pollinations models (only the enabled slots, in order)
+            val pollinationsModels = listOfNotNull(
+                if (s.enablePollinations1) s.pollinationsModel1 else null,
+                if (s.enablePollinations2) s.pollinationsModel2 else null
+            ).filter { it.isNotBlank() }
+
+            if (pollinationsModels.isNotEmpty()) {
+                Log.d("GALLERIA_AI", "=== Pollinations enabled models=$pollinationsModels ===")
+                _isFallbackLoading.value    = true
+                _fallbackModelMessage.value = _uiStrings.value.imageBackupEngine.format(pollinationsModels.first())
+
+                for ((idx, model) in pollinationsModels.withIndex()) {
+                    if (idx > 0) _fallbackModelMessage.value = _uiStrings.value.imageBackupEngine.format(model)
+                    Log.d("GALLERIA_AI", "Trying Pollinations model: $model")
+                    val file = PollinationsService.generateImage(getApplication(), imagePrompt, model, s.pollinationsApiKey)
+                    if (file != null) {
+                        _isFallbackLoading.value = false
+                        Log.d("GALLERIA_AI", "Pollinations success via model=$model")
+                        registerFallbackImage(
+                            downloadedFile = file, phrases = phrases,
+                            characterEn = characterEn, actionEn = actionEn, placeEn = placeEn,
+                            characterLocal = characterLocal, actionLocal = actionLocal, placeLocal = placeLocal
+                        )
+                        _navigateToGallery.trySend(Unit)
+                        return@launch
+                    }
+                    Log.w("GALLERIA_AI", "Pollinations model $model failed, trying next…")
+                }
+                _isFallbackLoading.value = false
+                Log.w("GALLERIA_AI", "All enabled Pollinations models failed")
+            } else {
+                Log.d("GALLERIA_AI", "Pollinations skipped (no enabled models)")
+            }
+
+            // Step C — ModelScope (if enabled)
+            if (s.enableModelScope && s.modelScopeApiKey.isNotBlank()) {
+                Log.d("GALLERIA_AI", "=== ModelScope model=${s.modelScopeModel} ===")
+                _isFallbackLoading.value    = true
+                _fallbackModelMessage.value = _uiStrings.value.imageBackupEngine.format(s.modelScopeModel)
+
+                val file = ModelScopeService.generateImage(
+                    context       = getApplication(),
+                    englishPrompt = imagePrompt,
+                    model         = s.modelScopeModel,
+                    apiKey        = s.modelScopeApiKey
+                )
+                _isFallbackLoading.value = false
+
+                if (file != null) {
+                    Log.d("GALLERIA_AI", "ModelScope success")
+                    registerFallbackImage(
+                        downloadedFile = file, phrases = phrases,
+                        characterEn = characterEn, actionEn = actionEn, placeEn = placeEn,
+                        characterLocal = characterLocal, actionLocal = actionLocal, placeLocal = placeLocal
+                    )
+                    _navigateToGallery.trySend(Unit)
+                    return@launch
+                }
+                Log.w("GALLERIA_AI", "ModelScope failed")
+            } else if (s.enableModelScope) {
+                Log.w("GALLERIA_AI", "ModelScope enabled but no token set")
+            } else {
+                Log.d("GALLERIA_AI", "ModelScope skipped (disabled)")
+            }
+
+            // All enabled providers exhausted
+            Log.e("GALLERIA_AI", "All enabled image models failed.")
+            _uiState.value = UiState.Error("Image generation failed. Please try again.")
         }
     }
 

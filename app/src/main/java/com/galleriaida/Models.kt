@@ -50,7 +50,16 @@ data class AppSettings(
     val pollinationsKeyValid: Boolean = false,
     val pollinationsModel1: String = "kontext",
     val pollinationsModel2: String = "nova-canvas",
-    val pollinationsModel3: String = "flux"
+    // ModelScope (async provider)
+    val modelScopeApiKey: String = "",
+    val modelScopeKeyValid: Boolean = false,
+    val modelScopeModelsJson: String = "",
+    val modelScopeModel: String = "Qwen/Qwen-Image-2512",
+    // Per-image-model enable flags (generation tries only enabled ones, in order)
+    val enableGeminiImage: Boolean = true,
+    val enablePollinations1: Boolean = true,
+    val enablePollinations2: Boolean = true,
+    val enableModelScope: Boolean = false
 )
 
 data class GeminiModel(
@@ -126,4 +135,11 @@ val POLLINATIONS_MODELS = listOf(
     "gptimage-large",
     "gptimage",
     "zimage"
+)
+
+// ── ModelScope models available for selection ─────────────────────────────────
+val MODELSCOPE_MODELS = listOf(
+    "Qwen/Qwen-Image-2512",
+    "MusePublic/FLUX.1-Kontext-Dev",
+    "flux-community/FLUX.2-klein-9B"
 )

@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galleriaida.data.POLLINATIONS_MODELS
+import com.galleriaida.data.MODELSCOPE_MODELS
 import com.galleriaida.BuildConfig
 import com.galleriaida.ui.theme.*
 import com.galleriaida.viewmodel.AppViewModel
@@ -50,14 +51,18 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
     val settings            by viewModel.settings.collectAsState()
     val apiKeyStatus        by viewModel.apiKeyStatus.collectAsState()
     val pollinationsStatus  by viewModel.pollinationsKeyStatus.collectAsState()
+    val modelScopeStatus    by viewModel.modelScopeKeyStatus.collectAsState()
 
     var keyInput             by remember(settings.geminiApiKey)        { mutableStateOf(settings.geminiApiKey) }
     var pollinationsKeyInput by remember(settings.pollinationsApiKey)  { mutableStateOf(settings.pollinationsApiKey) }
+    var modelScopeKeyInput   by remember(settings.modelScopeApiKey)    { mutableStateOf(settings.modelScopeApiKey) }
     var showGeminiKey        by remember { mutableStateOf(false) }
     var showPollinationsKey  by remember { mutableStateOf(false) }
+    var showModelScopeKey    by remember { mutableStateOf(false) }
     var showDeleteScreen     by remember { mutableStateOf(false) }
     var showGeminiModels     by remember { mutableStateOf(false) }
     var showPollinationsModels by remember { mutableStateOf(false) }
+    var showModelScopeModels   by remember { mutableStateOf(false) }
 
     when {
         showDeleteScreen       -> DeletePlayersScreen(
@@ -72,6 +77,10 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
         showPollinationsModels -> PollinationsModelScreen(
             viewModel  = viewModel,
             onBack     = { showPollinationsModels = false }
+        )
+        showModelScopeModels -> ModelScopeModelScreen(
+            viewModel  = viewModel,
+            onBack     = { showModelScopeModels = false }
         )
         else -> {
             Column(
@@ -238,7 +247,7 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                     }
                     Button(
                         onClick  = { showPollinationsModels = true },
-                        enabled  = settings.pollinationsKeyValid,
+                        enabled  = true,
                         modifier = Modifier.weight(1f).height(56.dp),
                         shape    = RoundedCornerShape(16.dp),
                         colors   = ButtonDefaults.buttonColors(
@@ -247,6 +256,83 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                         )
                     ) {
                         Text("🌸 Models", style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+
+                Spacer(Modifier.height(32.dp))
+                HorizontalDivider()
+                Spacer(Modifier.height(24.dp))
+
+                // ══════════════════════════════════════════════════════════════
+                // SECTION 2b – ModelScope (async provider)
+                // ══════════════════════════════════════════════════════════════
+                SectionHeader("🧩 ModelScope AI (Async Image Engine)")
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "An additional image provider. It works asynchronously — the app submits a " +
+                            "request, then waits for the image (up to 4 minutes). Requires a token.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MedText
+                )
+                Spacer(Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = modelScopeKeyInput,
+                    onValueChange = { modelScopeKeyInput = it },
+                    label = { Text("ModelScope Token", style = MaterialTheme.typography.bodyLarge) },
+                    singleLine = true,
+                    visualTransformation = if (showModelScopeKey) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        TextButton(onClick = { showModelScopeKey = !showModelScopeKey }) {
+                            Text(if (showModelScopeKey) "Hide" else "Show", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    },
+                    modifier  = Modifier.fillMaxWidth(),
+                    shape     = RoundedCornerShape(16.dp),
+                    textStyle = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                val (msStatusText, msStatusColor) = when {
+                    modelScopeStatus == "testing" -> "Testing…"                     to MedText
+                    modelScopeStatus == "valid"   -> "✅ Token valid"                to SuccessGreen
+                    modelScopeStatus == "invalid" -> "❌ Invalid token"             to ErrorRed
+                    settings.modelScopeKeyValid   -> "✅ Token saved and verified"  to SuccessGreen
+                    settings.modelScopeApiKey.isNotBlank() -> "⚠️ Not yet tested"   to MedText
+                    else -> "No token set" to MedText
+                }
+                Text(msStatusText, style = MaterialTheme.typography.bodyMedium, color = msStatusColor)
+
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier              = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick  = { viewModel.testModelScopeKey(modelScopeKeyInput) },
+                        enabled  = modelScopeKeyInput.isNotBlank() && modelScopeStatus != "testing",
+                        modifier = Modifier.weight(1f).height(56.dp),
+                        shape    = RoundedCornerShape(16.dp),
+                        colors   = ButtonDefaults.buttonColors(containerColor = ButtonPrimary)
+                    ) {
+                        Text(
+                            if (modelScopeStatus == "testing") "Testing…" else "Test & Save",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                    Button(
+                        onClick  = { showModelScopeModels = true },
+                        enabled  = settings.modelScopeKeyValid,
+                        modifier = Modifier.weight(1f).height(56.dp),
+                        shape    = RoundedCornerShape(16.dp),
+                        colors   = ButtonDefaults.buttonColors(
+                            containerColor         = ButtonSecondary,
+                            disabledContainerColor = DisabledGray
+                        )
+                    ) {
+                        Text("🧩 Models", style = MaterialTheme.typography.labelLarge)
                     }
                 }
 
@@ -290,6 +376,26 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
 @Composable
 private fun SectionHeader(text: String) {
     Text(text, style = MaterialTheme.typography.titleMedium, color = DeepPurple)
+}
+
+@Composable
+private fun ImageModelToggle(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onCheckedChange(!checked) }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(checked = checked, onCheckedChange = onCheckedChange)
+        Spacer(Modifier.width(4.dp))
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+    }
 }
 
 // ── Gemini model selection screen ────────────────────────────────────────────
@@ -424,6 +530,16 @@ fun ModelSelectionScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                         Text(currentDesc, style = MaterialTheme.typography.bodySmall,
                             color = MedText, lineHeight = 16.sp)
                     }
+
+                    // Only the image-generation slot can be toggled on/off for generation
+                    if (key == "imageGeneration") {
+                        Spacer(Modifier.height(8.dp))
+                        ImageModelToggle(
+                            label   = "Use this model for image generation",
+                            checked = settings.enableGeminiImage,
+                            onCheckedChange = { viewModel.setImageModelEnabled("gemini", it) }
+                        )
+                    }
                 }
             }
         }
@@ -437,16 +553,14 @@ fun ModelSelectionScreen(viewModel: AppViewModel, onBack: () -> Unit) {
 fun PollinationsModelScreen(viewModel: AppViewModel, onBack: () -> Unit) {
     val settings by viewModel.settings.collectAsState()
 
-    // The 3 slot values come straight from settings
+    // The 2 slot values come straight from settings
     val slotValues = listOf(
         settings.pollinationsModel1,
-        settings.pollinationsModel2,
-        settings.pollinationsModel3
+        settings.pollinationsModel2
     )
     val slotLabels = listOf(
         "🥇 Primary model (tried first)",
-        "🥈 Second fallback",
-        "🥉 Third fallback (last resort)"
+        "🥈 Second fallback"
     )
 
     Column(
@@ -466,7 +580,7 @@ fun PollinationsModelScreen(viewModel: AppViewModel, onBack: () -> Unit) {
 
         Spacer(Modifier.height(8.dp))
         Text(
-            "When Gemini image generation fails, the app tries these models in order (1 → 2 → 3).",
+            "When Gemini image generation fails, the app tries these models in order (1 → 2).",
             style = MaterialTheme.typography.bodyMedium,
             color = MedText
         )
@@ -515,14 +629,144 @@ fun PollinationsModelScreen(viewModel: AppViewModel, onBack: () -> Unit) {
                         }
                     }
                 }
+
+                Spacer(Modifier.height(8.dp))
+                val enabled = when (slot) {
+                    1 -> settings.enablePollinations1
+                    else -> settings.enablePollinations2
+                }
+                ImageModelToggle(
+                    label   = "Use this model",
+                    checked = enabled,
+                    onCheckedChange = { viewModel.setImageModelEnabled("pollinations$slot", it) }
+                )
             }
 
-            if (index < 2) Spacer(Modifier.height(20.dp))
+            if (index < 1) Spacer(Modifier.height(20.dp))
         }
 
         Spacer(Modifier.height(32.dp))
         Text(
             "💡 Tip: keep different models in each slot so if one fails, the next is likely to succeed.",
+            style     = MaterialTheme.typography.bodySmall,
+            color     = MedText,
+            textAlign = TextAlign.Center,
+            modifier  = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+// ── ModelScope model selection screen ────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ModelScopeModelScreen(viewModel: AppViewModel, onBack: () -> Unit) {
+    val settings by viewModel.settings.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
+    var showJsonDialog by remember { mutableStateOf(false) }
+
+    if (showJsonDialog) {
+        val prettyJson = remember(settings.modelScopeModelsJson) {
+            try { JSONObject(settings.modelScopeModelsJson).toString(2) }
+            catch (e: Exception) { settings.modelScopeModelsJson }
+        }
+        AlertDialog(
+            onDismissRequest = { showJsonDialog = false },
+            title   = { Text("ModelScope Models JSON", style = MaterialTheme.typography.titleMedium) },
+            text    = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    Text(
+                        prettyJson.ifBlank { "No data — test the token first." },
+                        style      = MaterialTheme.typography.bodySmall,
+                        fontFamily = FontFamily.Monospace
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showJsonDialog = false }) {
+                    Text("Close", style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        )
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+            .padding(24.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = DeepPurple)
+            }
+            Spacer(Modifier.width(8.dp))
+            Text("ModelScope Model 🧩", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+            TextButton(onClick = { showJsonDialog = true }) {
+                Text("View JSON", style = MaterialTheme.typography.bodyMedium, color = ButtonSecondary)
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "Choose which ModelScope model to use for image generation.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MedText
+        )
+        Spacer(Modifier.height(24.dp))
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(CardBg)
+                .padding(16.dp)
+        ) {
+            Text("Model", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+
+            ExposedDropdownMenuBox(
+                expanded         = expanded,
+                onExpandedChange = { expanded = !expanded }
+            ) {
+                OutlinedTextField(
+                    value         = settings.modelScopeModel.ifBlank { "— not set —" },
+                    onValueChange = {},
+                    readOnly      = true,
+                    trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier      = Modifier.fillMaxWidth().menuAnchor(),
+                    shape         = RoundedCornerShape(12.dp),
+                    textStyle     = MaterialTheme.typography.bodyMedium
+                )
+                ExposedDropdownMenu(
+                    expanded         = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier         = Modifier.heightIn(max = 280.dp)
+                ) {
+                    MODELSCOPE_MODELS.forEach { model ->
+                        DropdownMenuItem(
+                            text    = { Text(model, style = MaterialTheme.typography.bodyLarge) },
+                            onClick = {
+                                viewModel.updateModelScopeModel(model)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+            ImageModelToggle(
+                label   = "Use ModelScope for image generation",
+                checked = settings.enableModelScope,
+                onCheckedChange = { viewModel.setImageModelEnabled("modelscope", it) }
+            )
+        }
+
+        Spacer(Modifier.height(32.dp))
+        Text(
+            "💡 ModelScope is tried last, after Gemini and Pollinations, and only if enabled.",
             style     = MaterialTheme.typography.bodySmall,
             color     = MedText,
             textAlign = TextAlign.Center,
